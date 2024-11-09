@@ -22,8 +22,8 @@
 
 
 ## Về đồ án môn học:
-* **Chủ đề**: Xây dựng phần mềm quản lí bán vé máy bay
-* **Ngôn ngữ được sử dụng**: C#, SQL
+* **Chủ đề**: Xây dựng website quản lý khách sạn
+* **Ngôn ngữ được sử dụng**: Javascript
 * **Chi tiết đồ án**:
 
 
