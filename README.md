@@ -14,4 +14,17 @@
 |   3   |22521708|    Trần Phương Vy   |22521708@gm.uit.edu.vn|
 |   4   |22521713| Lê Nguyễn Đông Xuân |22521713@gm.uit.edu.vn|
 
+## Giới thiệu môn học:
+* **Tên môn học:** Công nghệ Web và ứng dụng
+* **Mã môn học:** SE347
+* **Mã lớp:** SE347.P11
+* **Giảng viên**: Trần Thị Hồng Yến
+
+
+## Về đồ án môn học:
+* **Chủ đề**: Xây dựng phần mềm quản lí bán vé máy bay
+* **Ngôn ngữ được sử dụng**: C#, SQL
+* **Chi tiết đồ án**:
+
+
 Đồ án cuối kì môn công nghệ web và ứng dụng (SE347.P11) 
