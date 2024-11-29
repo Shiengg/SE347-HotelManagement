@@ -10,7 +10,7 @@ export const MenuWrapper = styled.div`
   flex-direction: column;
   border-radius: 40px 40px 40px 40px; /* Bo góc cho sidebar */
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Đổ bóng cho sidebar */
-  margin-top: 20px;
+  margin-top: 30px;
    
 `;
 
