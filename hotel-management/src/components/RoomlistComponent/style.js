@@ -4,7 +4,7 @@ import styled from 'styled-components';
 export const RoomListContainer = styled.div`
   width: 100%;
   margin-left: 10px;
-  border-radius: 30px;
+  border-radius: 40px;
   padding: 10px;
   background-color: #E8E8F0;
   height: 100%;
