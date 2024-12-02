@@ -1,8 +1,13 @@
+import BookingPage from "../pages/BookingPage/BookingPage";
+import CustomerPage from "../pages/CustomersPage/CustomersPage";
+import FoodAndBeveragePage from "../pages/FoodAndBeveragePage/FoodAndBeveragePage";
 import GuestPage from "../pages/GuestPage/GuestPage";
 import HomePage from "../pages/HomePage/HomePage";
 import InvoicePage from "../pages/InvoicePage/InvoicePage";
+import InvoiceStaffPage from "../pages/InvoiceStaffPage/InvoiceStaffPage";
 import NotFoundPage from "../pages/NotFoundPage/NotFoundPage";
 import RoomPage from "../pages/RoomPage/RoomPage";
+import RoomstaffPage from "../pages/RoomstaffPage/RoomstaffPage";
 import ServicePage from "../pages/ServicePage/ServicePage";
 
 export const routes = [
@@ -11,24 +16,49 @@ export const routes = [
         page: HomePage,
         isShowHeader: true
     },
+    // {
+    //     path: '/rooms',
+    //     page: RoomPage,
+    //     isShowHeader: true
+    // },
+    // {
+    //     path: '/guest',
+    //     page: GuestPage,
+    //     isShowHeader: true
+    // },
+    // {
+    //     path: '/service',
+    //     page: ServicePage,
+    //     isShowHeader: true
+    // },
+    // {
+    //     path: '/invoice',
+    //     page: InvoicePage,
+    //     isShowHeader: true
+    // },
     {
-        path: '/rooms',
-        page: RoomPage,
+        path: '/booking',
+        page: BookingPage,
         isShowHeader: true
     },
     {
-        path: '/guest',
-        page: GuestPage,
+        path: '/food',
+        page: FoodAndBeveragePage,
         isShowHeader: true
     },
     {
-        path: '/service',
-        page: ServicePage,
+        path: '/customer',
+        page: CustomerPage,
         isShowHeader: true
     },
     {
-        path: '/invoice',
-        page: InvoicePage,
+        path: '/roomstaff',
+        page: RoomstaffPage,
+        isShowHeader: true
+    },
+    {
+        path: '/invoicestaff',
+        page: InvoiceStaffPage,
         isShowHeader: true
     },
     {
