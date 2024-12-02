@@ -16,7 +16,7 @@ export const MenuWrapper = styled.div`
 
 // Wrapper cho mỗi Menu Item
 export const MenuItem = styled.div`
-  padding: 20px 20px;
+  padding: 10px 0px;
   display: flex;
   align-items: center;
   cursor: pointer;
