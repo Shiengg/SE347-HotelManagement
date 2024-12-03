@@ -4,7 +4,7 @@ export const BookingListContainer = styled.div`
   width: 100%;
   padding: 10px;
   background-color: #E8E8F0;
-  border-radius: 8px;
+  border-radius: 30px;
 `;
 
 export const StyledTable = styled.table`

@@ -1,7 +1,7 @@
 import React from 'react'
 import styled from "styled-components";
 import BookingList from '../../components/BookinglistComponent/BookinglistComponent';
-import AddRoomForm from '../../components/AddRoomFormComponent/AddRoomFormComponent';
+import AddBookingForm from '../../components/AddBookingFormComponent/AddBookingFormComponent';
 
 
 // Styled-components cho bố cục
@@ -40,7 +40,7 @@ const BookingPage = () => {
 
         {/* Add Room Form */}
         <AddBookingFormWrapper>
-           <AddRoomForm/>
+           <AddBookingForm/>
         </AddBookingFormWrapper>
       </MainContent>
     </LayoutWrapper>
