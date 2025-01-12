@@ -7,59 +7,137 @@ const LoginContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background-color: #f5f5f5;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+  padding: 20px;
+  position: relative;
 `;
 
 const LoginForm = styled.form`
-  background: white;
-  padding: 40px;
-  border-radius: 10px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  padding: 45px 40px;
+  border-radius: 20px;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
+  position: relative;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(229, 231, 235, 0.5);
 `;
 
 const Logo = styled.img`
-  width: 200px;
-  margin-bottom: 20px;
+  width: 150px;
+  margin: 0 auto 35px;
+  display: block;
 `;
 
 const Title = styled.h2`
   text-align: center;
-  color: #333;
-  margin-bottom: 20px;
+  color: #111827;
+  margin-bottom: 35px;
+  font-size: 26px;
+  font-weight: 600;
+  
+  &::after {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 3px;
+    background: #4f46e5;
+    margin: 12px auto 0;
+    border-radius: 2px;
+  }
+`;
+
+const InputGroup = styled.div`
+  position: relative;
+  margin-bottom: 24px;
+
+  &:focus-within label {
+    top: -22px;
+    font-size: 13px;
+    color: #4f46e5;
+    transform: translateY(0) scale(0.85);
+  }
+`;
+
+const Label = styled.label`
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  font-size: 15px;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  transform-origin: left;
+  
+  ${props => props.hasValue && `
+    top: -22px;
+    font-size: 13px;
+    color: #4f46e5;
+    transform: translateY(0) scale(0.85);
+  `}
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 10px;
-  margin: 10px 0;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  font-size: 16px;
+  padding: 15px 18px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  color: #111827;
+
+  &:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    outline: none;
+  }
+
+  &::placeholder {
+    color: transparent;
+  }
 `;
 
 const Button = styled.button`
   width: 100%;
-  padding: 12px;
-  background-color: #007bff;
+  padding: 15px;
+  background: #4f46e5;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 12px;
   font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 32px;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
-    background-color: #0056b3;
+    background: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+    background: #3730a3;
   }
 `;
 
 const ErrorMessage = styled.div`
-  color: red;
+  color: #dc2626;
   text-align: center;
-  margin-top: 10px;
+  margin-top: 16px;
+  font-size: 14px;
+  padding: 12px;
+  background-color: #fef2f2;
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.1);
+  display: ${props => props.visible ? 'block' : 'none'};
 `;
 
 const LoginPage = React.memo(() => {
@@ -96,25 +174,37 @@ const LoginPage = React.memo(() => {
     <LoginContainer>
       <LoginForm onSubmit={handleSubmit}>
         <Logo src={logo} alt="Hotel Logo" />
-        <Title>Hotel Management System</Title>
-        <Input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleChange}
-          required
-        />
-        <Input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <Button type="submit">Login</Button>
-        {error && <ErrorMessage>{error}</ErrorMessage>}
+        <Title>Welcome Back</Title>
+        <InputGroup>
+          <Input
+            type="text"
+            name="username"
+            id="username"
+            value={formData.username}
+            onChange={handleChange}
+            required
+          />
+          <Label htmlFor="username" hasValue={formData.username.length > 0}>
+            Username
+          </Label>
+        </InputGroup>
+        <InputGroup>
+          <Input
+            type="password"
+            name="password"
+            id="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+          <Label htmlFor="password" hasValue={formData.password.length > 0}>
+            Password
+          </Label>
+        </InputGroup>
+        <Button type="submit">
+          Sign In
+        </Button>
+        <ErrorMessage visible={!!error}>{error}</ErrorMessage>
       </LoginForm>
     </LoginContainer>
   );
