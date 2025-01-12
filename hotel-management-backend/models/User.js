@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs'); // Để mã hóa mật khẩu
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
     username: {
@@ -28,12 +28,12 @@ const userSchema = new mongoose.Schema({
     },
     role_id: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Role',  // Liên kết với model Role
+        ref: 'Role',
         required: true
     }
 }, {
     collection: 'users',
-    timestamps: true // Thêm createdAt và updatedAt
+    timestamps: true 
 });
 
 // Middleware để hash password trước khi lưu

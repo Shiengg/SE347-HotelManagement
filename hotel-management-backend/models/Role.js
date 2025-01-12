@@ -8,7 +8,7 @@ const roleSchema = new mongoose.Schema({
     }
 }, { 
     collection: 'roles',
-    timestamps: true // Thêm createdAt và updatedAt
+    timestamps: true
 });
 
 const Role = mongoose.model('Role', roleSchema);
