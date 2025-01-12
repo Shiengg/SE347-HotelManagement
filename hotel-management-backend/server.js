@@ -1,16 +1,10 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const connectDB = require('./utils/dbConnect');
+const Role = require('./models/Role'); // Import Role model
 
 // Kết nối database
 connectDB();
-
-// Tạo schema cho collection roles đã tồn tại
-const roleSchema = new mongoose.Schema({
-  role_name: String
-}, { collection: 'roles' }); // Chỉ định rõ tên collection
-
-const Role = mongoose.model('Role', roleSchema);
 
 // Hàm kiểm tra kết nối và collection
 async function checkConnection() {
@@ -32,7 +26,7 @@ async function checkConnection() {
     const collections = await mongoose.connection.db.listCollections().toArray();
     console.log('Available collections:', collections.map(c => c.name));
 
-    // Đọc dữ liệu từ collection roles
+    // Đọc dữ liệu từ collection roles sử dụng model
     const roles = await Role.find({});
     console.log('Roles data:', roles);
     
