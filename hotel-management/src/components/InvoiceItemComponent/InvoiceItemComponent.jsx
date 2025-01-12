@@ -13,13 +13,25 @@ const InvoiceItemContainer = styled.div`
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   padding: 10px;
   cursor: pointer;
-  ${(props)=>props.isSelected ? "background-color: grey; color: white;" : ""}
+  ${(props) =>
+    props.isSelected ? "background-color: grey; color: white;" : ""}
   &:hover {
     background-color: grey; /* Use camelCase for CSS properties */
     color: white; /* Optional: adjust text color for contrast */
   }
   transition: background-color 0.1s;
   align-items: center;
+
+  @media (max-width: 680px) {
+    font-size: 1.2em;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    & > :nth-child(2n) {
+      justify-self: end; /* Aligns items in the second column */
+      text-align: right; /* Aligns text within the item */
+    }
+  }
 `;
 
 const InvoiceId = styled.div`
@@ -29,23 +41,25 @@ const InvoiceDate = styled.div`
   opacity: 0.7;
 `;
 
-
-
 const InvoiceTotal = styled.div`
-font-size: 1.2em;
+  font-size: 1.2em;
   font-weight: bold;
   text-align: right;
+
+  @media (max-width: 680px) {
+    grid-column: span 2;
+    font-size: 1.5em;
+  }
 `;
 
-const InvoiceItemComponent = ({ item,isSelected,onClick }) => {
+const InvoiceItemComponent = ({ item, isSelected, onClick }) => {
   return (
     <InvoiceItemContainer isSelected={isSelected} onClick={onClick}>
       <InvoiceId>{item.id}</InvoiceId>
       <InvoiceDate>{item.date}</InvoiceDate>
-      <PaymentMethodComponent method={item.method}/>
-        
+      <PaymentMethodComponent method={item.method} />
 
-      <PaymentStatusComponent status={item.status}/>
+      <PaymentStatusComponent status={item.status} />
       <InvoiceTotal>{formatCurrency(item.total)}</InvoiceTotal>
     </InvoiceItemContainer>
   );

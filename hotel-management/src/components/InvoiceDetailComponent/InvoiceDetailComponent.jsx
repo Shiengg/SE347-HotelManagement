@@ -6,11 +6,12 @@ import {
   faUtensils,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import PaymentMethodComponent from "../PaymentMethodComponent/PaymentMethodComponent";
 import { formatCurrency } from "../../utils/format/format";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
+import { use } from "react";
 
 const ServiceListContainer = styled.div`
   display: flex;
@@ -118,8 +119,16 @@ const InvoiceTotalContainer = styled.div`
   color: white;
 `
 const InvoiceDetailComponent = ({ selectedInvoice }) => {
+
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [selectedInvoice]);
   return (
-    <InvoiceDetailLayout>
+    <InvoiceDetailLayout ref={scrollRef}>
       <InvoiceId>Invoice:{selectedInvoice.id}</InvoiceId>
       <InvoiceDate>Date: {selectedInvoice.date}</InvoiceDate>
       <ServiceListContainer>

@@ -3,7 +3,11 @@ import InvoiceItemComponent from "../InvoiceItemComponent/InvoiceItemComponent";
 import styled from "styled-components";
 import Pagination from "../PaginationComponent/PaginationComponent";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAngleDown, faAngleUp, faMoneyBill } from "@fortawesome/free-solid-svg-icons";
+import {
+  faAngleDown,
+  faAngleUp,
+  faMoneyBill,
+} from "@fortawesome/free-solid-svg-icons";
 
 const InvoiceListContainer = styled.div`
   display: flex;
@@ -13,12 +17,19 @@ const InvoiceListContainer = styled.div`
 `;
 
 const InvoiceHeader = styled.div`
-font-size: 1.2em;
+  font-size: 1.2em;
   font-weight: bold;
   display: grid;
   align-items: center;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   padding: 10px;
+
+  @media (max-width: 680px) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex-wrap: wrap;
+
+  }
 `;
 
 const InvoiceHeaderItemLayout = styled.div`
@@ -33,10 +44,20 @@ const TotalSortingLayout = styled.div`
   justify-content: flex-end;
   gap: 5px;
   align-items: center;
+
+  @media (max-width: 680px) {
+    justify-content: flex-start;
+  }
+`;
+
+const InvoiceHeaderId = styled.div`
+  @media (max-width: 680px) {
+    display: none;
+  }
 `;
 
 const InvoiceFilter = styled.select`
-font-size: 1em;
+  font-size: 1em;
   opacity: 0.7;
   border: none;
   user-select: none;
@@ -52,7 +73,7 @@ font-size: 1em;
     color: grey; /* Default option text color */
     background-color: #fff; /* Background of options */
     font-weight: semi-bold;
-  };
+  }
   padding: 2px 5px;
 `;
 const InvoiceListComponent = ({
@@ -61,7 +82,7 @@ const InvoiceListComponent = ({
   handleSelect,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  const itemsPerPage = window.innerWidth > 680 ? 10 : 5;
 
   // Filter and sort states
   const [sortDate, setSortDate] = useState("asc"); // "asc" or "desc"
@@ -117,7 +138,7 @@ const InvoiceListComponent = ({
     <div>
       <h2>Invoices</h2>
       <InvoiceHeader>
-        <div>ID</div>
+        <InvoiceHeaderId>ID</InvoiceHeaderId>
         <InvoiceHeaderItemLayout>
           Date
           <InvoiceFilter
@@ -136,9 +157,15 @@ const InvoiceListComponent = ({
             onChange={(e) => setFilterMethod(e.target.value)}
           >
             <option value="">All</option>
-            <option value="1" style={{color:"lime"}}>Cash</option>
-            <option value="2" style={{color:"blue"}}>Credit</option>
-            <option value="3" style={{color:"red"}}>Debit</option>
+            <option value="1" style={{ color: "lime" }}>
+              Cash
+            </option>
+            <option value="2" style={{ color: "blue" }}>
+              Credit
+            </option>
+            <option value="3" style={{ color: "red" }}>
+              Debit
+            </option>
           </InvoiceFilter>
         </InvoiceHeaderItemLayout>
         <InvoiceHeaderItemLayout>
@@ -148,8 +175,12 @@ const InvoiceListComponent = ({
             onChange={(e) => setFilterStatus(e.target.value)}
           >
             <option value="">All</option>
-            <option value="paid" style={{color:"lime"}}>Paid</option>
-            <option value="unpaid" style={{color:"red"}}>Unpaid</option>
+            <option value="paid" style={{ color: "lime" }}>
+              Paid
+            </option>
+            <option value="unpaid" style={{ color: "red" }}>
+              Unpaid
+            </option>
           </InvoiceFilter>
         </InvoiceHeaderItemLayout>
 

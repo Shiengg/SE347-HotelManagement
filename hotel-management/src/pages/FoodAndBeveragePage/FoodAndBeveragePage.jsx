@@ -9,7 +9,6 @@ const LayoutWrapper = styled.div`
   grid-template-columns: 4fr 1fr; /* Increase the food list width (4 parts vs. 1 part) */
   grid-gap: 20px; /* Khoảng cách giữa các cột */
   height: 100vh; /* Full-screen height */
-  padding: 20px;
   background-color: #ffffff;
 `;
 

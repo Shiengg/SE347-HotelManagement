@@ -1,7 +1,15 @@
 import React from "react";
 import { Input, Avatar, Dropdown, Menu } from "antd";
 import { SearchOutlined, DownOutlined } from "@ant-design/icons";
-import { Wrapper, SearchWrapper, AvatarWrapper, RoleText, SearchContainer } from "./style"; 
+import {
+  Wrapper,
+  SearchWrapper,
+  AvatarWrapper,
+  RoleText,
+  SearchContainer,
+  RoundWrapper,
+  ProfileWrapper,
+} from "./style";
 
 const SearchComponent = () => {
   const menu = (
@@ -13,33 +21,35 @@ const SearchComponent = () => {
 
   return (
     <SearchContainer>
-    <Wrapper>
-      {/* Search Section */}
-      <SearchWrapper>
-        <SearchOutlined style={{ fontSize: "16px", marginRight: "10px" }} />
-        <Input
-          placeholder="Search"
-          bordered={false}
-          style={{ backgroundColor: "transparent", outline: "none" }}
-        />
-      </SearchWrapper>
-
-      {/* Avatar Section */}
-      <Dropdown overlay={menu} trigger={["click"]}>
-        <AvatarWrapper>
-          <Avatar
-            src="https://via.placeholder.com/40"
-            alt="avatar"
-            size="small"
+      <Wrapper>
+        {/* Search Section */}
+        <SearchWrapper>
+          <SearchOutlined style={{ fontSize: "16px", marginRight: "10px" }} />
+          <Input
+            placeholder="Search"
+            bordered={false}
+            style={{ backgroundColor: "transparent", outline: "none",fontSize:"16px" }}
           />
-          <div>
-            <div>Name</div>
-            <RoleText>Role</RoleText>
-          </div>
-          <DownOutlined style={{ fontSize: "12px" }} />
-        </AvatarWrapper>
-      </Dropdown>
-    </Wrapper>
+        </SearchWrapper>
+
+        {/* Avatar Section */}
+        <ProfileWrapper>
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <AvatarWrapper>
+              <Avatar
+                src="https://via.placeholder.com/40"
+                alt="avatar"
+                size="small"
+              />
+              <div>
+                <div>Name</div>
+                <RoleText>Role</RoleText>
+              </div>
+              <DownOutlined style={{ fontSize: "12px" }} />
+            </AvatarWrapper>
+          </Dropdown>
+        </ProfileWrapper>
+      </Wrapper>
     </SearchContainer>
   );
 };
