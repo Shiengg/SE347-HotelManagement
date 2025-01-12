@@ -1,25 +1,28 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { routes } from "./routes";
-import Sidebar from "./components/SidebarComponent/SidebarComponent"; // Đường dẫn phù hợp với dự án
+import React, { useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { routes } from './index';
+import { AuthProvider } from './contexts/AuthContext';
+import Sidebar from "./components/SidebarComponent/SidebarComponent";
 import styled from "styled-components";
 import HeaderComponent from "./components/HeaderComponent/HeaderComponent";
-
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
+import authService from "./services/authService";
+import LoginPage from "./pages/LoginPage/LoginPage";
+import { useAuth } from './contexts/AuthContext';
 
 const AppWrapper = styled.div`
   padding: 10px;
-`
+`;
+
 const LayoutWrapper = styled.div`
   display: flex;
-  height: 100vh; /* Toàn màn hình */
+  height: 100vh;
   width: 100%;
-
   gap: 20px;
 
   @media (max-width: 1600px) {
-    display: grid; /* Chuyển sang kiểu grid trên mobile */
+    display: grid;
     grid-template-rows: auto 1fr;
-    
     text-align: left;
   }
 `;
@@ -29,7 +32,7 @@ const SidebarWrapper = styled.div`
   background-color: #ffffff;
 
   @media (max-width: 1600px) {
-    width: auto; /* Chiếm toàn bộ chiều rộng trên mobile */
+    width: auto;
   }
 `;
 
@@ -38,29 +41,93 @@ const MainContent = styled.div`
   background-color: #ffffff;
 `;
 
-function App() {
+// Tạo component riêng cho layout được bảo vệ
+const ProtectedLayout = () => {
+  const location = useLocation();
+  const currentUser = authService.getCurrentUser();
+
+  return (
+    <>
+      <HeaderComponent />
+      <LayoutWrapper>
+        <SidebarWrapper>
+          <Sidebar />
+        </SidebarWrapper>
+        <MainContent>
+          <Routes>
+            {routes.map((route) => {
+              if (route.path === '/login' || route.path === '/') return null;
+              
+              const Component = route.page;
+              return (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={
+                    <ProtectedRoute roles={route.roles}>
+                      <Component />
+                    </ProtectedRoute>
+                  }
+                />
+              );
+            })}
+          </Routes>
+        </MainContent>
+      </LayoutWrapper>
+    </>
+  );
+};
+
+const AppContent = () => {
+  const { isAuthenticated, currentUser } = useAuth();
+  
   return (
     <AppWrapper>
-      <HeaderComponent />
-      <Router>
-        <LayoutWrapper>
-          {/* Sidebar */}
-          <SidebarWrapper>
-            <Sidebar />
-          </SidebarWrapper>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ? (
+              <Navigate to={`/${currentUser?.role}/dashboard`} replace />
+            ) : (
+              <LoginPage />
+            )
+          }
+        />
 
-          {/* Nội dung chính */}
-          <MainContent>
-            <Routes>
-              {routes.map((route) => {
-                const Page = route.page;
-                return <Route key={route.path} path={route.path} element={<Page />} />;
-              })}
-            </Routes>
-          </MainContent>
-        </LayoutWrapper>
-      </Router>
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to={`/${currentUser?.role}/dashboard`} replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        <Route
+          path="/*"
+          element={
+            isAuthenticated ? (
+              <ProtectedLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+      </Routes>
     </AppWrapper>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
   );
 }
 
