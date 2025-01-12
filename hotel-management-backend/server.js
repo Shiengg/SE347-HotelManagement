@@ -1,44 +1,20 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
+const app = require('./app');
 const connectDB = require('./utils/dbConnect');
-const Role = require('./models/Role'); // Import Role model
+
+const PORT = process.env.PORT || 5000;
 
 // Kết nối database
 connectDB();
 
-// Hàm kiểm tra kết nối và collection
-async function checkConnection() {
-  try {
-    // Kiểm tra trạng thái kết nối
-    const dbState = mongoose.connection.readyState;
-    console.log('Database connection state:', 
-      dbState === 0 ? 'Disconnected' :
-      dbState === 1 ? 'Connected' :
-      dbState === 2 ? 'Connecting' :
-      dbState === 3 ? 'Disconnecting' : 'Unknown'
-    );
-
-    // Lấy tên database hiện tại
-    const dbName = mongoose.connection.db.databaseName;
-    console.log('Current database:', dbName);
-
-    // Liệt kê tất cả collections
-    const collections = await mongoose.connection.db.listCollections().toArray();
-    console.log('Available collections:', collections.map(c => c.name));
-
-    // Đọc dữ liệu từ collection roles sử dụng model
-    const roles = await Role.find({});
-    console.log('Roles data:', roles);
-    
-  } catch (error) {
-    console.error('Error checking database:', error);
-  }
-}
-
-// Gọi hàm kiểm tra khi mongoose đã kết nối
-mongoose.connection.once('connected', () => {
+// Khởi động server sau khi kết nối database thành công
+mongoose.connection.once('connected', async () => {
   console.log('MongoDB connected successfully');
-  checkConnection();
+  
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
 });
 
 // Bắt lỗi kết nối
