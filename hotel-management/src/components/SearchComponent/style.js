@@ -4,18 +4,27 @@ export const Wrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #F5F5F5;
-  border-radius: 20px;
-  padding: 5px 15px;
+  gap: 10px;
   width: 100%;
-  max-width: 600px;
 `;
 
 export const SearchWrapper = styled.div`
   display: flex;
   align-items: center;
   flex: 1;
+  border-radius: 40px;
+  padding: 5px 15px;
+  align-items: center;
+  background-color: #f5f5f5;
 `;
+
+export const ProfileWrapper = styled.div`
+ border-radius: 40px;
+  padding: 5px 15px;
+  align-items: center;
+  background-color: #f5f5f5;
+`
+
 
 export const AvatarWrapper = styled.div`
   display: flex;
@@ -31,9 +40,8 @@ export const RoleText = styled.div`
 export const SearchContainer = styled.div`
   display: flex;
   justify-content: space-between;
-  width: 60%;
-  background-color: #E8E8F0;
-  border-radius: 20px;
-  padding: 5px 15px;
+  background-color: #e8e8f0;
+  border-radius: 50px;
+  padding: 10px;
   float: right;
 `;

@@ -11,7 +11,7 @@ const LayoutWrapper = styled.div`
 `;
 const MainContent = styled.div`
   flex: 1;
-  padding: 20px;
+
   background-color: #ffffff; /* Màu nền nội dung chính */
   display: flex;
   justify-content: flex-start; /* Đảm bảo nội dung không bị ép vào giữa */
