@@ -11,6 +11,11 @@ const LoginContainer = styled.div`
   background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
   padding: 20px;
   position: relative;
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    background: #ffffff;
+  }
 `;
 
 const LoginForm = styled.form`
@@ -24,12 +29,24 @@ const LoginForm = styled.form`
     0 10px 40px rgba(0, 0, 0, 0.08),
     0 1px 2px rgba(0, 0, 0, 0.05);
   border: 1px solid rgba(229, 231, 235, 0.5);
+
+  @media (max-width: 480px) {
+    padding: 30px 24px;
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+  }
 `;
 
 const Logo = styled.img`
   width: 150px;
   margin: 0 auto 35px;
   display: block;
+
+  @media (max-width: 480px) {
+    width: 120px;
+    margin: 0 auto 25px;
+  }
 `;
 
 const Title = styled.h2`
@@ -48,6 +65,11 @@ const Title = styled.h2`
     margin: 12px auto 0;
     border-radius: 2px;
   }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-bottom: 30px;
+  }
 `;
 
 const InputGroup = styled.div`
@@ -59,6 +81,10 @@ const InputGroup = styled.div`
     font-size: 13px;
     color: #4f46e5;
     transform: translateY(0) scale(0.85);
+  }
+
+  @media (max-width: 480px) {
+    margin-bottom: 20px;
   }
 `;
 
@@ -99,6 +125,11 @@ const Input = styled.input`
   &::placeholder {
     color: transparent;
   }
+
+  @media (max-width: 480px) {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
 `;
 
 const Button = styled.button`
@@ -126,6 +157,17 @@ const Button = styled.button`
     transform: translateY(0);
     background: #3730a3;
   }
+
+  @media (max-width: 480px) {
+    margin-top: 24px;
+    padding: 16px;
+    font-size: 17px;
+    
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
+  }
 `;
 
 const ErrorMessage = styled.div`
@@ -138,6 +180,12 @@ const ErrorMessage = styled.div`
   border-radius: 10px;
   border: 1px solid rgba(220, 38, 38, 0.1);
   display: ${props => props.visible ? 'block' : 'none'};
+
+  @media (max-width: 480px) {
+    margin-top: 14px;
+    padding: 10px;
+    font-size: 13px;
+  }
 `;
 
 const LoginPage = React.memo(() => {
