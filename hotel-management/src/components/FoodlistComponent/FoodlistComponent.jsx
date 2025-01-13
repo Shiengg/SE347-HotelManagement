@@ -80,7 +80,6 @@ const FoodListComponent = () => {
           />
         ))}
       </FoodListContainer>
-
       {/* Pagination */}
       {foodItems.length > itemsPerPage && (
         <PaginationContainer>

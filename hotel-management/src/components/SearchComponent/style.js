@@ -5,7 +5,7 @@ export const Wrapper = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  width: 100%;
+  width: 100%;  
 `;
 
 export const SearchWrapper = styled.div`
