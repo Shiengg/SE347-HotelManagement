@@ -1,18 +1,20 @@
 import React from "react";
 import { Col } from "antd";
-import { WrapperHeader } from "./style";
-import logo from "../../images/logo2.png";
+import { LogoName, LogoWrapper, WrapperHeader } from "./style";
+import logo from "../../svg/AppLogo.svg";
 import SearchComponent from "../SearchComponent/SearchComponent";
 
 const HeaderComponent = () => {
   return (
     <WrapperHeader>
-      <img
-        id="logo"
-        src={logo}
-        alt="Logo"
-        style={{ width: "170px", height: "auto", borderRadius: "8px" }}
-      />
+      <LogoWrapper id="logo">
+        <img
+          src={logo}
+          alt="Logo"
+          style={{ width: "32px", height: "auto" }}
+        />
+        <LogoName>Le Continental</LogoName>
+      </LogoWrapper>
       <SearchComponent />
     </WrapperHeader>
   );

@@ -3,8 +3,15 @@ body {
   box-sizing: border-box;
   padding: 0;
   font-family: Arial, Helvetica, sans-serif;
+  height: fit-content;
 }
 
 html {
   
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  border: 2px solid white;
 }

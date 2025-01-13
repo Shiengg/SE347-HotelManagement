@@ -10,6 +10,8 @@ import {
   RoundWrapper,
   ProfileWrapper,
 } from "./style";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faAngleDown, faBars, faSearch } from "@fortawesome/free-solid-svg-icons";
 
 const SearchComponent = () => {
   const menu = (
@@ -20,11 +22,11 @@ const SearchComponent = () => {
   );
 
   return (
-    <SearchContainer>
+    <SearchContainer className="panel">
       <Wrapper>
         {/* Search Section */}
         <SearchWrapper>
-          <SearchOutlined style={{ fontSize: "16px", marginRight: "10px" }} />
+          <FontAwesomeIcon icon={faSearch}/>
           <Input
             placeholder="Search"
             bordered={false}
@@ -39,13 +41,13 @@ const SearchComponent = () => {
               <Avatar
                 src="https://via.placeholder.com/40"
                 alt="avatar"
-                size="small"
+                size="big"
               />
               <div>
                 <div>Name</div>
                 <RoleText>Role</RoleText>
               </div>
-              <DownOutlined style={{ fontSize: "12px" }} />
+              <FontAwesomeIcon icon={faBars} style={{margin:"10px"}} />
             </AvatarWrapper>
           </Dropdown>
         </ProfileWrapper>

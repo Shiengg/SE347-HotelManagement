@@ -5,28 +5,34 @@ import Sidebar from "./components/SidebarComponent/SidebarComponent"; // Đườ
 import styled from "styled-components";
 import HeaderComponent from "./components/HeaderComponent/HeaderComponent";
 
-
 const AppWrapper = styled.div`
-  padding: 10px;
-`
+  background: linear-gradient(to bottom, #e2e8f0, #ffcc60);
+  min-height: fit-content;
+  background-attachment: fixed;
+`;
 const LayoutWrapper = styled.div`
-  display: flex;
-  height: 100vh; /* Toàn màn hình */
-  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr; 
 
+  min-height: 100vh;
   gap: 20px;
 
+  padding: 10px;
+
   @media (max-width: 1600px) {
-    display: grid; /* Chuyển sang kiểu grid trên mobile */
+    grid-template-columns: 1fr; /* Chuyển sang kiểu grid trên mobile 
     grid-template-rows: auto 1fr;
-    
+
     text-align: left;
   }
 `;
 
 const SidebarWrapper = styled.div`
+  position: sticky;
+  top: 90px;
+
+  z-index: 90;
   width: fit-content;
-  background-color: #ffffff;
 
   @media (max-width: 1600px) {
     width: auto; /* Chiếm toàn bộ chiều rộng trên mobile */
@@ -35,7 +41,6 @@ const SidebarWrapper = styled.div`
 
 const MainContent = styled.div`
   flex: 1;
-  background-color: #ffffff;
 `;
 
 function App() {
@@ -54,7 +59,13 @@ function App() {
             <Routes>
               {routes.map((route) => {
                 const Page = route.page;
-                return <Route key={route.path} path={route.path} element={<Page />} />;
+                return (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={<Page />}
+                  />
+                );
               })}
             </Routes>
           </MainContent>

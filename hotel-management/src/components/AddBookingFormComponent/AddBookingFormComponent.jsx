@@ -4,12 +4,10 @@ import styled from 'styled-components';
 // Styled-components for the form
 const AddBookingContainer = styled.div`
   width: 320px;
-  height: 100%;
   margin-left: 10px;
   margin-right: 0px;
   border-radius: 30px;
   padding: 10px 20px;
-  background-color: #e8e8f0;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
@@ -79,7 +77,7 @@ const AddNewBooking = () => {
   };
 
   return (
-    <AddBookingContainer>
+    <AddBookingContainer className="panel">
       <h3>Add New Booking</h3>
       <form onSubmit={handleSubmit}>
         <div>

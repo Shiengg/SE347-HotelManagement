@@ -2,7 +2,9 @@ import styled from "styled-components";
 
 // Wrapper cho Sidebar
 export const MenuWrapper = styled.div`
-  background-color: #e8e8f0; /* Màu nền xám nhạt */
+  position: sticky;
+  top: 90px; /* Khoảng cách từ trên xuống */
+  background: #ffcc0030; /* Màu nền của sidebar */
   padding: 20px;
   display: grid;
   border-radius: 20px; /* Bo góc cho sidebar */
@@ -39,6 +41,7 @@ export const MenuItem = styled.div`
     gap: 20px;
     width: 100%; /* Chiếm toàn bộ chiều rộng item */
     height: 100%;
+    transition: all 0.1s; /* Hiệu ứng chuyển động */
 
     @media (max-width: 1600px) {
       padding: 10px; /* Tăng khoảng cách trái để làm nổi bật item */
@@ -51,21 +54,23 @@ export const MenuItem = styled.div`
       }
     }
 
-    &:hover {
-      background-color: #e6e6ff; /* Màu nền khi hover */
+    &:hover:not(.active) {
+      background-color: ${(props) => props.color}; /* Màu nền khi hover */
       border-radius: 10px;
-      color: #1890ff; /* Màu chữ khi hover */
+      color: white; /* Màu chữ khi hover */
+      transform: scale(1.05); /* Phóng to item khi hover */
     }
+
     &.active {
-      background-color: #d9d9ff; /* Màu nền khi active */
-      color: #1890ff; /* Màu chữ khi active */
-      border-left: 4px solid #1890ff; /* Viền trái khi active */
+      background-color: white; /* Màu nền khi active */
+      color: ${(props) => props.color}; /* Màu chữ khi active */
+      border-left: 4px solid ${(props) => props.color}; /* Viền trái khi active */
       padding-left: 25px; /* Tăng khoảng cách trái để làm nổi bật item */
       border-radius: 10px;
 
       @media (max-width: 1600px) {
         padding-left: 10px; /* Tăng khoảng cách trái để làm nổi bật item */
-        border-bottom: 4px solid #1890ff; /* Viền trái khi active */
+        border-bottom: 4px solid ${(props) => props.color}; /* Viền trái khi active */
         border-left: none;
       }
 

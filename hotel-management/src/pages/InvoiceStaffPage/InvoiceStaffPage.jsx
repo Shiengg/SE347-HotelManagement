@@ -9,15 +9,13 @@ const LayoutWrapper = styled.div`
   grid-template-columns: 1fr auto;
   gap: 20px;
 
-  @media (max-width: 1600px) {
+  @media (max-width: 1080px) {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
-
   }
 `;
 
 const InvoiceListContainer = styled.div`
-  background-color: #e8e8f0; /* Màu nền */
   padding: 20px;
   height: fit-content;
   border-radius: 20px; /* Bo góc */
@@ -26,7 +24,6 @@ const InvoiceListContainer = styled.div`
 `;
 
 const InvoiceDetailContainer = styled.div`
-  background-color: #e8e8f0; /* Màu nền */
   padding: 20px;
   height: fit-content;
   min-height: 300px;
@@ -34,7 +31,7 @@ const InvoiceDetailContainer = styled.div`
   border-radius: 20px; /* Bo góc */
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Đổ bóng */
 
-  @media (max-width: 1600px) {
+  @media (max-width: 1080px) {
     grid-row: 1; /* Move to the second row on mobile */
     max-width: 100%;
   }
@@ -47,7 +44,7 @@ const InvoiceStaffPage = () => {
   return (
     <LayoutWrapper>
       {/* Invoice List */}
-      <InvoiceListContainer>
+      <InvoiceListContainer className="panel">
         <InvoiceListComponent
           invoiceItems={InvoiceItems}
           selectedInvoice={selectedInvoice}
@@ -56,7 +53,7 @@ const InvoiceStaffPage = () => {
       </InvoiceListContainer>
 
       {/* Invoice Detail */}
-      <InvoiceDetailContainer>
+      <InvoiceDetailContainer className="panel">
         <InvoiceDetailComponent selectedInvoice={selectedInvoice} />
       </InvoiceDetailContainer>
     </LayoutWrapper>

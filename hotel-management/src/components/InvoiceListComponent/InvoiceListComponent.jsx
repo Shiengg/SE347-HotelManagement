@@ -13,7 +13,6 @@ const InvoiceListContainer = styled.div`
   display: flex;
   gap: 10px;
   flex-direction: column;
-  background-color: #e8e8f0;
 `;
 
 const InvoiceHeader = styled.div`
@@ -82,7 +81,7 @@ const InvoiceListComponent = ({
   handleSelect,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = window.innerWidth > 680 ? 10 : 5;
+  const itemsPerPage = window.innerWidth > 680 ? 10 : 3;
 
   // Filter and sort states
   const [sortDate, setSortDate] = useState("asc"); // "asc" or "desc"

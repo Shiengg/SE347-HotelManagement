@@ -14,7 +14,6 @@ const FoodListContainer = styled.div`
   flex-wrap: wrap;
   justify-content: center;
   padding: 20px;
-  background-color: #E8E8F0;
 `;
 
 const PaginationContainer = styled.div`

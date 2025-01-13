@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { MenuWrapper, MenuItem } from "./style";
-import { HomeOutlined, TeamOutlined, AppstoreOutlined, CoffeeOutlined, FileTextOutlined, CalendarOutlined } from "@ant-design/icons";
+import {
+  HomeOutlined,
+  TeamOutlined,
+  AppstoreOutlined,
+  CoffeeOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+} from "@ant-design/icons";
 import { Tooltip } from "antd"; // Import Tooltip
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCalendarDays, faHouse, faMugHot, faReceipt, faTable, faUsers } from "@fortawesome/free-solid-svg-icons";
 
 const Sidebar = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const menuItems = [
+    { title: "Home", to: "/", icon: faHouse, color: "#ff6b6b" },
+    { title: "Booking", to: "/booking", icon: faCalendarDays, color: "#6b5bff" },
+    { title: "Food and Beverage", to: "/food", icon: faMugHot, color: "#ffb74d" },
+    { title: "Customers", to: "/customer", icon: faUsers, color: "#4caf50" },
+    { title: "Rooms", to: "/roomstaff", icon: faTable, color: "#2196f3" },
+    { title: "Invoice", to: "/invoicestaff", icon: faReceipt, color: "#9c27b0" },
+  ];
 
   useEffect(() => {
     // Check screen size on component mount
@@ -20,102 +37,29 @@ const Sidebar = () => {
   }, []);
 
   return (
-    <MenuWrapper>
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Home" placement="bottom">
-            <NavLink to="/" className={({ isActive }) => (isActive ? "active" : "")}>
-              <HomeOutlined />
-              <span className="text">Home</span>
+    <MenuWrapper   className="panel">
+      {menuItems.map((item) => (
+        <MenuItem
+          key={item.to}
+          color={item.color}
+          hoverColor={`${item.color}33`} // Add transparency for hover
+          activeColor={item.color}
+        >
+          {isMobile ? (
+            <Tooltip title={item.title} placement="bottom">
+              <NavLink to={item.to} className={({ isActive }) => (isActive ? "active" : "")}>
+                <FontAwesomeIcon icon={item.icon} />
+                <span className="text">{item.title}</span>
+              </NavLink>
+            </Tooltip>
+          ) : (
+            <NavLink to={item.to} className={({ isActive }) => (isActive ? "active" : "")}>
+              <FontAwesomeIcon icon={item.icon} />
+              <span className="text">{item.title}</span>
             </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/" className={({ isActive }) => (isActive ? "active" : "")}>
-            <HomeOutlined />
-            <span className="text">Home</span>
-          </NavLink>
-        )}
-      </MenuItem>
-
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Booking" placement="bottom">
-            <NavLink to="/booking" className={({ isActive }) => (isActive ? "active" : "")}>
-              <CalendarOutlined />
-              <span className="text">Booking</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/booking" className={({ isActive }) => (isActive ? "active" : "")}>
-            <CalendarOutlined />
-            <span className="text">Booking</span>
-          </NavLink>
-        )}
-      </MenuItem>
-
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Food and Beverage" placement="bottom">
-            <NavLink to="/food" className={({ isActive }) => (isActive ? "active" : "")}>
-              <CoffeeOutlined />
-              <span className="text">Food and Beverage</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/food" className={({ isActive }) => (isActive ? "active" : "")}>
-            <CoffeeOutlined />
-            <span className="text">Food and Beverage</span>
-          </NavLink>
-        )}
-      </MenuItem>
-
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Customers" placement="bottom">
-            <NavLink to="/customer" className={({ isActive }) => (isActive ? "active" : "")}>
-              <TeamOutlined />
-              <span className="text">Customers</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/customer" className={({ isActive }) => (isActive ? "active" : "")}>
-            <TeamOutlined />
-            <span className="text">Customers</span>
-          </NavLink>
-        )}
-      </MenuItem>
-
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Rooms" placement="bottom">
-            <NavLink to="/roomstaff" className={({ isActive }) => (isActive ? "active" : "")}>
-              <AppstoreOutlined />
-              <span className="text">Rooms</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/roomstaff" className={({ isActive }) => (isActive ? "active" : "")}>
-            <AppstoreOutlined />
-            <span className="text">Rooms</span>
-          </NavLink>
-        )}
-      </MenuItem>
-
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Invoice" placement="bottom">
-            <NavLink to="/invoicestaff" className={({ isActive }) => (isActive ? "active" : "")}>
-              <FileTextOutlined />
-              <span className="text">Invoice</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/invoicestaff" className={({ isActive }) => (isActive ? "active" : "")}>
-            <FileTextOutlined />
-            <span className="text">Invoice</span>
-          </NavLink>
-        )}
-      </MenuItem>
+          )}
+        </MenuItem>
+      ))}
     </MenuWrapper>
   );
 };

@@ -124,7 +124,7 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [selectedInvoice]);
   return (

@@ -46,7 +46,7 @@ const BookingList = () => {
   };
 
   return (
-    <BookingListContainer>
+    <BookingListContainer className="panel">
       <h2>Booking List</h2>
       {bookingsData.length > 0 ? (
         <>
