@@ -2,15 +2,20 @@ import { Row } from "antd";
 import styled from "styled-components";
 
 export const WrapperHeader = styled.div`
-  padding: 10px 0px;
-  display: grid;
+  display: flex;
   align-items: center;
-  grid-template-columns: auto 40%;
+  justify-content: space-between;
+  padding: 8px 0;
+  gap: 24px;
+
+  #logo {
+    height: 40px;
+    width: auto;
+  }
 
   @media (max-width: 1600px) {
     #logo {
       display: none;
     }
-    grid-template-columns: 1fr;
   }
 `;

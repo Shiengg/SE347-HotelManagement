@@ -1,48 +1,85 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const navigate = useNavigate();
-  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
-  const [currentUser, setCurrentUser] = useState(authService.getCurrentUser());
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      navigate(`/${currentUser.role}/dashboard`, { replace: true });
-    } else {
-      navigate('/login', { replace: true });
-    }
+    const initAuth = async () => {
+      try {
+        const user = authService.getCurrentUser();
+        if (user) {
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
+
+    // Thêm event listener cho beforeunload
+    const handleBeforeUnload = () => {
+      sessionStorage.clear();
+    };
+
+    // Thêm event listener cho visibilitychange
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        sessionStorage.clear();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
-  const login = useCallback(async (username, password) => {
+  const login = async (username, password) => {
     try {
-      const { success, data, error } = await authService.login(username, password);
-      
-      if (success && data.user) {
+      const result = await authService.login(username, password);
+      if (result.success) {
+        setCurrentUser(result.user);
         setIsAuthenticated(true);
-        setCurrentUser(data.user);
-        navigate(`/${data.user.role}/dashboard`, { replace: true });
         return { success: true };
       }
-      
-      return { success: false, error };
-    } catch (err) {
-      return { success: false, error: 'Login failed' };
+      return { success: false, error: result.error };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-  }, [navigate]);
+  };
 
-  const logout = useCallback(() => {
+  const logout = () => {
     authService.logout();
-    setIsAuthenticated(false);
     setCurrentUser(null);
-    navigate('/login', { replace: true });
-  }, [navigate]);
+    setIsAuthenticated(false);
+  };
+
+  const value = {
+    currentUser,
+    isAuthenticated,
+    isLoading,
+    login,
+    logout
+  };
+
+  if (isLoading) {
+    return <div>Loading...</div>; // Or your loading component
+  }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, currentUser, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

@@ -11,34 +11,62 @@ import LoginPage from "./pages/LoginPage/LoginPage";
 import { useAuth } from './contexts/AuthContext';
 
 const AppWrapper = styled.div`
-  padding: 10px;
+  min-height: 100vh;
+  background: #f3f4f6;
 `;
 
 const LayoutWrapper = styled.div`
   display: flex;
-  height: 100vh;
-  width: 100%;
-  gap: 20px;
-
-  @media (max-width: 1600px) {
-    display: grid;
-    grid-template-rows: auto 1fr;
-    text-align: left;
-  }
+  min-height: 100vh;
+  position: relative;
 `;
 
 const SidebarWrapper = styled.div`
-  width: fit-content;
-  background-color: #ffffff;
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  width: 280px;
+  z-index: 1000;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
 
-  @media (max-width: 1600px) {
-    width: auto;
+  @media (max-width: 680px) {
+    width: 80px;
   }
+`;
+
+const ContentWrapper = styled.div`
+  flex: 1;
+  margin-left: 280px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: 680px) {
+    margin-left: 80px;
+  }
+`;
+
+const HeaderWrapper = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 `;
 
 const MainContent = styled.div`
   flex: 1;
-  background-color: #ffffff;
+  padding: 24px;
+  background: #f3f4f6;
+
+  @media (max-width: 680px) {
+    padding: 16px;
+  }
 `;
 
 // Tạo component riêng cho layout được bảo vệ
@@ -47,12 +75,14 @@ const ProtectedLayout = () => {
   const currentUser = authService.getCurrentUser();
 
   return (
-    <>
-      <HeaderComponent />
-      <LayoutWrapper>
-        <SidebarWrapper>
-          <Sidebar />
-        </SidebarWrapper>
+    <LayoutWrapper>
+      <SidebarWrapper>
+        <Sidebar />
+      </SidebarWrapper>
+      <ContentWrapper>
+        <HeaderWrapper>
+          <HeaderComponent />
+        </HeaderWrapper>
         <MainContent>
           <Routes>
             {routes.map((route) => {
@@ -73,14 +103,18 @@ const ProtectedLayout = () => {
             })}
           </Routes>
         </MainContent>
-      </LayoutWrapper>
-    </>
+      </ContentWrapper>
+    </LayoutWrapper>
   );
 };
 
 const AppContent = () => {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isLoading } = useAuth();
   
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <AppWrapper>
       <Routes>

@@ -1,9 +1,8 @@
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api'; // Thay đổi URL này theo server của bạn
 
 const authService = {
     login: async (username, password) => {
         try {
-            console.log('Sending login request');
             const response = await fetch(`${API_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -11,30 +10,35 @@ const authService = {
                 },
                 body: JSON.stringify({ username, password }),
             });
+
             const data = await response.json();
-            console.log('Server response:', data);
-            
-            if (response.ok && data.success) {
-                await new Promise(resolve => setTimeout(resolve, 50));
+
+            if (response.ok) {
+                // Lưu token và thông tin user vào sessionStorage
                 sessionStorage.setItem('token', data.token);
-                sessionStorage.setItem('user', JSON.stringify(data.user));
-                return { success: true, data };
+                sessionStorage.setItem('user', JSON.stringify({
+                    ...data.user,
+                    role: data.user.role // Sử dụng role từ role_id
+                }));
+                return { success: true, user: data.user };
+            } else {
+                return { 
+                    success: false, 
+                    error: data.message || 'Login failed' 
+                };
             }
-            
-            return { 
-                success: false, 
-                error: data.message || 'Login failed' 
-            };
         } catch (error) {
             console.error('Login error:', error);
-            return { success: false, error: 'Network error' };
+            return { 
+                success: false, 
+                error: 'Network error. Please try again.' 
+            };
         }
     },
 
     logout: () => {
         sessionStorage.removeItem('token');
         sessionStorage.removeItem('user');
-        window.location.href = '/login';
     },
 
     getCurrentUser: () => {
@@ -43,18 +47,18 @@ const authService = {
     },
 
     isAuthenticated: () => {
-        const token = sessionStorage.getItem('token');
-        console.log('Checking authentication:', { hasToken: !!token });
-        return !!token;
+        return !!sessionStorage.getItem('token');
     },
 
+    // Hàm để lấy token cho các request khác
     getToken: () => {
         return sessionStorage.getItem('token');
     },
 
-    hasRole: (requiredRole) => {
-        const user = authService.getCurrentUser();
-        return user?.role === requiredRole;
+    // Hàm để thêm token vào header của request
+    authHeader: () => {
+        const token = authService.getToken();
+        return token ? { 'Authorization': `Bearer ${token}` } : {};
     }
 };
 

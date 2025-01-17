@@ -1,56 +1,24 @@
 import React from "react";
-import { Input, Avatar, Dropdown, Menu } from "antd";
-import { SearchOutlined, DownOutlined } from "@ant-design/icons";
-import {
-  Wrapper,
-  SearchWrapper,
-  AvatarWrapper,
-  RoleText,
-  SearchContainer,
-  RoundWrapper,
-  ProfileWrapper,
-} from "./style";
+import { Input } from "antd";
+import { SearchOutlined } from "@ant-design/icons";
+import styled from "styled-components";
+
+const SearchInput = styled(Input)`
+  width: 400px;
+  border-radius: 8px;
+  
+  @media (max-width: 680px) {
+    width: 100%;
+  }
+`;
 
 const SearchComponent = () => {
-  const menu = (
-    <Menu>
-      <Menu.Item key="1">Profile</Menu.Item>
-      <Menu.Item key="2">Logout</Menu.Item>
-    </Menu>
-  );
-
   return (
-    <SearchContainer>
-      <Wrapper>
-        {/* Search Section */}
-        <SearchWrapper>
-          <SearchOutlined style={{ fontSize: "16px", marginRight: "10px" }} />
-          <Input
-            placeholder="Search"
-            bordered={false}
-            style={{ backgroundColor: "transparent", outline: "none",fontSize:"16px" }}
-          />
-        </SearchWrapper>
-
-        {/* Avatar Section */}
-        <ProfileWrapper>
-          <Dropdown overlay={menu} trigger={["click"]}>
-            <AvatarWrapper>
-              <Avatar
-                src="https://via.placeholder.com/40"
-                alt="avatar"
-                size="small"
-              />
-              <div>
-                <div>Name</div>
-                <RoleText>Role</RoleText>
-              </div>
-              <DownOutlined style={{ fontSize: "12px" }} />
-            </AvatarWrapper>
-          </Dropdown>
-        </ProfileWrapper>
-      </Wrapper>
-    </SearchContainer>
+    <SearchInput
+      placeholder="Search..."
+      prefix={<SearchOutlined style={{ color: '#9ca3af' }} />}
+      variant="outlined"
+    />
   );
 };
 

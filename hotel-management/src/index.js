@@ -14,12 +14,55 @@ import RoomstaffPage from './pages/RoomstaffPage/RoomstaffPage';
 import InvoiceStaffPage from './pages/InvoiceStaffPage/InvoiceStaffPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
+import EmployeesPage from './pages/EmployeesPage/EmployeesPage';
+import GuestsPage from './pages/GuestsPage/GuestsPage';
+import RoomsManagementPage from './pages/RoomsManagementPage/RoomsManagementPage';
+import RestaurantManagementPage from './pages/RestaurantManagementPage/RestaurantManagementPage';
+import BookingsManagementPage from './pages/BookingsManagementPage/BookingsManagementPage';
+import InvoicesManagementPage from './pages/InvoicesManagementPage/InvoicesManagementPage';
+import SettingsPage from './pages/SettingsPage/SettingsPage';
 
 // Định nghĩa routes
 export const routes = [
+    // Admin routes
     {
         path: '/admin/dashboard',
         page: AdminDashboard,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/employees',
+        page: EmployeesPage,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/guests',
+        page: GuestsPage,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/rooms',
+        page: RoomsManagementPage,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/restaurant',
+        page: RestaurantManagementPage,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/bookings',
+        page: BookingsManagementPage,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/invoices',
+        page: InvoicesManagementPage,
+        roles: ['admin']
+    },
+    {
+        path: '/admin/settings',
+        page: SettingsPage,
         roles: ['admin']
     },
     {
