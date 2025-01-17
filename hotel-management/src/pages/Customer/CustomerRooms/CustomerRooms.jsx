@@ -11,13 +11,13 @@ const Title = styled.h1`
   color: #111827;
 `;
 
-const BookingManagement = () => {
+const CustomerRooms = () => {
   return (
     <PageContainer>
-      <Title>Booking Management hehe</Title>
-      {/* Add booking management content here */}
+      <Title>Available Rooms</Title>
+      {/* Add room list and filters here */}
     </PageContainer>
   );
 };
 
-export default BookingManagement; 
+export default CustomerRooms; 

@@ -13,7 +13,12 @@ import BookingsManagementPage from './pages/Admin/BookingsManagementPage/Booking
 import InvoicesManagementPage from './pages/Admin/InvoicesManagementPage/InvoicesManagementPage';
 import SettingsPage from './pages/Admin/SettingsPage/SettingsPage';
 import ReceptionistDashboard from './pages/Receptionist/ReceptionistDashboard/ReceptionistDashboard';
-import CustomerDashboard from './pages/CustomerDashboard/CustomerDashboard';
+import CustomerDashboard from './pages/Customer/CustomerDashboard/CustomerDashboard';
+import CustomerBooking from './pages/Customer/CustomerBooking/CustomerBooking';
+import CustomerRooms from './pages/Customer/CustomerRooms/CustomerRooms';
+import CustomerRestaurant from './pages/Customer/CustomerRestaurant/CustomerRestaurant';
+import CustomerInvoice from './pages/Customer/CustomerInvoice/CustomerInvoice';
+import CustomerProfile from './pages/Customer/CustomerProfile/CustomerProfile';
 import BookingPage from './pages/BookingPage/BookingPage';
 import CustomerPage from './pages/CustomersPage/CustomersPage';
 import FoodAndBeveragePage from './pages/FoodAndBeveragePage/FoodAndBeveragePage';
@@ -78,6 +83,31 @@ export const routes = [
     {
         path: '/customer/dashboard',
         page: CustomerDashboard,
+        roles: ['customer']
+    },
+    {
+        path: '/customer/booking',
+        page: CustomerBooking,
+        roles: ['customer']
+    },
+    {
+        path: '/customer/rooms',
+        page: CustomerRooms,
+        roles: ['customer']
+    },
+    {
+        path: '/customer/restaurant',
+        page: CustomerRestaurant,
+        roles: ['customer']
+    },
+    {
+        path: '/customer/invoice',
+        page: CustomerInvoice,
+        roles: ['customer']
+    },
+    {
+        path: '/customer/profile',
+        page: CustomerProfile,
         roles: ['customer']
     },
     {
