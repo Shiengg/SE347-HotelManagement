@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import { TeamOutlined, HomeOutlined, BookOutlined, DollarOutlined } from '@ant-design/icons';
+import { Card, Row, Col, Statistic } from 'antd';
+import { TeamOutlined, HomeOutlined, CalendarOutlined, DollarOutlined } from '@ant-design/icons';
 
-const DashboardContainer = styled.div`
+const PageContainer = styled.div`
   padding: 24px;
 `;
 
@@ -36,37 +37,6 @@ const StatCard = styled.div`
   }
 `;
 
-const StatHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const StatIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  background: ${props => props.bg};
-  color: ${props => props.color};
-`;
-
-const StatTitle = styled.h3`
-  margin: 0;
-  color: #6b7280;
-  font-size: 16px;
-  font-weight: 500;
-`;
-
-const StatValue = styled.div`
-  font-size: 32px;
-  font-weight: 600;
-  color: #111827;
-`;
-
 const AdminDashboard = () => {
   const stats = [
     {
@@ -86,7 +56,7 @@ const AdminDashboard = () => {
     {
       title: 'Active Bookings',
       value: '25',
-      icon: <BookOutlined />,
+      icon: <CalendarOutlined />,
       bg: '#dcfce7',
       color: '#15803d'
     },
@@ -100,23 +70,20 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <DashboardContainer>
+    <PageContainer>
       <Title>Admin Dashboard</Title>
       <StatsGrid>
         {stats.map((stat, index) => (
           <StatCard key={index}>
-            <StatHeader>
-              <StatIcon bg={stat.bg} color={stat.color}>
-                {stat.icon}
-              </StatIcon>
-              <StatTitle>{stat.title}</StatTitle>
-            </StatHeader>
-            <StatValue>{stat.value}</StatValue>
+            <Statistic
+              title={stat.title}
+              value={stat.value}
+              prefix={stat.icon}
+            />
           </StatCard>
         ))}
       </StatsGrid>
-      {/* Add more dashboard content here */}
-    </DashboardContainer>
+    </PageContainer>
   );
 };
 

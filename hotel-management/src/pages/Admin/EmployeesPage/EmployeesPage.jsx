@@ -11,13 +11,13 @@ const Title = styled.h1`
   color: #111827;
 `;
 
-const SettingsPage = () => {
+const EmployeesPage = () => {
   return (
     <PageContainer>
-      <Title>Settings</Title>
-      {/* Add your settings content here */}
+      <Title>Employees Management</Title>
+      {/* Add employees management content here */}
     </PageContainer>
   );
 };
 
-export default SettingsPage; 
+export default EmployeesPage; 
