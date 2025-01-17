@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:5000/api'; // Thay đổi URL này theo server của bạn
+const API_URL = 'http://localhost:5000/api';
 
 const authService = {
     login: async (username, password) => {
@@ -14,51 +14,40 @@ const authService = {
             const data = await response.json();
 
             if (response.ok) {
-                // Lưu token và thông tin user vào sessionStorage
-                sessionStorage.setItem('token', data.token);
-                sessionStorage.setItem('user', JSON.stringify({
-                    ...data.user,
-                    role: data.user.role // Sử dụng role từ role_id
-                }));
-                return { success: true, user: data.user };
+                // Lưu vào localStorage thay vì sessionStorage
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                return {
+                    success: true,
+                    user: data.user,
+                    token: data.token
+                };
             } else {
-                return { 
-                    success: false, 
-                    error: data.message || 'Login failed' 
+                return {
+                    success: false,
+                    error: data.message
                 };
             }
         } catch (error) {
-            console.error('Login error:', error);
-            return { 
-                success: false, 
-                error: 'Network error. Please try again.' 
+            return {
+                success: false,
+                error: 'Network error. Please try again.'
             };
         }
     },
 
     logout: () => {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
     },
 
     getCurrentUser: () => {
-        const user = sessionStorage.getItem('user');
+        const user = localStorage.getItem('user');
         return user ? JSON.parse(user) : null;
     },
 
-    isAuthenticated: () => {
-        return !!sessionStorage.getItem('token');
-    },
-
-    // Hàm để lấy token cho các request khác
     getToken: () => {
-        return sessionStorage.getItem('token');
-    },
-
-    // Hàm để thêm token vào header của request
-    authHeader: () => {
-        const token = authService.getToken();
-        return token ? { 'Authorization': `Bearer ${token}` } : {};
+        return localStorage.getItem('token');
     }
 };
 

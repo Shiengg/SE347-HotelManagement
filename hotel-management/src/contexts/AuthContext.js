@@ -11,14 +11,35 @@ export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Định nghĩa logout trước
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('isAuthenticated');
+    setCurrentUser(null);
+    setIsAuthenticated(false);
+    navigate('/login', { replace: true });
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const user = authService.getCurrentUser();
-        if (user) {
+        // Kiểm tra xem có phiên làm việc trong sessionStorage không
+        const hasSession = sessionStorage.getItem('isAuthenticated');
+        
+        // Nếu không có phiên làm việc (trình duyệt mới mở)
+        if (!hasSession) {
+          logout();
+          return;
+        }
+
+        const user = JSON.parse(localStorage.getItem('user'));
+        const token = localStorage.getItem('token');
+
+        if (user && token) {
           setCurrentUser(user);
           setIsAuthenticated(true);
-          // Chỉ chuyển hướng khi ở trang login hoặc trang gốc
+          
           if (location.pathname === '/login' || location.pathname === '/') {
             const dashboardPath = `/${user.role}/dashboard`;
             navigate(dashboardPath, { replace: true });
@@ -32,53 +53,17 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-
-    // Xử lý đóng tab
-    const handleTabClose = (event) => {
-      // Chỉ xóa session khi thực sự đóng tab/window
-      if (event.type === 'beforeunload') {
-        const confirmationMessage = '';
-        event.returnValue = confirmationMessage;     // Chuẩn
-        return confirmationMessage;                  // Safari
-      }
-    };
-
-    // Thêm event listener cho việc đóng tab
-    window.addEventListener('beforeunload', handleTabClose);
-    
-    // Xử lý khi tab bị ẩn (chuyển tab khác)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        // Lưu thời điểm tab bị ẩn
-        sessionStorage.setItem('tabHiddenTime', Date.now().toString());
-      } else if (document.visibilityState === 'visible') {
-        // Kiểm tra xem tab có bị đóng và mở lại không
-        const hiddenTime = sessionStorage.getItem('tabHiddenTime');
-        if (hiddenTime) {
-          const currentTime = Date.now();
-          const timeDiff = currentTime - parseInt(hiddenTime);
-          // Nếu thời gian ẩn quá lâu (ví dụ: 1 giây), coi như tab đã được đóng và mở lại
-          if (timeDiff > 1000) {
-            sessionStorage.clear();
-            navigate('/login', { replace: true });
-          }
-          sessionStorage.removeItem('tabHiddenTime');
-        }
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleTabClose);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, [navigate, location.pathname]);
 
   const login = async (username, password) => {
     try {
       const result = await authService.login(username, password);
       if (result.success) {
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        // Tạo phiên làm việc mới
+        sessionStorage.setItem('isAuthenticated', 'true');
+        
         setCurrentUser(result.user);
         setIsAuthenticated(true);
         const dashboardPath = `/${result.user.role}/dashboard`;
@@ -89,13 +74,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       return { success: false, error: error.message };
     }
-  };
-
-  const logout = () => {
-    authService.logout();
-    setCurrentUser(null);
-    setIsAuthenticated(false);
-    navigate('/login', { replace: true });
   };
 
   const value = {
