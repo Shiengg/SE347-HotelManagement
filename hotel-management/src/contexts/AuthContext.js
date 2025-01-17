@@ -25,24 +25,21 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Thêm event listener cho beforeunload
-    const handleBeforeUnload = () => {
+    // Chỉ xử lý sự kiện beforeunload
+    const handleBeforeUnload = (e) => {
+      // Kiểm tra xem có phải là reload không
+      if (e.persisted || (window.performance && window.performance.navigation.type === 1)) {
+        // Nếu là reload thì không làm gì cả
+        return;
+      }
+      // Nếu là đóng tab/window thì clear session
       sessionStorage.clear();
     };
 
-    // Thêm event listener cho visibilitychange
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        sessionStorage.clear();
-      }
-    };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
@@ -75,7 +72,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (isLoading) {
-    return <div>Loading...</div>; // Or your loading component
+    return <div>Loading...</div>;
   }
 
   return (
