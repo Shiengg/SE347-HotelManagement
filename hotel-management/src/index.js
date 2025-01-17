@@ -5,7 +5,7 @@ import App from './App';
 
 // Import các components
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
-import ReceptionistDashboard from './pages/ReceptionistDashboard/ReceptionistDashboard';
+import ReceptionistDashboard from './pages/Receptionist/ReceptionistDashboard/ReceptionistDashboard';
 import CustomerDashboard from './pages/CustomerDashboard/CustomerDashboard';
 import BookingPage from './pages/BookingPage/BookingPage';
 import CustomerPage from './pages/CustomersPage/CustomersPage';
@@ -21,6 +21,12 @@ import RestaurantManagementPage from './pages/RestaurantManagementPage/Restauran
 import BookingsManagementPage from './pages/BookingsManagementPage/BookingsManagementPage';
 import InvoicesManagementPage from './pages/InvoicesManagementPage/InvoicesManagementPage';
 import SettingsPage from './pages/SettingsPage/SettingsPage';
+import ReceptionistHome from './pages/Receptionist/ReceptionistHome/ReceptionistHome';
+import GuestManagement from './pages/Receptionist/GuestManagement/GuestManagement';
+import RoomManagement from './pages/Receptionist/RoomManagement/RoomManagement';
+import RestaurantService from './pages/Receptionist/RestaurantService/RestaurantService';
+import BookingManagement from './pages/Receptionist/BookingManagement/BookingManagement';
+import InvoiceManagement from './pages/Receptionist/InvoiceManagement/InvoiceManagement';
 
 // Định nghĩa routes
 export const routes = [
@@ -104,6 +110,31 @@ export const routes = [
         path: '/login',
         page: LoginPage,
         isPublic: true
+    },
+    {
+        path: '/receptionist/guests',
+        page: GuestManagement,
+        roles: ['receptionist']
+    },
+    {
+        path: '/receptionist/rooms',
+        page: RoomManagement,
+        roles: ['receptionist']
+    },
+    {
+        path: '/receptionist/restaurant',
+        page: RestaurantService,
+        roles: ['receptionist']
+    },
+    {
+        path: '/receptionist/bookings',
+        page: BookingManagement,
+        roles: ['receptionist']
+    },
+    {
+        path: '/receptionist/invoices',
+        page: InvoiceManagement,
+        roles: ['receptionist']
     },
     {
         path: '*',

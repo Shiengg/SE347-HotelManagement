@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 
 const AuthContext = createContext(null);
@@ -7,6 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const initAuth = async () => {
@@ -15,6 +18,11 @@ export const AuthProvider = ({ children }) => {
         if (user) {
           setCurrentUser(user);
           setIsAuthenticated(true);
+          // Chỉ chuyển hướng khi ở trang login hoặc trang gốc
+          if (location.pathname === '/login' || location.pathname === '/') {
+            const dashboardPath = `/${user.role}/dashboard`;
+            navigate(dashboardPath, { replace: true });
+          }
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -25,14 +33,11 @@ export const AuthProvider = ({ children }) => {
 
     initAuth();
 
-    // Chỉ xử lý sự kiện beforeunload
+    // Chỉ xử lý sự kiện beforeunload khi đóng tab
     const handleBeforeUnload = (e) => {
-      // Kiểm tra xem có phải là reload không
-      if (e.persisted || (window.performance && window.performance.navigation.type === 1)) {
-        // Nếu là reload thì không làm gì cả
-        return;
+      if (e.persisted) {
+        return; // Không làm gì nếu là reload
       }
-      // Nếu là đóng tab/window thì clear session
       sessionStorage.clear();
     };
 
@@ -41,7 +46,7 @@ export const AuthProvider = ({ children }) => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, []);
+  }, [navigate, location.pathname]);
 
   const login = async (username, password) => {
     try {
@@ -49,6 +54,9 @@ export const AuthProvider = ({ children }) => {
       if (result.success) {
         setCurrentUser(result.user);
         setIsAuthenticated(true);
+        // Chuyển hướng đến dashboard sau khi đăng nhập
+        const dashboardPath = `/${result.user.role}/dashboard`;
+        navigate(dashboardPath, { replace: true });
         return { success: true };
       }
       return { success: false, error: result.error };
@@ -61,6 +69,7 @@ export const AuthProvider = ({ children }) => {
     authService.logout();
     setCurrentUser(null);
     setIsAuthenticated(false);
+    navigate('/login', { replace: true });
   };
 
   const value = {
