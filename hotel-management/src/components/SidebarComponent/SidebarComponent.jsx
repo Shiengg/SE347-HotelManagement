@@ -10,7 +10,8 @@ import {
   CoffeeOutlined, 
   CalendarOutlined,
   FileTextOutlined,
-  SettingOutlined
+  SettingOutlined,
+  ShopOutlined
 } from "@ant-design/icons";
 import { Tooltip } from "antd";
 import { useAuth } from "../../contexts/AuthContext";
@@ -20,6 +21,7 @@ const Sidebar = () => {
   const { currentUser } = useAuth();
   const isAdmin = currentUser?.role === 'admin';
   const isReceptionist = currentUser?.role === 'receptionist';
+  const isCustomer = currentUser?.role === 'customer';
 
   useEffect(() => {
     const handleResize = () => {
@@ -135,6 +137,42 @@ const Sidebar = () => {
           <h3 className="section-title">Finance</h3>
           <MenuItem>
             {renderMenuItem("/receptionist/invoices", <FileTextOutlined />, "Invoices")}
+          </MenuItem>
+        </MenuSection>
+      </MenuWrapper>
+    );
+  }
+
+  if (isCustomer) {
+    return (
+      <MenuWrapper>
+        <MenuSection>
+          <h3 className="section-title">Overview</h3>
+          <MenuItem>
+            {renderMenuItem("/customer/dashboard", <HomeOutlined />, "Dashboard")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">Services</h3>
+          <MenuItem>
+            {renderMenuItem("/customer/booking", <CalendarOutlined />, "Booking")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/customer/rooms", <ShopOutlined />, "Rooms")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/customer/restaurant", <CoffeeOutlined />, "Restaurant")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">Personal</h3>
+          <MenuItem>
+            {renderMenuItem("/customer/invoice", <FileTextOutlined />, "Invoice")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/customer/profile", <UserOutlined />, "Profile")}
           </MenuItem>
         </MenuSection>
       </MenuWrapper>

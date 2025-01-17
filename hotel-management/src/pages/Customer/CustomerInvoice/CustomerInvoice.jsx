@@ -11,13 +11,13 @@ const Title = styled.h1`
   color: #111827;
 `;
 
-const BookingManagement = () => {
+const CustomerInvoice = () => {
   return (
     <PageContainer>
-      <Title>Booking Management hehe</Title>
-      {/* Add booking management content here */}
+      <Title>Your Invoices</Title>
+      {/* Add invoice list and details here */}
     </PageContainer>
   );
 };
 
-export default BookingManagement; 
+export default CustomerInvoice; 
