@@ -1,123 +1,148 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { MenuWrapper, MenuItem } from "./style";
-import { HomeOutlined, TeamOutlined, AppstoreOutlined, CoffeeOutlined, FileTextOutlined, CalendarOutlined } from "@ant-design/icons";
-import { Tooltip } from "antd"; // Import Tooltip
+import { MenuWrapper, MenuItem, MenuSection } from "./style";
+import { 
+  DashboardOutlined,
+  TeamOutlined,
+  HomeOutlined,
+  UserOutlined,
+  AppstoreOutlined, 
+  CoffeeOutlined, 
+  CalendarOutlined,
+  FileTextOutlined,
+  SettingOutlined
+} from "@ant-design/icons";
+import { Tooltip } from "antd";
+import { useAuth } from "../../contexts/AuthContext";
 
 const Sidebar = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const { currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'admin';
+  const isReceptionist = currentUser?.role === 'receptionist';
 
   useEffect(() => {
-    // Check screen size on component mount
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 680); // Set to true if screen width <= 680px (mobile)
+      setIsMobile(window.innerWidth <= 680);
     };
 
-    handleResize(); // Run once when component mounts
-    window.addEventListener("resize", handleResize); // Listen for window resize events
-
-    return () => window.removeEventListener("resize", handleResize); // Clean up on unmount
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  return (
-    <MenuWrapper>
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Home" placement="bottom">
-            <NavLink to="/" className={({ isActive }) => (isActive ? "active" : "")}>
-              <HomeOutlined />
-              <span className="text">Home</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/" className={({ isActive }) => (isActive ? "active" : "")}>
-            <HomeOutlined />
-            <span className="text">Home</span>
-          </NavLink>
-        )}
-      </MenuItem>
+  console.log('Current user:', currentUser);
+  console.log('Is admin:', isAdmin);
 
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Booking" placement="bottom">
-            <NavLink to="/booking" className={({ isActive }) => (isActive ? "active" : "")}>
-              <CalendarOutlined />
-              <span className="text">Booking</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/booking" className={({ isActive }) => (isActive ? "active" : "")}>
-            <CalendarOutlined />
-            <span className="text">Booking</span>
-          </NavLink>
-        )}
-      </MenuItem>
+  const renderMenuItem = (to, icon, text) => {
+    const content = (
+      <NavLink to={to} className={({ isActive }) => (isActive ? "active" : "")}>
+        {icon}
+        <span className="text">{text}</span>
+      </NavLink>
+    );
 
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Food and Beverage" placement="bottom">
-            <NavLink to="/food" className={({ isActive }) => (isActive ? "active" : "")}>
-              <CoffeeOutlined />
-              <span className="text">Food and Beverage</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/food" className={({ isActive }) => (isActive ? "active" : "")}>
-            <CoffeeOutlined />
-            <span className="text">Food and Beverage</span>
-          </NavLink>
-        )}
-      </MenuItem>
+    return isMobile ? (
+      <Tooltip title={text} placement="right">
+        {content}
+      </Tooltip>
+    ) : (
+      content
+    );
+  };
 
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Customers" placement="bottom">
-            <NavLink to="/customer" className={({ isActive }) => (isActive ? "active" : "")}>
-              <TeamOutlined />
-              <span className="text">Customers</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/customer" className={({ isActive }) => (isActive ? "active" : "")}>
-            <TeamOutlined />
-            <span className="text">Customers</span>
-          </NavLink>
-        )}
-      </MenuItem>
+  if (isAdmin) {
+    return (
+      <MenuWrapper>
+        <MenuSection>
+          <h3 className="section-title">Overview</h3>
+          <MenuItem>
+            {renderMenuItem("/admin/dashboard", <DashboardOutlined />, "Dashboard")}
+          </MenuItem>
+        </MenuSection>
 
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Rooms" placement="bottom">
-            <NavLink to="/roomstaff" className={({ isActive }) => (isActive ? "active" : "")}>
-              <AppstoreOutlined />
-              <span className="text">Rooms</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/roomstaff" className={({ isActive }) => (isActive ? "active" : "")}>
-            <AppstoreOutlined />
-            <span className="text">Rooms</span>
-          </NavLink>
-        )}
-      </MenuItem>
+        <MenuSection>
+          <h3 className="section-title">People Management</h3>
+          <MenuItem>
+            {renderMenuItem("/admin/employees", <TeamOutlined />, "Employees")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/admin/guests", <UserOutlined />, "Guests")}
+          </MenuItem>
+        </MenuSection>
 
-      <MenuItem>
-        {isMobile ? (
-          <Tooltip title="Invoice" placement="bottom">
-            <NavLink to="/invoicestaff" className={({ isActive }) => (isActive ? "active" : "")}>
-              <FileTextOutlined />
-              <span className="text">Invoice</span>
-            </NavLink>
-          </Tooltip>
-        ) : (
-          <NavLink to="/invoicestaff" className={({ isActive }) => (isActive ? "active" : "")}>
-            <FileTextOutlined />
-            <span className="text">Invoice</span>
-          </NavLink>
-        )}
-      </MenuItem>
-    </MenuWrapper>
-  );
+        <MenuSection>
+          <h3 className="section-title">Operations</h3>
+          <MenuItem>
+            {renderMenuItem("/admin/bookings", <CalendarOutlined />, "Bookings")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/admin/rooms", <AppstoreOutlined />, "Rooms")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/admin/restaurant", <CoffeeOutlined />, "Restaurant")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">Finance</h3>
+          <MenuItem>
+            {renderMenuItem("/admin/invoices", <FileTextOutlined />, "Invoices")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">System</h3>
+          <MenuItem>
+            {renderMenuItem("/admin/settings", <SettingOutlined />, "Settings")}
+          </MenuItem>
+        </MenuSection>
+      </MenuWrapper>
+    );
+  }
+
+  if (isReceptionist) {
+    return (
+      <MenuWrapper>
+        <MenuSection>
+          <h3 className="section-title">Overview</h3>
+          <MenuItem>
+            {renderMenuItem("/receptionist/dashboard", <DashboardOutlined />, "Dashboard")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">Guest Management</h3>
+          <MenuItem>
+            {renderMenuItem("/receptionist/guests", <UserOutlined />, "Guests")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">Operations</h3>
+          <MenuItem>
+            {renderMenuItem("/receptionist/bookings", <CalendarOutlined />, "Bookings")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/receptionist/rooms", <AppstoreOutlined />, "Rooms")}
+          </MenuItem>
+          <MenuItem>
+            {renderMenuItem("/receptionist/restaurant", <CoffeeOutlined />, "Restaurant")}
+          </MenuItem>
+        </MenuSection>
+
+        <MenuSection>
+          <h3 className="section-title">Finance</h3>
+          <MenuItem>
+            {renderMenuItem("/receptionist/invoices", <FileTextOutlined />, "Invoices")}
+          </MenuItem>
+        </MenuSection>
+      </MenuWrapper>
+    );
+  }
+
+  // Return other role-specific sidebars or null
+  return null;
 };
 
 export default Sidebar;

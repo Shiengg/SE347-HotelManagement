@@ -1,77 +1,106 @@
 import styled from "styled-components";
 
-// Wrapper cho Sidebar
 export const MenuWrapper = styled.div`
-  background-color: #e8e8f0; /* Màu nền xám nhạt */
-  padding: 20px;
-  display: grid;
-  border-radius: 20px; /* Bo góc cho sidebar */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Đổ bóng cho sidebar */
-  gap: 10px;
-
-  @media (max-width: 1600px) {
-    padding: 10px 20px;
-    grid-template-columns: repeat(3, 1fr); /* Chia thành 3 cột trên mobile */
-    text-align: left;
-  }
+  background: #ffffff;
+  padding: 24px 16px;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid #e5e7eb;
 
   @media (max-width: 680px) {
-    display: flex;
-    justify-content: space-between;
+    padding: 20px 8px;
+  }
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #e5e7eb;
+    border-radius: 3px;
   }
 `;
 
-// Wrapper cho mỗi Menu Item
-export const MenuItem = styled.div`
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  font-weight: bold;
-  height: fit-content; /* Chiều cao của mỗi item */
+export const MenuSection = styled.div`
+  margin-bottom: 16px;
 
-  a {
-    padding: 20px; /* Khoảng cách giữa các item */
-    text-decoration: none;
-    color: black; /* Màu chữ mặc định */
-    font-size: 17px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    width: 100%; /* Chiếm toàn bộ chiều rộng item */
-    height: 100%;
-
-    @media (max-width: 1600px) {
-      padding: 10px; /* Tăng khoảng cách trái để làm nổi bật item */
-    }
+  .section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: 600;
+    margin: 16px 12px 8px;
+    letter-spacing: 0.05em;
 
     @media (max-width: 680px) {
-      padding: 10px; /* Khoảng cách giữa các item */
-      .text {
+      display: none;
+    }
+  }
+`;
+
+export const MenuItem = styled.div`
+  margin: 2px 0;
+
+  a {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: #4b5563;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    font-size: 14px;
+
+    .anticon {
+      font-size: 20px;
+      margin-right: 12px;
+      opacity: 0.8;
+
+      @media (max-width: 680px) {
+        margin-right: 0;
+        font-size: 22px;
+      }
+    }
+
+    .text {
+      font-size: 14px;
+      
+      @media (max-width: 680px) {
         display: none;
       }
     }
 
     &:hover {
-      background-color: #e6e6ff; /* Màu nền khi hover */
-      border-radius: 10px;
-      color: #1890ff; /* Màu chữ khi hover */
+      background: #f3f4f6;
+      color: #4f46e5;
+
+      .anticon {
+        opacity: 1;
+      }
     }
+
     &.active {
-      background-color: #d9d9ff; /* Màu nền khi active */
-      color: #1890ff; /* Màu chữ khi active */
-      border-left: 4px solid #1890ff; /* Viền trái khi active */
-      padding-left: 25px; /* Tăng khoảng cách trái để làm nổi bật item */
-      border-radius: 10px;
+      background: #4f46e5;
+      color: white;
 
-      @media (max-width: 1600px) {
-        padding-left: 10px; /* Tăng khoảng cách trái để làm nổi bật item */
-        border-bottom: 4px solid #1890ff; /* Viền trái khi active */
-        border-left: none;
+      .anticon {
+        opacity: 1;
       }
+    }
+  }
 
-      @media (max-width: 680px) {
-        padding: 10px; /* Khoảng cách giữa các item */
-      }
+  @media (max-width: 680px) {
+    a {
+      padding: 12px;
+      justify-content: center;
     }
   }
 `;
