@@ -4,18 +4,18 @@ import styled from "styled-components";
 export const WrapperHeader = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 0;
-  gap: 24px;
+  justify-content:end;
 
-  #logo {
-    height: 40px;
-    width: auto;
-  }
+  z-index: 100;
 
-  @media (max-width: 1600px) {
-    #logo {
-      display: none;
-    }
-  }
+
+  padding: 5px 10px;
+
+  background: #ffcc0080;
+
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(20px);
+
 `;
+
+

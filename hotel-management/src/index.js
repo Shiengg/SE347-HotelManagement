@@ -23,7 +23,6 @@ import BookingPage from './pages/BookingPage/BookingPage';
 import CustomerPage from './pages/CustomersPage/CustomersPage';
 import FoodAndBeveragePage from './pages/FoodAndBeveragePage/FoodAndBeveragePage';
 import RoomstaffPage from './pages/RoomstaffPage/RoomstaffPage';
-import InvoiceStaffPage from './pages/InvoiceStaffPage/InvoiceStaffPage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import GuestManagement from './pages/Receptionist/GuestManagement/GuestManagement';
@@ -131,8 +130,8 @@ export const routes = [
         roles: ['admin', 'receptionist']
     },
     {
-        path: '/invoicestaff',
-        page: InvoiceStaffPage,
+        path: '/invoice',
+        page: InvoiceManagement,
         roles: ['admin', 'receptionist']
     },
     {

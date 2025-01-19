@@ -14,15 +14,15 @@ const InvoiceItemContainer = styled.div`
   padding: 10px;
   cursor: pointer;
   ${(props) =>
-    props.isSelected ? "background-color: grey; color: white;" : ""}
+    props.isSelected ? "background-color: gold; color: white;" : ""}
   &:hover {
-    background-color: grey; /* Use camelCase for CSS properties */
+    background-color:${(props)=>props.isSelected?"gold":"#FFD70080"} ; /* Use camelCase for CSS properties */
     color: white; /* Optional: adjust text color for contrast */
   }
   transition: background-color 0.1s;
   align-items: center;
 
-  @media (max-width: 680px) {
+  @media (max-width: 1080px) {
     font-size: 1.2em;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
@@ -38,7 +38,6 @@ const InvoiceId = styled.div`
   font-weight: bold;
 `;
 const InvoiceDate = styled.div`
-  opacity: 0.7;
 `;
 
 const InvoiceTotal = styled.div`
@@ -46,7 +45,7 @@ const InvoiceTotal = styled.div`
   font-weight: bold;
   text-align: right;
 
-  @media (max-width: 680px) {
+  @media (max-width: 1080px) {
     grid-column: span 2;
     font-size: 1.5em;
   }

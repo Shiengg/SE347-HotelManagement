@@ -1,3 +1,5 @@
+import { faAngleLeft, faAngleRight } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React from 'react';
 import styled from 'styled-components';
 
@@ -7,20 +9,25 @@ const PaginationContainer = styled.div`
   justify-content: center;
   align-items: center;
   margin-top: 20px;
+  gap: 10px;
 `;
 
 const PageButton = styled.button`
-  margin: 0 5px;
-  padding: 5px 10px;
+  padding: 5px;
+  font-size: 1.2em; 
+  aspect-ratio: 1;
+  width: 40px;
+  font-weight: bold;
+
   background-color: ${(props) =>
-    props.isActive ? '#007bff' : '#ffffff'}; /* Nền xanh cho trang hiện tại */
+    props.isActive ? '#007b99' : 'transparent'}; /* Nền xanh cho trang hiện tại */
   color: ${(props) => (props.isActive ? '#ffffff' : '#000000')};
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: none;
+  border-radius: 10px;
   cursor: pointer;
 
   &:hover {
-    background-color: ${(props) => (props.isActive ? '#0056b3' : '#f1f1f1')};
+    background-color: ${(props) => (props.isActive ? '#0056b3' : '#f1ffff')};
   }
 `;
 
@@ -63,7 +70,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
         onClick={() => handlePageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
-        &lt;
+        <FontAwesomeIcon icon={faAngleLeft} />
       </PageButton>
 
       {/* Danh sách các số trang */}
@@ -82,7 +89,7 @@ const Pagination = ({ totalItems, itemsPerPage, currentPage, onPageChange }) => 
         onClick={() => handlePageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >
-        &gt;
+       <FontAwesomeIcon icon={faAngleRight} />
       </PageButton>
     </PaginationContainer>
   );

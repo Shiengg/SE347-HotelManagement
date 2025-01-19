@@ -1,17 +1,19 @@
 import styled from "styled-components";
 
 export const MenuWrapper = styled.div`
-  background: #ffffff;
-  padding: 24px 16px;
-  height: 100vh;
-  overflow-y: auto;
+  background: white;
+  padding: 20px;
   display: flex;
+  width: 100%;
   flex-direction: column;
-  gap: 8px;
-  border-right: 1px solid #e5e7eb;
+  height: 100vh;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Đổ bóng cho sidebar */
+  gap: 10px;
+  transition: transform 0.5s ease;
 
   @media (max-width: 680px) {
-    padding: 20px 8px;
+    padding: 10px 5px;
+    gap: 5px;
   }
 
   &::-webkit-scrollbar {
@@ -26,12 +28,20 @@ export const MenuWrapper = styled.div`
     background-color: #e5e7eb;
     border-radius: 3px;
   }
+  &.open {
+    transform: translateX(0); /* Slide in when open */
+  }
+
+  &.closed {
+    transform: translateX(-100%); /* Slide out when closed */
+  }
 `;
 
 export const MenuSection = styled.div`
   margin-bottom: 16px;
 
   .section-title {
+    white-space:break-all;
     font-size: 12px;
     text-transform: uppercase;
     color: #6b7280;
@@ -40,9 +50,30 @@ export const MenuSection = styled.div`
     letter-spacing: 0.05em;
 
     @media (max-width: 680px) {
+     border-top: 2px solid grey;
+     opacity:0.7;
+     h3{
       display: none;
+       
+      }
     }
   }
+  a {
+    padding: 20px; /* Khoảng cách giữa các item */
+    text-decoration: none;
+    color: black; /* Màu chữ mặc định */
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%; /* Chiếm toàn bộ chiều rộng item */
+    height: 100%;
+    transition: all 0.1s; /* Hiệu ứng chuyển động */
+
+    @media (max-width: 1600px) {
+      padding: 10px; /* Tăng khoảng cách trái để làm nổi bật item */
+    }
+
 `;
 
 export const MenuItem = styled.div`
@@ -56,44 +87,24 @@ export const MenuItem = styled.div`
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.2s ease;
-    font-weight: 500;
-    font-size: 14px;
+    font-weight: bold;
 
-    .anticon {
-      font-size: 20px;
-      margin-right: 12px;
-      opacity: 0.8;
+    color: ${(props) => props.color};
 
-      @media (max-width: 680px) {
-        margin-right: 0;
-        font-size: 22px;
-      }
-    }
-
-    .text {
-      font-size: 14px;
-      
-      @media (max-width: 680px) {
-        display: none;
-      }
-    }
-
-    &:hover {
-      background: #f3f4f6;
-      color: #4f46e5;
-
-      .anticon {
-        opacity: 1;
-      }
+    &:hover:not(.active) {
+      background-color: ${(props) => props.color}; /* Màu nền khi hover */
+      border-radius: 0px 10px 10px 0px;
+      color: white; /* Màu chữ khi hover */
+      transform: scale(1.05); /* Phóng to item khi hover */
     }
 
     &.active {
-      background: #4f46e5;
-      color: white;
-
-      .anticon {
-        opacity: 1;
-      }
+      background-color: white; /* Màu nền khi active */
+      color: ${(props) => props.color}; /* Màu chữ khi active */
+      border-left: 4px solid ${(props) => props.color}; /* Viền trái khi active */
+      border-bottom: 4px solid ${(props) => props.color}; /* Viền trái khi active */
+      padding-left: 25px; /* Tăng khoảng cách trái để làm nổi bật item */
+      border-radius: 0px 10px 10px 0px;
     }
   }
 
@@ -102,5 +113,83 @@ export const MenuItem = styled.div`
       padding: 12px;
       justify-content: center;
     }
+  }
+`;
+
+export const LogoWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+
+  img {
+    width: 32px;
+    height: auto;
+
+    @media (max-width: 680px) {
+      width: 28px;
+    }
+  }
+`;
+
+export const LogoName = styled.div`
+  font-family: Times New Roman;
+  font-weight: bold;
+  font-size: 1.6em;
+  color: #ffdd1e;
+
+  @media (max-width: 680px) {
+    display: none;
+  }
+`;
+
+export const MenuButton = styled.button`
+  font-size: 1.2em;
+  cursor: pointer;
+  border: none;
+  border-radius: 30%;
+  padding: 10px;
+  margin: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  aspect-ratio: 1/1;
+  color: white;
+  background: gold;
+  opacity: 0.5;
+  transition: all 0.1s;
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+
+  &:hover {
+    opacity: 1;
+    border-bottom: 3px solid brown;
+    border-left: 3px solid brown;
+  }
+
+  &:active {
+    border: none;
+  }
+`;
+
+export const ToggleMenuButton = styled.button`
+  background: transparent;
+  font-size: 1.2em;
+  cursor: pointer;
+  border: none;
+  margin-top: auto;
+  transition: all 0.1s;
+
+  &:hover {
+    transform: scale(1.1);
+  }
+
+  &:hover {
+    transform: scale(1.1);
   }
 `;

@@ -10,10 +10,13 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const InvoiceListContainer = styled.div`
+  background: grey;
+  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2); /* Example of inset shadow */
+  padding: 10px;
+  border-radius: 10px;
   display: flex;
   gap: 10px;
   flex-direction: column;
-  background-color: #e8e8f0;
 `;
 
 const InvoiceHeader = styled.div`
@@ -28,7 +31,6 @@ const InvoiceHeader = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     flex-wrap: wrap;
-
   }
 `;
 
@@ -82,7 +84,8 @@ const InvoiceListComponent = ({
   handleSelect,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = window.innerWidth > 680 ? 10 : 5;
+  const [isMobile, setIsMobile] = useState(false);
+  const itemsPerPage = isMobile ? 3 : 10;
 
   // Filter and sort states
   const [sortDate, setSortDate] = useState("asc"); // "asc" or "desc"
@@ -90,6 +93,15 @@ const InvoiceListComponent = ({
   const [filterStatus, setFilterStatus] = useState(""); // "paid" or "unpaid"
   const [filterMethod, setFilterMethod] = useState(""); // "cash", "credit", etc.
 
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 680);
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   // Filtered items
   const filteredItems = useMemo(() => {
     return invoiceItems.filter((item) => {

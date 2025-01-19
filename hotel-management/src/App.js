@@ -1,71 +1,69 @@
 import React, { useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { routes } from './index';
-import { AuthProvider } from './contexts/AuthContext';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { routes } from "./index";
+import { AuthProvider } from "./contexts/AuthContext";
 import Sidebar from "./components/SidebarComponent/SidebarComponent";
 import styled from "styled-components";
 import HeaderComponent from "./components/HeaderComponent/HeaderComponent";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute";
 import authService from "./services/authService";
 import LoginPage from "./pages/LoginPage/LoginPage";
-import { useAuth } from './contexts/AuthContext';
+import { useAuth } from "./contexts/AuthContext";
 
 const AppWrapper = styled.div`
-  min-height: 100vh;
-  background: #f3f4f6;
+  min-height: fit-content;
+  background-attachment: fixed;
 `;
-
 const LayoutWrapper = styled.div`
   display: flex;
+  flex-direction: row;
   min-height: 100vh;
+  height: fit-content;
   position: relative;
 `;
 
 const SidebarWrapper = styled.div`
-  position: fixed;
-  left: 0;
-  top: 0;
-  height: 100vh;
+position: sticky;
+top:0;
   width: 280px;
-  z-index: 1000;
-  background: #ffffff;
-  border-right: 1px solid #e5e7eb;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+  z-index: 100;
+  height: 100vh;
 
   @media (max-width: 680px) {
-    width: 80px;
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 60px;
   }
 `;
 
 const ContentWrapper = styled.div`
   flex: 1;
-  margin-left: 280px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-
-  @media (max-width: 680px) {
-    margin-left: 80px;
-  }
 `;
 
 const HeaderWrapper = styled.div`
   position: sticky;
   top: 0;
-  z-index: 999;
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
-  padding: 16px 24px;
+  z-index: 90;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 `;
 
 const MainContent = styled.div`
   flex: 1;
-  padding: 24px;
-  background: #f3f4f6;
+  padding: 10px;
 
   @media (max-width: 680px) {
-    padding: 16px;
+    padding: 5px;
   }
 `;
 
@@ -86,8 +84,8 @@ const ProtectedLayout = () => {
         <MainContent>
           <Routes>
             {routes.map((route) => {
-              if (route.path === '/login' || route.path === '/') return null;
-              
+              if (route.path === "/login" || route.path === "/") return null;
+
               const Component = route.page;
               return (
                 <Route
@@ -110,7 +108,7 @@ const ProtectedLayout = () => {
 
 const AppContent = () => {
   const { isAuthenticated, currentUser, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <div>Loading...</div>;
   }

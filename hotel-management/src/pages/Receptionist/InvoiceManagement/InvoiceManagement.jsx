@@ -1,8 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
+import InvoicePage from '../../InvoicePage/InvoicePage';
 
 const PageContainer = styled.div`
-  padding: 24px;
+  padding: 0px;
 `;
 
 const Title = styled.h1`
@@ -14,8 +15,7 @@ const Title = styled.h1`
 const InvoiceManagement = () => {
   return (
     <PageContainer>
-      <Title>Invoice Management</Title>
-      {/* Add invoice management content here */}
+      <InvoicePage/>
     </PageContainer>
   );
 };

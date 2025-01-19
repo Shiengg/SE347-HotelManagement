@@ -1,27 +1,222 @@
 import React, { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { MenuWrapper, MenuItem, MenuSection } from "./style";
-import { 
-  DashboardOutlined,
-  TeamOutlined,
-  HomeOutlined,
-  UserOutlined,
-  AppstoreOutlined, 
-  CoffeeOutlined, 
-  CalendarOutlined,
-  FileTextOutlined,
-  SettingOutlined,
-  ShopOutlined
-} from "@ant-design/icons";
-import { Tooltip } from "antd";
+import {
+  MenuWrapper,
+  MenuItem,
+  MenuSection,
+  LogoWrapper,
+  LogoName,
+  MenuButton,
+  ToggleMenuButton,
+} from "./style";
+import { Tooltip } from "antd"; // Import Tooltip
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faBars,
+  faCalendarDays,
+  faGear,
+  faHouse,
+  faMugHot,
+  faReceipt,
+  faTable,
+  faUsers,
+} from "@fortawesome/free-solid-svg-icons";
 import { useAuth } from "../../contexts/AuthContext";
+import logo from "../../svg/AppLogo.svg";
 
 const Sidebar = () => {
   const [isMobile, setIsMobile] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const { currentUser } = useAuth();
-  const isAdmin = currentUser?.role === 'admin';
-  const isReceptionist = currentUser?.role === 'receptionist';
-  const isCustomer = currentUser?.role === 'customer';
+
+  const menuConfig = {
+    admin: [
+      {
+        section: "Overview",
+        items: [
+          {
+            title: "Dashboard",
+            to: "/admin/dashboard",
+            icon: faHouse, // Replace with <DashboardOutlined /> in your rendering logic
+            color: "#ff6b6b",
+          },
+        ],
+      },
+      {
+        section: "People Management",
+        items: [
+          {
+            title: "Employees",
+            to: "/admin/employees",
+            icon: faUsers, // Replace with <TeamOutlined />
+            color: "#4caf50",
+          },
+          {
+            title: "Guests",
+            to: "/admin/guests",
+            icon: faUsers, // Replace with <UserOutlined />
+            color: "#6b5bff",
+          },
+        ],
+      },
+      {
+        section: "Operations",
+        items: [
+          {
+            title: "Bookings",
+            to: "/admin/bookings",
+            icon: faCalendarDays, // Replace with <CalendarOutlined />
+            color: "#6b5bff",
+          },
+          {
+            title: "Rooms",
+            to: "/admin/rooms",
+            icon: faTable, // Replace with <AppstoreOutlined />
+            color: "#2196f3",
+          },
+          {
+            title: "Restaurant",
+            to: "/admin/restaurant",
+            icon: faMugHot, // Replace with <CoffeeOutlined />
+            color: "#ffb74d",
+          },
+        ],
+      },
+      {
+        section: "Finance",
+        items: [
+          {
+            title: "Invoices",
+            to: "/admin/invoices",
+            icon: faReceipt, // Replace with <FileTextOutlined />
+            color: "#9c27b0",
+          },
+        ],
+      },
+      {
+        section: "System",
+        items: [
+          {
+            title: "Settings",
+            to: "/admin/settings",
+            icon: faGear, // Replace with <SettingOutlined />
+            color: "#9c27b0",
+          },
+        ],
+      },
+    ],
+    receptionist: [
+      {
+        section: "Overview",
+        items: [
+          {
+            title: "Dashboard",
+            to: "/receptionist/dashboard",
+            icon: faHouse, // Replace with <DashboardOutlined />
+            color: "#ff6b6b",
+          },
+        ],
+      },
+      {
+        section: "Guest Management",
+        items: [
+          {
+            title: "Guests",
+            to: "/receptionist/guests",
+            icon: faUsers, // Replace with <UserOutlined />
+            color: "#4caf50",
+          },
+        ],
+      },
+      {
+        section: "Operations",
+        items: [
+          {
+            title: "Bookings",
+            to: "/receptionist/bookings",
+            icon: faCalendarDays, // Replace with <CalendarOutlined />
+            color: "#6b5bff",
+          },
+          {
+            title: "Rooms",
+            to: "/receptionist/rooms",
+            icon: faTable, // Replace with <AppstoreOutlined />
+            color: "#2196f3",
+          },
+          {
+            title: "Restaurant",
+            to: "/receptionist/restaurant",
+            icon: faMugHot, // Replace with <CoffeeOutlined />
+            color: "#ffb74d",
+          },
+        ],
+      },
+      {
+        section: "Finance",
+        items: [
+          {
+            title: "Invoices",
+            to: "/receptionist/invoices",
+            icon: faReceipt, // Replace with <FileTextOutlined />
+            color: "#9c27b0",
+          },
+        ],
+      },
+    ],
+    customer: [
+      {
+        section: "Overview",
+        items: [
+          {
+            title: "Dashboard",
+            to: "/customer/dashboard",
+            icon: faHouse, // Replace with <HomeOutlined />
+            color: "#ff6b6b",
+          },
+        ],
+      },
+      {
+        section: "Services",
+        items: [
+          {
+            title: "Booking",
+            to: "/customer/booking",
+            icon: faCalendarDays, // Replace with <CalendarOutlined />
+            color: "#6b5bff",
+          },
+          {
+            title: "Rooms",
+            to: "/customer/rooms",
+            icon: faTable, // Replace with <ShopOutlined />
+            color: "#2196f3",
+          },
+          {
+            title: "Restaurant",
+            to: "/customer/restaurant",
+            icon: faMugHot, // Replace with <CoffeeOutlined />
+            color: "#ffb74d",
+          },
+        ],
+      },
+      {
+        section: "Personal",
+        items: [
+          {
+            title: "Invoice",
+            to: "/customer/invoice",
+            icon: faReceipt, // Replace with <FileTextOutlined />
+            color: "#9c27b0",
+          },
+          {
+            title: "Profile",
+            to: "/customer/profile",
+            icon: faUsers, // Replace with <UserOutlined />
+            color: "#4caf50",
+          },
+        ],
+      },
+    ],
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -33,154 +228,71 @@ const Sidebar = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  console.log('Current user:', currentUser);
-  console.log('Is admin:', isAdmin);
+  const renderMenuItems = (items) =>
+    items.map(({ title, to, icon, color }) => (
+      <MenuItem
+        key={to}
+        color={color}
+        hoverColor={`${color}33`}
+        activeColor={color}
+      >
+        {isMobile ? (
+          <Tooltip title={title} placement="right">
+            <NavLink
+              to={to}
+              className={({ isActive }) => (isActive ? "active" : "")}
+            >
+              <FontAwesomeIcon icon={icon} />
+            </NavLink>
+          </Tooltip>
+        ) : (
+          <NavLink
+            to={to}
+            className={({ isActive }) => (isActive ? "active" : "")}
+          >
+            <FontAwesomeIcon icon={icon} />
+            <span className="text">{title}</span>
+          </NavLink>
+        )}
+      </MenuItem>
+    ));
 
-  const renderMenuItem = (to, icon, text) => {
-    const content = (
-      <NavLink to={to} className={({ isActive }) => (isActive ? "active" : "")}>
-        {icon}
-        <span className="text">{text}</span>
-      </NavLink>
-    );
+  const renderSidebar = () => {
+    const role = currentUser?.role;
+    if (!role || !menuConfig[role]) return null;
 
-    return isMobile ? (
-      <Tooltip title={text} placement="right">
-        {content}
-      </Tooltip>
-    ) : (
-      content
-    );
+    return menuConfig[role].map(({ section, items }) => (
+      <MenuSection key={section}>
+        <div className="section-title">
+          <h3>{section}</h3>
+        </div>
+        {renderMenuItems(items)}
+      </MenuSection>
+    ));
   };
 
-  if (isAdmin) {
-    return (
-      <MenuWrapper>
-        <MenuSection>
-          <h3 className="section-title">Overview</h3>
-          <MenuItem>
-            {renderMenuItem("/admin/dashboard", <DashboardOutlined />, "Dashboard")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">People Management</h3>
-          <MenuItem>
-            {renderMenuItem("/admin/employees", <TeamOutlined />, "Employees")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/admin/guests", <UserOutlined />, "Guests")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Operations</h3>
-          <MenuItem>
-            {renderMenuItem("/admin/bookings", <CalendarOutlined />, "Bookings")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/admin/rooms", <AppstoreOutlined />, "Rooms")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/admin/restaurant", <CoffeeOutlined />, "Restaurant")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Finance</h3>
-          <MenuItem>
-            {renderMenuItem("/admin/invoices", <FileTextOutlined />, "Invoices")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">System</h3>
-          <MenuItem>
-            {renderMenuItem("/admin/settings", <SettingOutlined />, "Settings")}
-          </MenuItem>
-        </MenuSection>
+  return (
+    <>
+      <MenuWrapper className={isMobile ? (isOpen ? "open" : "closed") : ""}>
+        <LogoWrapper id="logo">
+          <img src={logo} alt="Logo" />
+          <LogoName>Le Continental</LogoName>
+        </LogoWrapper>
+        {renderSidebar()}
+        {isMobile && (
+          <ToggleMenuButton onClick={() => setIsOpen((prev) => !prev)}>
+            <FontAwesomeIcon icon={faBars} />
+          </ToggleMenuButton>
+        )}
       </MenuWrapper>
-    );
-  }
-
-  if (isReceptionist) {
-    return (
-      <MenuWrapper>
-        <MenuSection>
-          <h3 className="section-title">Overview</h3>
-          <MenuItem>
-            {renderMenuItem("/receptionist/dashboard", <DashboardOutlined />, "Dashboard")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Guest Management</h3>
-          <MenuItem>
-            {renderMenuItem("/receptionist/guests", <UserOutlined />, "Guests")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Operations</h3>
-          <MenuItem>
-            {renderMenuItem("/receptionist/bookings", <CalendarOutlined />, "Bookings")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/receptionist/rooms", <AppstoreOutlined />, "Rooms")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/receptionist/restaurant", <CoffeeOutlined />, "Restaurant")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Finance</h3>
-          <MenuItem>
-            {renderMenuItem("/receptionist/invoices", <FileTextOutlined />, "Invoices")}
-          </MenuItem>
-        </MenuSection>
-      </MenuWrapper>
-    );
-  }
-
-  if (isCustomer) {
-    return (
-      <MenuWrapper>
-        <MenuSection>
-          <h3 className="section-title">Overview</h3>
-          <MenuItem>
-            {renderMenuItem("/customer/dashboard", <HomeOutlined />, "Dashboard")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Services</h3>
-          <MenuItem>
-            {renderMenuItem("/customer/booking", <CalendarOutlined />, "Booking")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/customer/rooms", <ShopOutlined />, "Rooms")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/customer/restaurant", <CoffeeOutlined />, "Restaurant")}
-          </MenuItem>
-        </MenuSection>
-
-        <MenuSection>
-          <h3 className="section-title">Personal</h3>
-          <MenuItem>
-            {renderMenuItem("/customer/invoice", <FileTextOutlined />, "Invoice")}
-          </MenuItem>
-          <MenuItem>
-            {renderMenuItem("/customer/profile", <UserOutlined />, "Profile")}
-          </MenuItem>
-        </MenuSection>
-      </MenuWrapper>
-    );
-  }
-
-  // Return other role-specific sidebars or null
-  return null;
+      
+      {isMobile && !isOpen && (
+        <MenuButton onClick={() => setIsOpen((prev) => !prev)}>
+          <FontAwesomeIcon icon={faBars} />
+        </MenuButton>
+      )}
+    </>
+  );
 };
 
 export default Sidebar;
