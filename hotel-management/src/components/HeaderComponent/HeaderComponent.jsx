@@ -1,20 +1,32 @@
 import React from "react";
-import { Col } from "antd";
-import { LogoName, LogoWrapper, WrapperHeader } from "./style";
-import logo from "../../svg/AppLogo.svg";
+import { WrapperHeader } from "./style";
+
 import SearchComponent from "../SearchComponent/SearchComponent";
+import { useAuth } from "../../contexts/AuthContext";
 
 const HeaderComponent = () => {
+  const { currentUser, logout } = useAuth();
+
+  const menuItems = {
+    items: [
+      {
+        key: '1',
+        label: 'Profile'
+      },
+      {
+        key: '2',
+        label: 'Settings'
+      },
+      {
+        key: '3',
+        label: 'Logout',
+        onClick: logout
+      }
+    ]
+  };
+
   return (
     <WrapperHeader>
-      <LogoWrapper id="logo">
-        <img
-          src={logo}
-          alt="Logo"
-          style={{ width: "32px", height: "auto" }}
-        />
-        <LogoName>Le Continental</LogoName>
-      </LogoWrapper>
       <SearchComponent />
     </WrapperHeader>
   );
