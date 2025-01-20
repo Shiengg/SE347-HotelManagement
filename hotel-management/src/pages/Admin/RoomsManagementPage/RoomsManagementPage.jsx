@@ -122,7 +122,7 @@ const RoomItem = styled.div`
 const RoomDetailContainer = styled.div`
   background: white;
   border-radius: 10px;
-  padding: 20px;
+  padding: 12px;
   border: 2px solid gold;
   display: flex;
   flex-direction: column;
@@ -258,46 +258,68 @@ const TotalPrice = styled.div`
 `;
 
 const FormWrapper = styled.div`
-  background: white;
+  background: linear-gradient(to bottom right, #999999, #f8f9fa);
   border-radius: 10px;
-  padding: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 `;
 
 const FormTitle = styled.div`
-  font-size: 1.5em;
+  font-size: 1.6em;
   font-weight: 600;
   color: #1a3353;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
 
   .icon {
-    color: gold;
-    font-size: 24px;
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    color: #1a3353;
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 `;
 
 const FormSection = styled.div`
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 12px;
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
   border: 1px solid #eee;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
 
-  .section-title {
-    font-weight: 500;
-    color: #1a3353;
-    margin-bottom: 12px;
-    font-size: 1.2em;
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
   }
 
-  .ant-form-item {
-    margin-bottom: 12px;
-    
-    &:last-child {
-      margin-bottom: 0;
+  .section-title {
+    font-weight: 600;
+    color: #1a3353;
+    margin-bottom: 16px;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(45deg, #ffd700, #ffed4a);
+      border-radius: 2px;
+      display: inline-block;
     }
+  }
+
+  .ant-form-item:last-child {
+    margin-bottom: 0;
   }
 `;
 
@@ -321,7 +343,8 @@ const StyledSelect = styled(Select)`
   .ant-select-selector {
     height: 45px !important;
     padding: 0 16px !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #eee !important;
 
     .ant-select-selection-item {
       line-height: 45px !important;
@@ -329,8 +352,12 @@ const StyledSelect = styled(Select)`
     }
   }
 
+  &:hover .ant-select-selector {
+    border-color: #ffd700 !important;
+  }
+
   &.ant-select-focused .ant-select-selector {
-    border-color: gold !important;
+    border-color: #ffd700 !important;
     box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
   }
 `;
@@ -339,10 +366,21 @@ const StyledInput = styled(Input)`
   height: 45px;
   font-size: 1.1em;
   padding: 8px 16px;
+  border-radius: 8px;
+  border: 1.5px solid #eee;
+  transition: all 0.3s ease;
 
-  &:focus, &:hover {
-    border-color: gold !important;
-    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+  &:hover {
+    border-color: #ffd700;
+  }
+
+  &:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2);
+  }
+
+  &::placeholder {
+    color: #aaa;
   }
 `;
 
@@ -357,25 +395,38 @@ const StyledTextArea = styled(Input.TextArea)`
 `;
 
 const SubmitButton = styled(Button)`
-  height: 45px;
-  font-size: 1.1em;
+  height: 50px;
+  font-size: 1.2em;
+  font-weight: 500;
   background: linear-gradient(45deg, #ffd700, #ffed4a);
   border: none;
+  border-radius: 10px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 8px;
   
   &:hover {
     background: linear-gradient(45deg, #ffed4a, #ffd700);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
     box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 `;
 
 const StyledForm = styled(Form)`
   .ant-form-item-label > label {
-    font-size: 1.1em;
+    font-size: 1.05em;
     font-weight: 500;
     color: #1a3353;
     margin-bottom: 8px;
+    opacity: 0.85;
+  }
+
+  .ant-form-item-explain-error {
+    margin-top: 4px;
+    font-size: 0.9em;
   }
 `;
 
