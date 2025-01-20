@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Space } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
@@ -24,54 +24,190 @@ const ContentWrapper = styled.div`
 `;
 
 const HeaderSection = styled.div`
+  background: linear-gradient(to right, #ffffff, #f8f9fa);
+  border-radius: 12px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+`;
+
+const TitleSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .anticon {
+      font-size: 24px;
+      color: #1a3353;
+    }
+  }
+
+  .text-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
 `;
 
 const Title = styled.h2`
   margin: 0;
   color: #1a3353;
+  font-size: 1.8em;
+  font-weight: 600;
+`;
+
+const Subtitle = styled.p`
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+`;
+
+const AddButton = styled(Button)`
+  height: 45px;
+  padding: 0 24px;
+  border-radius: 10px;
+  font-size: 1.1em;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1a3353;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    background: #264773;
+  }
+
+  .anticon {
+    font-size: 18px;
+  }
 `;
 
 const RoomListContainer = styled.div`
-  background: grey;
-  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2);
-  padding: 8px;
-  border-radius: 10px;
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 16px;
+  border-radius: 12px;
   display: flex;
-  gap: 8px;
+  gap: 12px;
   flex-direction: column;
   margin-top: 16px;
+  border: 1px solid #eee;
 `;
 
 const FilterSection = styled.div`
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
+  border-radius: 12px;
+  padding: 16px 20px;
   display: flex;
-  gap: 16px;
-  align-items: center;
-  margin-bottom: 16px;
+  gap: 24px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+  flex-wrap: wrap;
+
+  .ant-select {
+    min-width: 200px;
+    
+    .ant-select-selector {
+      border-radius: 8px !important;
+      border: 1.5px solid #eee !important;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        border-color: #ffd700 !important;
+        transform: translateY(-1px);
+      }
+    }
+
+    &.ant-select-focused .ant-select-selector {
+      border-color: #ffd700 !important;
+      box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+      transform: translateY(-1px);
+    }
+  }
 `;
 
-const FilterItem = styled.div`
+const FilterGroup = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.2em;
-  font-weight: bold;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+
+  .filter-label {
+    font-size: 0.9em;
+    color: #1a3353;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .icon {
+      font-size: 14px;
+      color: #666;
+    }
+  }
+
+  .ant-select-selection-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    
+    .anticon {
+      font-size: 16px;
+    }
+  }
 `;
 
 const RoomHeader = styled.div`
-  font-size: 1.2em;
-  font-weight: bold;
+  font-size: 1em;
   display: grid;
   align-items: center;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  padding: 10px;
+  grid-template-columns: 100px 1fr 140px 140px 120px;
+  padding: 16px 20px;
+  background: linear-gradient(to right, #f8f9fa, #ffffff);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+
+  .header-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a3353;
+    font-weight: 500;
+    font-size: 0.95em;
+    
+    .icon {
+      color: #666;
+      font-size: 14px;
+    }
+  }
 
   @media (max-width: 680px) {
-    grid-template-columns: 1fr 1fr;
-    flex-wrap: wrap;
+    display: none;
   }
 `;
 
@@ -96,25 +232,86 @@ const RoomItem = styled.div`
   border-radius: 10px;
   background: white;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  padding: 10px;
+  grid-template-columns: 100px 1fr 140px 140px 120px;
+  padding: 16px;
   cursor: pointer;
-  ${props => props.isSelected ? "background-color: gold; color: white;" : ""}
-  &:hover {
-    background-color: ${props => props.isSelected ? "gold" : "#FFD70080"};
-    color: white;
-  }
-  transition: background-color 0.1s;
   align-items: center;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+  
+  ${props => props.isSelected && `
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    border-color: #ffd700;
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  `}
+
+  &:hover {
+    background: ${props => props.isSelected ? 
+      'linear-gradient(45deg, #ffd700, #ffed4a)' : 
+      'linear-gradient(45deg, #ffffff, #f8f9fa)'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .room-number {
+    font-weight: 600;
+    color: #1a3353;
+    font-size: 1.1em;
+  }
+
+  .room-type {
+    color: #666;
+  }
+
+  .occupancy {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #666;
+
+    .icon {
+      color: #ffd700;
+      font-size: 14px;
+    }
+  }
+
+  .price {
+    font-weight: 600;
+    color: #00a854;
+  }
 
   @media (max-width: 1080px) {
-    font-size: 1.2em;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
+    padding: 12px;
 
-    & > :nth-child(2n) {
-      justify-self: end;
+    .room-number {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .room-type {
+      grid-column: 2;
+      grid-row: 1;
       text-align: right;
+    }
+
+    .status {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .occupancy {
+      grid-column: 1;
+      grid-row: 3;
+    }
+
+    .price {
+      grid-column: 2;
+      grid-row: 2/4;
+      text-align: right;
+      font-size: 1.2em;
     }
   }
 `;
@@ -533,8 +730,17 @@ const RoomsManagementPage = () => {
     <PageContainer>
       <ContentWrapper>
         <HeaderSection>
-          <Title>Rooms</Title>
-          <Button 
+          <TitleSection>
+            <div className="icon-wrapper">
+              <HomeOutlined />
+            </div>
+            <div className="text-content">
+              <Title>Room Management</Title>
+              <Subtitle>Manage your hotel rooms efficiently</Subtitle>
+            </div>
+          </TitleSection>
+          
+          <AddButton 
             type="primary" 
             icon={<PlusOutlined />}
             onClick={() => {
@@ -543,48 +749,152 @@ const RoomsManagementPage = () => {
             }}
           >
             Add New Room
-          </Button>
+          </AddButton>
         </HeaderSection>
 
         <FilterSection>
-          <FilterItem>
-            Type:
-            <RoomFilter value={filterType} onChange={e => setFilterType(e.target.value)}>
-              <option value="All">All</option>
-              <option value="Single">Single</option>
-              <option value="Double">Double</option>
-              <option value="Suite">Suite</option>
-              <option value="Deluxe">Deluxe</option>
-              <option value="Family">Family</option>
-            </RoomFilter>
-          </FilterItem>
+          <FilterGroup>
+            <div className="filter-label">
+              <HomeOutlined className="icon" />
+              Room Type
+            </div>
+            <Select
+              value={filterType}
+              onChange={setFilterType}
+              style={{ width: '100%' }}
+              dropdownStyle={{ padding: '8px' }}
+            >
+              <Option value="All">
+                <Space>
+                  <HomeOutlined style={{ color: '#666' }} />
+                  All Room Types
+                </Space>
+              </Option>
+              <Option value="Single">
+                <Space>
+                  <HomeOutlined style={{ color: '#40a9ff' }} />
+                  Single Room
+                </Space>
+              </Option>
+              <Option value="Double">
+                <Space>
+                  <HomeOutlined style={{ color: '#52c41a' }} />
+                  Double Room
+                </Space>
+              </Option>
+              <Option value="Suite">
+                <Space>
+                  <HomeOutlined style={{ color: '#ffd700' }} />
+                  Luxury Suite
+                </Space>
+              </Option>
+              <Option value="Deluxe">
+                <Space>
+                  <HomeOutlined style={{ color: '#722ed1' }} />
+                  Deluxe Room
+                </Space>
+              </Option>
+              <Option value="Family">
+                <Space>
+                  <HomeOutlined style={{ color: '#eb2f96' }} />
+                  Family Room
+                </Space>
+              </Option>
+            </Select>
+          </FilterGroup>
 
-          <FilterItem>
-            Status:
-            <RoomFilter value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
-              <option value="All">All</option>
-              <option value="Available">Available</option>
-              <option value="Occupied">Occupied</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Reserved">Reserved</option>
-            </RoomFilter>
-          </FilterItem>
+          <FilterGroup>
+            <div className="filter-label">
+              <CheckCircleOutlined className="icon" />
+              Status
+            </div>
+            <Select
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: '100%' }}
+              dropdownStyle={{ padding: '8px' }}
+            >
+              <Option value="All">
+                <Space>
+                  <CheckCircleOutlined style={{ color: '#666' }} />
+                  All Status
+                </Space>
+              </Option>
+              <Option value="Available">
+                <Space>
+                  <CheckCircleOutlined style={{ color: '#10b981' }} />
+                  Available
+                </Space>
+              </Option>
+              <Option value="Occupied">
+                <Space>
+                  <CloseCircleOutlined style={{ color: '#ef4444' }} />
+                  Occupied
+                </Space>
+              </Option>
+              <Option value="Maintenance">
+                <Space>
+                  <ToolOutlined style={{ color: '#f59e0b' }} />
+                  Under Maintenance
+                </Space>
+              </Option>
+              <Option value="Reserved">
+                <Space>
+                  <CalendarOutlined style={{ color: '#6366f1' }} />
+                  Reserved
+                </Space>
+              </Option>
+            </Select>
+          </FilterGroup>
 
-          <FilterItem>
-            Price:
-            <RoomFilter value={sortPrice} onChange={e => setSortPrice(e.target.value)}>
-              <option value="asc">ASC</option>
-              <option value="desc">DESC</option>
-            </RoomFilter>
-          </FilterItem>
+          <FilterGroup>
+            <div className="filter-label">
+              <SortAscendingOutlined className="icon" />
+              Sort by Price
+            </div>
+            <Select
+              value={sortPrice}
+              onChange={setSortPrice}
+              style={{ width: '100%' }}
+              dropdownStyle={{ padding: '8px' }}
+            >
+              <Option value="asc">
+                <Space>
+                  <SortAscendingOutlined />
+                  Price: Low to High
+                </Space>
+              </Option>
+              <Option value="desc">
+                <Space>
+                  <SortDescendingOutlined />
+                  Price: High to Low
+                </Space>
+              </Option>
+            </Select>
+          </FilterGroup>
         </FilterSection>
 
         <RoomHeader>
-          <div>Room</div>
-          <div>Type</div>
-          <div>Status</div>
-          <div>Max Occupancy</div>
-          <div>Price</div>
+          <div className="header-item">
+            <HomeOutlined className="icon" />
+            Room No.
+          </div>
+          <div className="header-item">
+            <i className="fas fa-bed icon"></i>
+            Type
+          </div>
+          <div className="header-item">
+            <CheckCircleOutlined className="icon" />
+            Status
+          </div>
+          <div className="header-item">
+            <i className="fas fa-user icon"></i>
+            Occupancy
+          </div>
+          <div className="header-item">
+            <i className="fas fa-tag icon"></i>
+            Price
+          </div>
         </RoomHeader>
 
         <RoomListContainer>
@@ -594,11 +904,14 @@ const RoomsManagementPage = () => {
               isSelected={selectedRoom?._id === room._id}
               onClick={() => setSelectedRoom(room)}
             >
-              <div>{room.roomNumber}</div>
-              <div>{room.roomType}</div>
-              <div>{getStatusTag(room.status)}</div>
-              <div>{room.maxOccupancy}</div>
-              <div>${room.price.toLocaleString()}</div>
+              <div className="room-number">Room {room.roomNumber}</div>
+              <div className="room-type">{room.roomType}</div>
+              <div className="status">{getStatusTag(room.status)}</div>
+              <div className="occupancy">
+                <i className="fas fa-user icon" />
+                {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
+              </div>
+              <div className="price">${room.price.toLocaleString()}</div>
             </RoomItem>
           ))}
         </RoomListContainer>
