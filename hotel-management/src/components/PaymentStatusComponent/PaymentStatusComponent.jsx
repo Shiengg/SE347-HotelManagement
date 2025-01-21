@@ -1,17 +1,24 @@
-import React from 'react';
-import styled from 'styled-components';
+import React from "react";
+import styled from "styled-components";
 const PaymentStatus = styled.div`
-  color: ${(props) => (props.status ? "lime" : "red")};
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: semibold;
   width: fit-content;
-  border-radius: 5px;
-  background: white;
-  padding: 5px;
-  font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  height: fit-content;
+
+  &.Paid {
+    color: #10b981;
+    background: #d1fae5;
+  }
+  &.Unpaid {
+    color: #ef4444;
+    background: #fee2e2;
+  }
 `;
-const PaymentStatusComponent = ({status}) => {
+const PaymentStatusComponent = ({ status }) => {
   return (
-<PaymentStatus status={status}>{status?"Paid":"Unpaid"}</PaymentStatus>
+    <PaymentStatus className={`${status ? "Paid" : "Unpaid"}`}>{status ? "Paid" : "Unpaid"}</PaymentStatus>
   );
 };
 

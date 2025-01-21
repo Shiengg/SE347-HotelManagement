@@ -6,12 +6,85 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faAngleDown,
   faAngleUp,
+  faCheck,
+  faCircleCheck,
+  faCircleXmark,
+  faCoins,
+  faCreditCard,
   faMoneyBill,
+  faReceipt,
 } from "@fortawesome/free-solid-svg-icons";
+import { Select, Space } from "antd";
+import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  CloseSquareOutlined,
+  SortAscendingOutlined,
+  SortDescendingOutlined,
+  UnorderedListOutlined,
+} from "@ant-design/icons";
+const { Option } = Select;
+const ContentLayout = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
 
+const HeaderSection = styled.div`
+  background: linear-gradient(to right, #ffffff, #f8f9fa);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+`;
+
+const TitleSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+`;
+
+const Title = styled.h2`
+  margin: 0;
+  color: #1a3353;
+  font-size: 1.8em;
+  font-weight: 600;
+
+  @media (max-width: 680px) {
+    font-size:1.3em;
+  }
+`;
+
+const Subtitle = styled.p`
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+`;
 const InvoiceListContainer = styled.div`
-  background: grey;
-  box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.2); /* Example of inset shadow */
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
   padding: 10px;
   border-radius: 10px;
   display: flex;
@@ -19,22 +92,27 @@ const InvoiceListContainer = styled.div`
   flex-direction: column;
 `;
 
-const InvoiceHeader = styled.div`
-  font-size: 1.2em;
-  font-weight: bold;
+const InvoiceFilterSection = styled.div`
+  font-size: 1.1em;
   display: grid;
   align-items: center;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-  padding: 10px;
 
-  @media (max-width: 680px) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+  border: 1px solid #eee;
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  padding: 10px;
+  border-radius: 10px;
+
+  @media (max-width: 1600px) {
+    display: flex;
     flex-wrap: wrap;
+    gap: 10px;
   }
 `;
 
-const InvoiceHeaderItemLayout = styled.div`
+const InvoiceFilterItemLayout = styled.div`
   display: flex;
   flex-direction: row;
   gap: 5px;
@@ -47,37 +125,39 @@ const TotalSortingLayout = styled.div`
   gap: 5px;
   align-items: center;
 
-  @media (max-width: 680px) {
+  @media (max-width: 1600px) {
     justify-content: flex-start;
   }
 `;
 
+const StyledSelect = styled(Select)`
+  .ant-select-selector {
+    padding: 0 16px !important;
+    border-radius: 8px !important;
+    border: 1.5px solid #eee !important;
+
+    .ant-select-selection-item {
+      line-height: 45px !important;
+      font-size: 1.1em;
+    }
+  }
+
+  &:hover .ant-select-selector {
+    border-color: #ffd700 !important;
+  }
+
+  &.ant-select-focused .ant-select-selector {
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 0 2px rgba(255, 215, 0, 0.2) !important;
+  }
+`;
+
 const InvoiceHeaderId = styled.div`
-  @media (max-width: 680px) {
+  @media (max-width: 1600px) {
     display: none;
   }
 `;
 
-const InvoiceFilter = styled.select`
-  font-size: 1em;
-  opacity: 0.7;
-  border: none;
-  user-select: none;
-  outline: none;
-  background: transparent;
-  appearance: none; /* Removes the default browser styles */
-  -webkit-appearance: none; /* Safari/WebKit specific */
-  -moz-appearance: none; /* Firefox specific */
-  padding: 0; /* Ensure no extra padding */
-  margin: 0; /* Ensure no extra margin */
-  box-shadow: none; /* Removes any shadow effects from the browser */
-  option {
-    color: grey; /* Default option text color */
-    background-color: #fff; /* Background of options */
-    font-weight: semi-bold;
-  }
-  padding: 2px 5px;
-`;
 const InvoiceListComponent = ({
   invoiceItems,
   selectedInvoice,
@@ -88,8 +168,8 @@ const InvoiceListComponent = ({
   const itemsPerPage = isMobile ? 3 : 10;
 
   // Filter and sort states
-  const [sortDate, setSortDate] = useState("asc"); // "asc" or "desc"
-  const [sortTotal, setSortTotal] = useState("asc"); // "asc" or "desc" or ""
+  const [sortDate, setSortDate] = useState("desc"); // "asc" or "desc"
+  const [sortTotal, setSortTotal] = useState(""); // "asc" or "desc" or ""
   const [filterStatus, setFilterStatus] = useState(""); // "paid" or "unpaid"
   const [filterMethod, setFilterMethod] = useState(""); // "cash", "credit", etc.
 
@@ -107,10 +187,10 @@ const InvoiceListComponent = ({
     return invoiceItems.filter((item) => {
       const matchesStatus =
         filterStatus !== ""
-          ? item.status === (filterStatus === "paid" ? 1 : 0)
+          ? item.paymentStatus === filterStatus
           : true;
       const matchesMethod = filterMethod
-        ? item.method === parseInt(filterMethod, 10)
+        ? item.paymentMethod === filterMethod
         : true;
       return matchesStatus && matchesMethod;
     });
@@ -147,67 +227,121 @@ const InvoiceListComponent = ({
   };
 
   return (
-    <div>
-      <h2>Invoices</h2>
-      <InvoiceHeader>
+    <ContentLayout>
+      <HeaderSection>
+        <TitleSection>
+          <div className="icon-wrapper">
+            <FontAwesomeIcon icon={faReceipt} size="xl" />
+          </div>
+          <div className="text-content">
+            <Title>Invoices Management</Title>
+            <Subtitle>Manage your invoices</Subtitle>
+          </div>
+        </TitleSection>
+      </HeaderSection>
+      <InvoiceFilterSection>
         <InvoiceHeaderId>ID</InvoiceHeaderId>
-        <InvoiceHeaderItemLayout>
+        <InvoiceFilterItemLayout>
           Date
-          <InvoiceFilter
+          <StyledSelect
             value={sortDate}
-            onChange={(e) => setSortDate(e.target.value)}
+            onChange={(value) => setSortDate(value)}
           >
-            <option value="asc">ASC</option>
-            <option value="desc">DES</option>
-          </InvoiceFilter>
-        </InvoiceHeaderItemLayout>
-        <InvoiceHeaderItemLayout>
+            <Option value="asc">
+              <Space>Oldest</Space>
+            </Option>
+            <Option value="desc">
+              <Space>Newest</Space>
+            </Option>
+          </StyledSelect>
+        </InvoiceFilterItemLayout>
+        <InvoiceFilterItemLayout>
           <div>Method: </div>
-          <InvoiceFilter
+          <StyledSelect
             className=""
             value={filterMethod}
-            onChange={(e) => setFilterMethod(e.target.value)}
+            onChange={(value) => setFilterMethod(value)}
           >
-            <option value="">All</option>
-            <option value="1" style={{ color: "lime" }}>
-              Cash
-            </option>
-            <option value="2" style={{ color: "blue" }}>
-              Credit
-            </option>
-            <option value="3" style={{ color: "red" }}>
-              Debit
-            </option>
-          </InvoiceFilter>
-        </InvoiceHeaderItemLayout>
-        <InvoiceHeaderItemLayout>
+            <Option value="">
+              <Space>
+                <FontAwesomeIcon icon={faCoins} />
+                All
+              </Space>
+            </Option>
+            <Option value="Cash">
+              <Space style={{ color: "#10b981" }}>
+                <FontAwesomeIcon icon={faMoneyBill} />
+                Cash
+              </Space>
+            </Option>
+            <Option value="Credit Card" >
+              <Space style={{ color: "#6366f1" }}>
+                <FontAwesomeIcon icon={faCreditCard} />
+                Credit
+              </Space>
+            </Option>
+            <Option value="Debit Card" >
+              <Space style={{ color: "#ef4444" }}>
+                <FontAwesomeIcon icon={faCreditCard} />
+                Debit
+              </Space>
+            </Option>
+          </StyledSelect>
+        </InvoiceFilterItemLayout>
+        <InvoiceFilterItemLayout>
           <div>Status: </div>
-          <InvoiceFilter
+          <StyledSelect
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(value) => setFilterStatus(value)}
           >
-            <option value="">All</option>
-            <option value="paid" style={{ color: "lime" }}>
-              Paid
-            </option>
-            <option value="unpaid" style={{ color: "red" }}>
-              Unpaid
-            </option>
-          </InvoiceFilter>
-        </InvoiceHeaderItemLayout>
+            <Option value="">
+              <Space>
+                <CheckCircleOutlined />
+                All Status
+              </Space>
+            </Option>
+            <Option value={true}>
+              <Space>
+                <CheckCircleOutlined style={{ color: " #10b981" }} />
+                Paid
+              </Space>
+            </Option>
+            <Option value={false}>
+              <Space>
+                <CloseCircleOutlined style={{ color: "#ef4444" }} />
+                Unpaid
+              </Space>
+            </Option>
+          </StyledSelect>
+        </InvoiceFilterItemLayout>
 
         <TotalSortingLayout>
           <div style={{ textAlign: "right" }}>Total: </div>
-          <InvoiceFilter
+          <StyledSelect
             value={sortTotal}
-            onChange={(e) => setSortTotal(e.target.value)}
+            onChange={(value) => setSortTotal(value)}
           >
-            <option value="">All</option>
-            <option value="asc">ASC</option>
-            <option value="desc"> DES</option>
-          </InvoiceFilter>
+            <Option value="">
+              <Space>
+                <UnorderedListOutlined />
+                Unsorted
+              </Space>
+            </Option>
+            <Option value="asc">
+              <Space>
+                <SortAscendingOutlined />
+                Low to High
+              </Space>
+            </Option>
+            <Option value="desc">
+              <Space>
+                <SortDescendingOutlined />
+                High to Low
+              </Space>
+            </Option>
+          </StyledSelect>
         </TotalSortingLayout>
-      </InvoiceHeader>
+      </InvoiceFilterSection>
       <InvoiceListContainer>
         {currentItems.map((item) => (
           <InvoiceItemComponent
@@ -224,7 +358,7 @@ const InvoiceListComponent = ({
         currentPage={currentPage}
         onPageChange={handlePageChange}
       />
-    </div>
+    </ContentLayout>
   );
 };
 

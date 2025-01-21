@@ -7,19 +7,27 @@ import PaymentMethodComponent from "../PaymentMethodComponent/PaymentMethodCompo
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
 
 const InvoiceItemContainer = styled.div`
+  border: 1px solid #f0f0f0;
   border-radius: 10px;
   background: white;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   padding: 10px;
   cursor: pointer;
+  transition: all 0.3s ease;
+
   ${(props) =>
-    props.isSelected ? "background-color: gold; color: white;" : ""}
+    props.isSelected &&
+    `background: linear-gradient(45deg, #ffd700, #ffed4a);
+    border-color: #ffd700;
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);`}
   &:hover {
-    background-color:${(props)=>props.isSelected?"gold":"#FFD70080"} ; /* Use camelCase for CSS properties */
-    color: white; /* Optional: adjust text color for contrast */
+    background: ${(props) =>
+      props.isSelected ? "linear-gradient(45deg, #ffd700, #ffed4a)" : "white"};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   }
-  transition: background-color 0.1s;
   align-items: center;
 
   @media (max-width: 1080px) {
@@ -37,8 +45,7 @@ const InvoiceItemContainer = styled.div`
 const InvoiceId = styled.div`
   font-weight: bold;
 `;
-const InvoiceDate = styled.div`
-`;
+const InvoiceDate = styled.div``;
 
 const InvoiceTotal = styled.div`
   font-size: 1.2em;
@@ -55,11 +62,11 @@ const InvoiceItemComponent = ({ item, isSelected, onClick }) => {
   return (
     <InvoiceItemContainer isSelected={isSelected} onClick={onClick}>
       <InvoiceId>{item.id}</InvoiceId>
-      <InvoiceDate>{item.date}</InvoiceDate>
-      <PaymentMethodComponent method={item.method} />
+      <InvoiceDate>{item.created_at}</InvoiceDate>
+      <PaymentMethodComponent method={item.paymentMethod} />
 
-      <PaymentStatusComponent status={item.status} />
-      <InvoiceTotal>{formatCurrency(item.total)}</InvoiceTotal>
+      <PaymentStatusComponent status={item.paymentStatus} />
+      <InvoiceTotal>{formatCurrency(item.totalAmount)}</InvoiceTotal>
     </InvoiceItemContainer>
   );
 };
