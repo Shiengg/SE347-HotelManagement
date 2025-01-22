@@ -60,9 +60,9 @@ const HeaderWrapper = styled.div`
 
 const MainContent = styled.div`
   flex: 1;
-  padding: 10px;
+  padding: 20px;
 
-  @media (max-width: 680px) {
+  @media (max-width: 1080px) {
     padding: 5px;
   }
 `;

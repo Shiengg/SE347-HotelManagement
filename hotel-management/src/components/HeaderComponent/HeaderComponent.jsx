@@ -3,6 +3,7 @@ import { WrapperHeader } from "./style";
 
 import SearchComponent from "../SearchComponent/SearchComponent";
 import { useAuth } from "../../contexts/AuthContext";
+import ProfileComponent from "../ProfileComponent/ProfileComponent";
 
 const HeaderComponent = () => {
   const { currentUser, logout } = useAuth();
@@ -28,6 +29,8 @@ const HeaderComponent = () => {
   return (
     <WrapperHeader>
       <SearchComponent />
+
+      <ProfileComponent/>
     </WrapperHeader>
   );
 };
