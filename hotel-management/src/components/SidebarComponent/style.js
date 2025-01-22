@@ -95,7 +95,9 @@ export const MenuItem = styled.div`
       background-color: ${(props) => props.color}; /* Màu nền khi hover */
       border-radius: 0px 10px 10px 0px;
       color: white; /* Màu chữ khi hover */
+      transform-origin:left;
       transform: scale(1.05); /* Phóng to item khi hover */
+      
     }
 
     &.active {

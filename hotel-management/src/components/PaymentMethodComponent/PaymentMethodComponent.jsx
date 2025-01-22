@@ -10,6 +10,10 @@ const PaymentMethodContainer = styled.div`
   font-weight: 500;
   width:fit-content;
 
+  @media (max-width: 1080px) {
+    font-size: 0.8em;
+  }
+
   &.Cash {
     color: #10b981;
     background: #d1fae5;
@@ -32,9 +36,9 @@ const PaymentMethodComponent = ({ method }) => {
     switch (method) {
       case "Cash":
         return "Cash";
-      case "Credit Card":
+      case "CreditCard":
         return "Credit";
-      case "Debit Card":
+      case "DebitCard":
         return "Debit";
       default:
         return "Unknown";

@@ -1,10 +1,20 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMoneyBill, faCreditCard } from "@fortawesome/free-solid-svg-icons";
-import { formatCurrency } from "../../utils/format/format";
+import { formatCurrency, formatDate } from "../../utils/format/format";
 import PaymentMethodComponent from "../PaymentMethodComponent/PaymentMethodComponent";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
+
+// Pulse animation
+const pulse = keyframes`
+  0%, 100% {
+    background-color: #e0e0e0;
+  }
+  50% {
+    background-color: #f5f5f5;
+  }
+`;
 
 const InvoiceItemContainer = styled.div`
   border: 1px solid #f0f0f0;
@@ -12,6 +22,7 @@ const InvoiceItemContainer = styled.div`
   background: white;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  gap: 5px;
   padding: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -41,11 +52,27 @@ const InvoiceItemContainer = styled.div`
     }
   }
 `;
+const Placeholder = styled.div`
+  height: 20px;
+  border-radius: 5px;
+  animation: ${pulse} 1.5s infinite;
+  ${(props) => props.width && `width: ${props.width};`}
+`;
 
 const InvoiceId = styled.div`
+  color:navy;
   font-weight: bold;
+  font-size: 0.9em;
+  word-break: break-all;
+  @media (max-width: 1080px) {
+    font-size: 0.8em;
+  }
 `;
-const InvoiceDate = styled.div``;
+const InvoiceDate = styled.div`
+  @media (max-width: 1080px) {
+    font-size: 0.8em;
+  }
+`;
 
 const InvoiceTotal = styled.div`
   font-size: 1.2em;
@@ -54,15 +81,39 @@ const InvoiceTotal = styled.div`
 
   @media (max-width: 1080px) {
     grid-column: span 2;
-    font-size: 1.5em;
+    font-size: 1.2em;
   }
 `;
 
-const InvoiceItemComponent = ({ item, isSelected, onClick }) => {
-  return (
+const TotalAmountPlaceholder = styled.div`
+  height: 20px;
+  border-radius: 5px;
+  animation: ${pulse} 1.5s infinite;
+  width:200px;
+  margin-left:auto;
+  @media (max-width: 1080px) {
+    grid-column: span 2;
+  }
+`;
+
+const InvoiceItemComponent = ({
+  isLoading = false,
+  item,
+  isSelected,
+  onClick,
+}) => {
+  return isLoading ? (
+    <InvoiceItemContainer isSelected={false} onClick={() => {}}>
+      <Placeholder width="100px" />
+      <Placeholder width="150px" />
+      <Placeholder width="80px" />
+      <Placeholder width="80px" />
+      <TotalAmountPlaceholder />
+    </InvoiceItemContainer>
+  ) : (
     <InvoiceItemContainer isSelected={isSelected} onClick={onClick}>
-      <InvoiceId>{item.id}</InvoiceId>
-      <InvoiceDate>{item.created_at}</InvoiceDate>
+      <InvoiceId>{item._id}</InvoiceId>
+      <InvoiceDate>{formatDate(item.createdAt)}</InvoiceDate>
       <PaymentMethodComponent method={item.paymentMethod} />
 
       <PaymentStatusComponent status={item.paymentStatus} />

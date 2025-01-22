@@ -6,10 +6,13 @@ export const WrapperHeader = styled.div`
   align-items: center;
   justify-content:end;
 
+  gap: 10px;
+  width: 100%;
+
   z-index: 100;
 
 
-  padding: 5px 10px;
+  padding:10px;
 
   background: #ffcc0080;
 

@@ -1,16 +1,19 @@
 import {
   faBed,
+  faBusinessTime,
   faCreditCard,
   faMoneyBill,
   faReceipt,
   faSprayCan,
+  faUser,
+  faUserTie,
   faUtensils,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components";
 import PaymentMethodComponent from "../PaymentMethodComponent/PaymentMethodComponent";
-import { formatCurrency } from "../../utils/format/format";
+import { formatCurrency, formatDate } from "../../utils/format/format";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
 import { use } from "react";
 
@@ -53,13 +56,13 @@ const ServiceItem = styled.div`
   align-items: center;
   color: white;
 
-  &.service-1 {
+  &.FoodandDrinks {
     background: linear-gradient(45deg, #ff7f50, #ff4500); /* Orange gradient */
   }
-  &.service-2 {
+  &.Cleaning {
     background: linear-gradient(45deg, #d3d3d3, #a9a9a9); /* Gray gradient */
   }
-  &.service-3 {
+  &.RoomReservation {
     background: linear-gradient(45deg, #32cd32, #228b22); /* Green gradient */
   }
 `;
@@ -72,11 +75,12 @@ const InvoiceDetailLayout = styled.div`
 `;
 
 const InvoiceId = styled.div`
+  word-break: break-all;
   font-weight: bold;
-  font-size: 1.5em;
-
-  @media (max-width: 680px) {
-    font-size: 1.2em;
+  font-size: 1.3em;
+  color: navy;
+  @media (max-width: 1080px) {
+    font-size: 1em;
   }
 `;
 
@@ -88,10 +92,10 @@ const InvoiceDate = styled.div`
   border-radius: 10px;
   opacity: 0.7;
   font-size: 1.1em;
+  @media (max-width: 1080px) {
+    font-size: 1em;
+  }
 `;
-
-const InvoiceCustomer = styled.div``;
-const InvoiceReceptionist = styled.div``;
 
 const ServiceName = styled.div`
   text-align: left;
@@ -111,7 +115,7 @@ const ServiceCost = styled.div`
   font-weight: semi-bold;
 `;
 const ServiceQuantity = styled.div`
-  font-size: 0.8em;
+  font-size: 1em;
   font-weight: semi-bold;
   opacity: 0.7;
 `;
@@ -164,6 +168,33 @@ const InvoiceTotalContainer = styled.div`
   border-radius: 10px;
   color: white;
 `;
+
+const InvoiceReceptionist = styled.div`
+  text-transform: uppercase; /* Convert text to uppercase */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  padding: 10px;
+  border-radius: 10px;
+  opacity: 0.7;
+  font-size: 1.1em;
+`;
+const InvoiceCustomer = styled.div`
+  text-transform: uppercase; /* Convert text to uppercase */
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  padding: 10px;
+  border-radius: 10px;
+  opacity: 0.7;
+  font-size: 1.1em;
+`;
 const InvoiceDetailComponent = ({ selectedInvoice }) => {
   const scrollRef = useRef(null);
 
@@ -172,35 +203,52 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
       scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [selectedInvoice]);
+  if (!selectedInvoice) return null;
   return (
     <InvoiceDetailLayout ref={scrollRef}>
       <Header>
         <IconWrapper>
           <FontAwesomeIcon icon={faReceipt} size="xl" />
         </IconWrapper>
-        <InvoiceId>Invoice:{selectedInvoice.id}</InvoiceId>
+        <InvoiceId>
+          {" "}
+          <span style={{ "fontSize": "1.2em" }}>ID:</span>{" "}
+          {selectedInvoice?._id}
+        </InvoiceId>
       </Header>
-      <InvoiceDate>Date: {selectedInvoice.created_at}</InvoiceDate>
-      <InvoiceCustomer></InvoiceCustomer>
-      <InvoiceReceptionist></InvoiceReceptionist>
+
+      <InvoiceDate>Date: {formatDate(selectedInvoice?.createdAt)}</InvoiceDate>
+      <InvoiceReceptionist>
+        <FontAwesomeIcon icon={faUserTie} size="xl" />
+        {selectedInvoice?.bookingID.receptionistID.fullname}
+      </InvoiceReceptionist>
+      <InvoiceCustomer>
+        <FontAwesomeIcon icon={faUser} size="xl" />
+        {selectedInvoice?.bookingID.customerID.fullname}
+      </InvoiceCustomer>
       <ServiceListContainer>
-        {selectedInvoice.services.map((service) => (
-          <ServiceItem key={service.id} className={`service-${service.id}`}>
-            <ServiceIcon serviceId={service.id}>
+        {selectedInvoice?.bookingID?.services?.map((service) => (
+          <ServiceItem
+            key={service.serviceID._id}
+            className={`${service.serviceID.serviceName.replace(/\s+/g, "")}`}
+          >
+            <ServiceIcon>
               <FontAwesomeIcon
                 icon={
-                  service.id === 1
+                  service.serviceID.serviceName === "Food and Drinks"
                     ? faUtensils
-                    : service.id === 2
+                    : service.serviceID.serviceName === "Cleaning"
                     ? faSprayCan
                     : faBed
                 }
                 size="xl"
               />
             </ServiceIcon>
-            <ServiceName>{service.name}</ServiceName>
+            <ServiceName>{service.serviceID.serviceName}</ServiceName>
             <ServiceCostLayout>
-              <ServiceCost>{formatCurrency(service.price)}</ServiceCost>
+              <ServiceCost>
+                {formatCurrency(service.serviceID.servicePrice)}
+              </ServiceCost>
               <ServiceQuantity>x{service.quantity}</ServiceQuantity>
             </ServiceCostLayout>
           </ServiceItem>
@@ -208,16 +256,16 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
       </ServiceListContainer>
       <PaymentMethodLayout>
         Payment method:{" "}
-        <PaymentMethodComponent method={selectedInvoice.paymentMethod} />
+        <PaymentMethodComponent method={selectedInvoice?.paymentMethod} />
       </PaymentMethodLayout>
       <PaymentStatusLayout>
         Status:{" "}
-        <PaymentStatusComponent status={selectedInvoice.paymentStatus} />
+        <PaymentStatusComponent status={selectedInvoice?.paymentStatus} />
       </PaymentStatusLayout>
       <Divider />
 
       <InvoiceTotalContainer>
-        <div>Total:</div> {formatCurrency(selectedInvoice.totalAmount)}
+        <div>Total:</div> {formatCurrency(selectedInvoice?.totalAmount)}
       </InvoiceTotalContainer>
     </InvoiceDetailLayout>
   );

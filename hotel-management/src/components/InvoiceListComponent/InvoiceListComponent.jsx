@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import InvoiceItemComponent from "../InvoiceItemComponent/InvoiceItemComponent";
 import styled from "styled-components";
 import Pagination from "../PaginationComponent/PaginationComponent";
@@ -13,8 +13,9 @@ import {
   faCreditCard,
   faMoneyBill,
   faReceipt,
+  faSearch,
 } from "@fortawesome/free-solid-svg-icons";
-import { Select, Space } from "antd";
+import { Input, Select, Space } from "antd";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
 import {
   CheckCircleOutlined,
@@ -35,6 +36,17 @@ const HeaderSection = styled.div`
   background: linear-gradient(to right, #ffffff, #f8f9fa);
   border-radius: 12px;
   padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
+`;
+
+const SearchSection = styled.div`
+  background: linear-gradient(to right, #ffffff, #f8f9fa);
+  border-radius: 30px;
+  padding: 5px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -72,7 +84,7 @@ const Title = styled.h2`
   font-weight: 600;
 
   @media (max-width: 680px) {
-    font-size:1.3em;
+    font-size: 1.3em;
   }
 `;
 
@@ -93,7 +105,7 @@ const InvoiceListContainer = styled.div`
 `;
 
 const InvoiceFilterSection = styled.div`
-  font-size: 1.1em;
+  font-size: 1.2em;
   display: grid;
   align-items: center;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
@@ -109,6 +121,9 @@ const InvoiceFilterSection = styled.div`
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+  }
+  @media (max-width: 680px) {
+    font-size: 0.8em;
   }
 `;
 
@@ -138,7 +153,10 @@ const StyledSelect = styled(Select)`
 
     .ant-select-selection-item {
       line-height: 45px !important;
-      font-size: 1.1em;
+      font-size: 1.2em;
+      @media (max-width: 680px) {
+        font-size: 1em;
+      }
     }
   }
 
@@ -158,20 +176,102 @@ const InvoiceHeaderId = styled.div`
   }
 `;
 
+const SearchWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  border-radius: 40px;
+  padding: 5px 7px;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: 1.2em;
+  background: linear-gradient(
+    135deg,
+    #ffcc00,
+    #ff9900
+  ); /* Gold to Orange gradient */
+`;
+
+const SearchButton = styled.button`
+  background: black;
+  cursor: pointer;
+  border-radius: 50%;
+  aspect-ratio: 1/1;
+  height: 42px;
+  color: white;
+  font-size: 1em;
+
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @media (max-width: 680px) {
+    height: 32px;
+  }
+`;
+
+export const SearchBox = styled.input`
+  font-size: 0.8em;
+  padding: 0px 5px;
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+`;
 const InvoiceListComponent = ({
-  invoiceItems,
+  invoiceItems = [],
   selectedInvoice,
   handleSelect,
+  handlePagination,
+  handleSearchInvoice,
 }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalInvoices, setTotalInvoices] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const itemsPerPage = isMobile ? 3 : 10;
+  const itemsPerPage = isMobile ? 5 : 10;
 
   // Filter and sort states
   const [sortDate, setSortDate] = useState("desc"); // "asc" or "desc"
-  const [sortTotal, setSortTotal] = useState(""); // "asc" or "desc" or ""
-  const [filterStatus, setFilterStatus] = useState(""); // "paid" or "unpaid"
-  const [filterMethod, setFilterMethod] = useState(""); // "cash", "credit", etc.
+  const [sortTotal, setSortTotal] = useState("all"); // "asc" or "desc" or "all"
+  const [filterStatus, setFilterStatus] = useState("all"); // true or false or "all"
+  const [filterMethod, setFilterMethod] = useState("all"); // "cash", "credit", etc.
+
+  const searchRef = useRef("");
+
+  const handleKeyDown = (event) => {
+    // Disable space key
+    if (event.key === " ") {
+      event.preventDefault();
+    }
+
+    // Detect when Enter key is pressed
+    if (event.key === "Enter") {
+      handleSearchInvoice(searchRef.current.value);
+    }
+  };
+  const fetchInvoices = () => {
+    setIsLoading(true);
+    handlePagination(
+      currentPage,
+      itemsPerPage,
+      sortDate,
+      filterMethod,
+      filterStatus,
+      sortTotal
+    ).then((data) => {
+      setTotalInvoices(data?.totalInvoices);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    });
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -182,43 +282,13 @@ const InvoiceListComponent = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  // Filtered items
-  const filteredItems = useMemo(() => {
-    return invoiceItems.filter((item) => {
-      const matchesStatus =
-        filterStatus !== ""
-          ? item.paymentStatus === filterStatus
-          : true;
-      const matchesMethod = filterMethod
-        ? item.paymentMethod === filterMethod
-        : true;
-      return matchesStatus && matchesMethod;
-    });
-  }, [invoiceItems, filterStatus, filterMethod]);
 
-  // Apply sorting
-  const sortedItems = useMemo(() => {
-    let items = [...filteredItems];
-    if (sortDate) {
-      items.sort((a, b) =>
-        sortDate === "asc"
-          ? new Date(a.date) - new Date(b.date)
-          : new Date(b.date) - new Date(a.date)
-      );
-    }
-    if (sortTotal !== "") {
-      items.sort((a, b) =>
-        sortTotal === "asc" ? a.total - b.total : b.total - a.total
-      );
-    }
-    return items;
-  }, [filteredItems, sortDate, sortTotal]);
+  useEffect(() => {
+    fetchInvoices();
+  }, [sortDate, sortTotal, filterMethod, filterStatus, currentPage]);
 
   // Pagination logic
-  const totalPages = Math.ceil(sortedItems.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = sortedItems.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(totalInvoices / itemsPerPage);
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -239,6 +309,7 @@ const InvoiceListComponent = ({
           </div>
         </TitleSection>
       </HeaderSection>
+
       <InvoiceFilterSection>
         <InvoiceHeaderId>ID</InvoiceHeaderId>
         <InvoiceFilterItemLayout>
@@ -262,7 +333,7 @@ const InvoiceListComponent = ({
             value={filterMethod}
             onChange={(value) => setFilterMethod(value)}
           >
-            <Option value="">
+            <Option value="all">
               <Space>
                 <FontAwesomeIcon icon={faCoins} />
                 All
@@ -274,13 +345,13 @@ const InvoiceListComponent = ({
                 Cash
               </Space>
             </Option>
-            <Option value="Credit Card" >
+            <Option value="CreditCard">
               <Space style={{ color: "#6366f1" }}>
                 <FontAwesomeIcon icon={faCreditCard} />
                 Credit
               </Space>
             </Option>
-            <Option value="Debit Card" >
+            <Option value="DebitCard">
               <Space style={{ color: "#ef4444" }}>
                 <FontAwesomeIcon icon={faCreditCard} />
                 Debit
@@ -294,7 +365,7 @@ const InvoiceListComponent = ({
             value={filterStatus}
             onChange={(value) => setFilterStatus(value)}
           >
-            <Option value="">
+            <Option value="all">
               <Space>
                 <CheckCircleOutlined />
                 All Status
@@ -321,7 +392,7 @@ const InvoiceListComponent = ({
             value={sortTotal}
             onChange={(value) => setSortTotal(value)}
           >
-            <Option value="">
+            <Option value="all">
               <Space>
                 <UnorderedListOutlined />
                 Unsorted
@@ -342,18 +413,39 @@ const InvoiceListComponent = ({
           </StyledSelect>
         </TotalSortingLayout>
       </InvoiceFilterSection>
-      <InvoiceListContainer>
-        {currentItems.map((item) => (
-          <InvoiceItemComponent
-            key={item.id}
-            item={item}
-            isSelected={item.id === selectedInvoice?.id}
-            onClick={() => handleSelect(item)}
+
+      <SearchSection>
+        <SearchWrapper>
+          <SearchBox
+            ref={searchRef}
+            placeholder="Invoice id"
+            onKeyDown={handleKeyDown}
           />
-        ))}
+          <SearchButton
+            onClick={() => {
+              handleSearchInvoice(searchRef.current.value);
+            }}
+          >
+            <FontAwesomeIcon icon={faSearch} />
+          </SearchButton>
+        </SearchWrapper>
+      </SearchSection>
+      <InvoiceListContainer>
+        {isLoading
+          ? Array.from({ length: itemsPerPage }).map((_, i) => (
+              <InvoiceItemComponent key={i} isLoading={true} />
+            ))
+          : invoiceItems.map((item) => (
+              <InvoiceItemComponent
+                key={item._id}
+                item={item}
+                isSelected={item._id === selectedInvoice?._id}
+                onClick={() => handleSelect(item)}
+              />
+            ))}
       </InvoiceListContainer>
       <Pagination
-        totalItems={sortedItems.length}
+        totalItems={totalInvoices}
         itemsPerPage={itemsPerPage}
         currentPage={currentPage}
         onPageChange={handlePageChange}

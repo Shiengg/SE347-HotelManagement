@@ -6,6 +6,9 @@ const PaymentStatus = styled.div`
   font-weight: semibold;
   width: fit-content;
   height: fit-content;
+  @media (max-width: 1080px) {
+    font-size: 0.8em;
+  }
 
   &.Paid {
     color: #10b981;
