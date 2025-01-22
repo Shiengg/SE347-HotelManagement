@@ -4,7 +4,7 @@ const Booking = require("./Booking");
 const invoiceSchema = new mongoose.Schema(
   {
     bookingID: {
-      type: Types.ObjectId, // Use ObjectId to reference another document
+      type: mongoose.Types.ObjectId, // Use ObjectId to reference another document
       ref: Booking, // Reference the Booking collection
       required: true,
       unique: true,

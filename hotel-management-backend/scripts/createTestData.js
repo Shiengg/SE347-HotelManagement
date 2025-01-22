@@ -48,6 +48,14 @@ const createTestData = async () => {
         fullname: 'Customer User',
         phonenumber: '0123456787',
         role_id: roles[2]._id // customer role
+      },
+      {
+        username: 'customer2',
+        password: 'customer123',
+        email: 'customer2@example.com',
+        fullname: 'Customer User 2',
+        phonenumber: '0987654321',
+        role_id: roles[2]._id // customer role
       }
     ];
 
