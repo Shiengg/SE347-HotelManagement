@@ -66,7 +66,7 @@ exports.getInvoiceById = async (req, res) => {
     // Check if the ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
       // Respond with an empty JSON object if the ID is invalid
-      return res.status(200).json({});
+      return res.status(200).json(null);
     }
 
     // Find the user by ID to check their role
@@ -76,50 +76,50 @@ exports.getInvoiceById = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    let invoice;
+
     // Check if the user has the 'admin' or 'receptionist' role or if it's a 'customer'
     let query = {};
     if (
       user.role_id.role_name === "admin" ||
       user.role_id.role_name === "receptionist"
     ) {
-      // If the user is an admin or receptionist, they can access any invoice
-      query._id = id;
+       // Admin or receptionist can access any invoice
+      invoice = await Invoice.findById(id).populate({
+        path: "bookingID",
+        populate: [
+          { path: "customerID" },
+          { path: "receptionistID" },
+          { path: "services.serviceID" },
+        ],
+      });
     } else if (user.role_id.role_name === "customer") {
       // If the user is a customer, they can only access their own invoice
       const bookings = await Booking.find({
         customerID: user._id, // Ensure the invoice belongs to the logged-in customer
       }).select("_id");
 
-      if (!bookings) {
-        return res.status(200).json({});
+      if (!bookings || bookings.length === 0) {
+        return res.status(200).json(null); // No bookings found for this customer
       }
 
-      const customerInvoice = await Invoice.findOne({
+      invoice = await Invoice.findOne({
         _id: id,
         bookingID: { $in: bookings.map((bk) => bk._id) },
       }).populate({
         path: "bookingID",
-        match: { customerID: user._id }, // Ensure the booking matches the user
+        match: { customerID: user._id },
         populate: [
-          { path: "customerID" }, // Populate customerID
-          { path: "receptionistID" }, // Populate receptionistID
-          { path: "services.serviceID" }, // Populate serviceID inside services array
+          { path: "customerID" },
+          { path: "receptionistID" },
+          { path: "services.serviceID" },
         ],
       });
-      res.status(200).json(customerInvoice);
     } else {
       return res.status(403).json({ message: "Unauthorized role" });
     }
 
-    // Find the invoice by ID and populate the relevant data
-    const invoice = await Invoice.findById(id).populate({
-      path: "bookingID",
-      populate: [
-        { path: "customerID" }, // Populate customerID
-        { path: "receptionistID" }, // Populate receptionistID
-        { path: "services.serviceID" }, // Populate serviceID inside services array
-      ],
-    });
+
 
     // Return the invoice with status 200
     res.status(200).json(invoice);
