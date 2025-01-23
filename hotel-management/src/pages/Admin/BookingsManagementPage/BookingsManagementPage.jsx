@@ -291,14 +291,8 @@ const BookingsManagementPage = () => {
 
   const handleSubmit = async (values) => {
     try {
-      const url = editingBooking 
-        ? `http://localhost:5000/api/bookings/${editingBooking._id}`
-        : 'http://localhost:5000/api/bookings';
-      
-      const method = editingBooking ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -306,13 +300,14 @@ const BookingsManagementPage = () => {
         body: JSON.stringify(values)
       });
 
+      const data = await response.json();
       if (response.ok) {
-        message.success(`Booking ${editingBooking ? 'updated' : 'created'} successfully`);
+        message.success('Booking created successfully');
+        message.info(`Invoice #${data.invoice._id} has been created`);
         setIsFormVisible(false);
-        setEditingBooking(null);
         fetchBookings();
       } else {
-        throw new Error('Failed to save booking');
+        throw new Error(data.message || 'Failed to create booking');
       }
     } catch (error) {
       message.error(error.message);

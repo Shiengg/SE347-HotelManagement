@@ -1,6 +1,7 @@
 const Booking = require('../models/Booking');
 const Service = require('../models/Service');
 const Room = require('../models/Rooms');
+const Invoice = require('../models/Invoice');
 const mongoose = require('mongoose');
 
 // Export các hàm controller
@@ -18,6 +19,9 @@ exports.getAllBookings = async (req, res) => {
 };
 
 exports.createBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const {
       customerID,
@@ -88,13 +92,14 @@ exports.createBooking = async (req, res) => {
 
     const room = await Room.findById(roomID);
     if (!room) {
-      return res.status(400).json({ message: 'Room not found' });
+      throw new Error('Room not found');
     }
 
     const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
     const roomPrice = room.price * days;
     const totalPrice = roomPrice + totalServicePrice;
 
+    // Tạo booking
     const booking = new Booking({
       customerID,
       receptionistID,
@@ -106,20 +111,48 @@ exports.createBooking = async (req, res) => {
       totalPrice
     });
 
-    const newBooking = await booking.save();
+    const newBooking = await booking.save({ session });
+
+    // Tự động tạo invoice cho booking
+    const invoice = new Invoice({
+      bookingID: newBooking._id,
+      totalAmount: totalPrice,
+      paymentMethod: 'Cash', // Mặc định
+      paymentStatus: false, // Chưa thanh toán
+      paymentDate: new Date()
+    });
+
+    await invoice.save({ session });
+
+    // Cập nhật trạng thái phòng thành Reserved
+    await Room.findByIdAndUpdate(
+      roomID,
+      { status: 'Reserved' },
+      { session }
+    );
+
+    await session.commitTransaction();
+
     const populatedBooking = await Booking.findById(newBooking._id)
       .populate('customerID', 'name email phone')
       .populate('receptionistID', 'name')
       .populate('roomID', 'roomNumber roomType')
       .populate('services.serviceID', 'serviceName servicePrice');
 
-    res.status(201).json(populatedBooking);
+    res.status(201).json({
+      booking: populatedBooking,
+      invoice: invoice
+    });
+
   } catch (error) {
+    await session.abortTransaction();
     console.error('Create booking error:', error);
     res.status(400).json({ 
       message: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  } finally {
+    session.endSession();
   }
 };
 
