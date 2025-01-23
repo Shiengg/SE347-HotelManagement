@@ -31,7 +31,7 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
     fetchRooms();
     fetchCustomers();
     fetchServices();
-  }, []);
+  }, [booking]);
 
   useEffect(() => {
     if (booking) {
@@ -64,8 +64,16 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
         }
       });
       const data = await response.json();
-      const availableRooms = data.filter(room => room.status === 'Available');
-      setRooms(availableRooms);
+      if (booking) {
+        const currentRoom = data.find(room => room._id === booking.roomID._id);
+        const availableRooms = data.filter(room => 
+          room.status === 'Available' || (currentRoom && room._id === currentRoom._id)
+        );
+        setRooms(availableRooms);
+      } else {
+        const availableRooms = data.filter(room => room.status === 'Available');
+        setRooms(availableRooms);
+      }
     } catch (error) {
       message.error('Failed to fetch rooms');
     }
@@ -179,7 +187,7 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
           <Select placeholder="Select customer">
             {customers.map(customer => (
               <Option key={customer._id} value={customer._id}>
-                {customer.name} ({customer.email})
+                {customer.name} {customer.fullname}
               </Option>
             ))}
           </Select>
