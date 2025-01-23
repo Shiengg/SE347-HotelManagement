@@ -662,6 +662,15 @@ const RoomsManagementPage = () => {
   // Handle form submit
   const handleSubmit = async (values) => {
     try {
+      // Nếu đang edit và thay đổi status
+      if (selectedRoom && values.status !== selectedRoom.status) {
+        const hasBookings = await checkRoomHasBookings(selectedRoom._id);
+        if (hasBookings) {
+          message.error('Cannot change room status. Room has active bookings.');
+          return;
+        }
+      }
+
       const url = selectedRoom 
         ? `http://localhost:5000/api/rooms/${selectedRoom._id}`
         : 'http://localhost:5000/api/rooms';
@@ -677,13 +686,14 @@ const RoomsManagementPage = () => {
         body: JSON.stringify(values)
       });
 
+      const data = await response.json();
       if (response.ok) {
         message.success(`Room ${selectedRoom ? 'updated' : 'created'} successfully`);
         form.resetFields();
         setIsEditing(false);
         fetchRooms();
       } else {
-        throw new Error('Failed to save room');
+        throw new Error(data.message || 'Failed to save room');
       }
     } catch (error) {
       message.error(error.message);
@@ -757,6 +767,22 @@ const RoomsManagementPage = () => {
   // Thêm hàm format tiền VND
   const formatVND = (price) => {
     return `${price.toLocaleString('vi-VN')}đ`;
+  };
+
+  // Thêm kiểm tra phòng có đang được booking không
+  const checkRoomHasBookings = async (roomId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}/bookings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.hasActiveBookings;
+    } catch (error) {
+      console.error('Error checking room bookings:', error);
+      return false;
+    }
   };
 
   return (
@@ -1024,34 +1050,17 @@ const RoomsManagementPage = () => {
                   <div className="section-title">Room Status & Details</div>
                   <Form.Item
                     name="status"
-                    label="Current Status"
+                    label="Status"
                     rules={[{ required: true, message: 'Please select status!' }]}
                   >
-                    <StyledSelect placeholder="Select room status">
-                      <Option value="Available">
-                        <Space>
-                          <span style={{ color: '#10b981' }}>●</span>
-                          Available
-                        </Space>
-                      </Option>
-                      <Option value="Occupied">
-                        <Space>
-                          <span style={{ color: '#ef4444' }}>●</span>
-                          Occupied
-                        </Space>
-                      </Option>
-                      <Option value="Maintenance">
-                        <Space>
-                          <span style={{ color: '#f59e0b' }}>●</span>
-                          Maintenance
-                        </Space>
-                      </Option>
-                      <Option value="Reserved">
-                        <Space>
-                          <span style={{ color: '#6366f1' }}>●</span>
-                          Reserved
-                        </Space>
-                      </Option>
+                    <StyledSelect 
+                      placeholder="Select status"
+                      disabled={selectedRoom?.status === 'Reserved' || selectedRoom?.status === 'Occupied'}
+                    >
+                      <Option value="Available">Available</Option>
+                      <Option value="Maintenance">Maintenance</Option>
+                      {!selectedRoom && <Option value="Reserved">Reserved</Option>}
+                      {!selectedRoom && <Option value="Occupied">Occupied</Option>}
                     </StyledSelect>
                   </Form.Item>
 
