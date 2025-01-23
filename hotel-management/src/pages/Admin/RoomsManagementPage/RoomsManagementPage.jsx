@@ -754,6 +754,11 @@ const RoomsManagementPage = () => {
     return sortPrice === 'asc' ? a.price - b.price : b.price - a.price;
   });
 
+  // Thêm hàm format tiền VND
+  const formatVND = (price) => {
+    return `${price.toLocaleString('vi-VN')}đ`;
+  };
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -912,16 +917,16 @@ const RoomsManagementPage = () => {
             Type
           </div>
           <div className="header-item">
+            <i className="fas fa-tag icon"></i>
+            Price
+          </div>
+          <div className="header-item">
             <CheckCircleOutlined className="icon" />
             Status
           </div>
           <div className="header-item">
             <i className="fas fa-user icon"></i>
             Occupancy
-          </div>
-          <div className="header-item">
-            <i className="fas fa-tag icon"></i>
-            Price
           </div>
         </RoomHeader>
 
@@ -934,12 +939,12 @@ const RoomsManagementPage = () => {
             >
               <div className="room-number">Room {room.roomNumber}</div>
               <div className="room-type">{room.roomType}</div>
+              <div className="price">{formatVND(room.price)}</div>
               <div className="status">{getStatusTag(room.status)}</div>
               <div className="occupancy">
                 <i className="fas fa-user icon" />
                 {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
               </div>
-              <div className="price">${room.price.toLocaleString()}</div>
             </RoomItem>
           ))}
         </RoomListContainer>
@@ -988,15 +993,17 @@ const RoomsManagementPage = () => {
                   <div className="section-title">Capacity & Pricing</div>
                   <Form.Item
                     name="price"
-                    label="Price"
-                    rules={[{ required: true, message: 'Please input price!' }]}
+                    label="Price per day"
+                    rules={[
+                      { required: true, message: 'Please input room price' },
+                      { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                    ]}
                   >
-                    <PriceInput
-                      formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                      min={0}
+                    <InputNumber
                       style={{ width: '100%' }}
-                      placeholder="Enter price"
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND/day"
                     />
                   </Form.Item>
 
@@ -1101,7 +1108,7 @@ const RoomsManagementPage = () => {
                 <DetailItem>
                   <div className="label">Price</div>
                   <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                    ${selectedRoom.price.toLocaleString()}
+                    {formatVND(selectedRoom.price)}
                   </div>
                 </DetailItem>
 
@@ -1183,15 +1190,17 @@ const RoomsManagementPage = () => {
                 <div className="section-title">Capacity & Pricing</div>
                 <Form.Item
                   name="price"
-                  label="Price"
-                  rules={[{ required: true, message: 'Please input price!' }]}
+                  label="Price per day"
+                  rules={[
+                    { required: true, message: 'Please input room price' },
+                    { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                  ]}
                 >
-                  <PriceInput
-                    formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                    min={0}
+                  <InputNumber
                     style={{ width: '100%' }}
-                    placeholder="Enter price"
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    addonAfter="VND/day"
                   />
                 </Form.Item>
 

@@ -18,6 +18,29 @@ exports.getAllBookings = async (req, res) => {
   }
 };
 
+// Thêm hàm helper để xử lý trạng thái phòng
+const updateRoomStatus = async (roomId, bookingStatus, session) => {
+  let roomStatus;
+  switch (bookingStatus) {
+    case 'Pending':
+      roomStatus = 'Reserved';
+      break;
+    case 'Confirmed':
+      roomStatus = 'Occupied';
+      break;
+    case 'Cancelled':
+    default:
+      roomStatus = 'Available';
+      break;
+  }
+
+  await Room.findByIdAndUpdate(
+    roomId,
+    { status: roomStatus },
+    { session }
+  );
+};
+
 exports.createBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -126,12 +149,8 @@ exports.createBooking = async (req, res) => {
       await invoice.save({ session });
     }
 
-    // Cập nhật trạng thái phòng
-    await Room.findByIdAndUpdate(
-      roomID,
-      { status: 'Reserved' },
-      { session }
-    );
+    // Cập nhật trạng thái phòng dựa theo status của booking
+    await updateRoomStatus(roomID, status || 'Pending', session);
 
     await session.commitTransaction();
 
@@ -186,18 +205,16 @@ exports.updateBooking = async (req, res) => {
       throw new Error('Booking not found');
     }
 
-    // Cập nhật booking như bình thường
+    // Cập nhật booking
     const updatedBooking = await Booking.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true, session }
     );
 
-    // Xử lý invoice dựa trên thay đổi status
+    // Xử lý invoice khi chuyển sang Confirmed
     let invoice = await Invoice.findOne({ bookingID: updatedBooking._id });
-    
     if (status === 'Confirmed' && oldBooking.status !== 'Confirmed') {
-      // Tạo invoice mới nếu booking được confirm lần đầu
       if (!invoice) {
         invoice = new Invoice({
           bookingID: updatedBooking._id,
@@ -210,12 +227,8 @@ exports.updateBooking = async (req, res) => {
       }
     }
 
-    // Cập nhật trạng thái phòng
-    await Room.findByIdAndUpdate(
-      updatedBooking.roomID,
-      { status: status === 'Cancelled' ? 'Available' : 'Reserved' },
-      { session }
-    );
+    // Cập nhật trạng thái phòng dựa theo status mới của booking
+    await updateRoomStatus(updatedBooking.roomID, status, session);
 
     await session.commitTransaction();
 
@@ -244,7 +257,6 @@ exports.deleteBooking = async (req, res) => {
   session.startTransaction();
 
   try {
-    // Kiểm tra booking có tồn tại không
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
       throw new Error('Booking not found');
@@ -265,12 +277,8 @@ exports.deleteBooking = async (req, res) => {
       }
     }
 
-    // Nếu có thể xóa, cập nhật trạng thái phòng về Available
-    await Room.findByIdAndUpdate(
-      booking.roomID,
-      { status: 'Available' },
-      { session }
-    );
+    // Cập nhật trạng thái phòng về Available
+    await updateRoomStatus(booking.roomID, 'Cancelled', session);
 
     // Xóa booking
     await Booking.findByIdAndDelete(booking._id, { session });
