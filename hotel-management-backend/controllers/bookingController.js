@@ -8,12 +8,29 @@ const mongoose = require('mongoose');
 exports.getAllBookings = async (req, res) => {
   try {
     const bookings = await Booking.find()
-      .populate('customerID', 'name email phone')
-      .populate('receptionistID', 'name')
-      .populate('roomID', 'roomNumber roomType')
-      .populate('services.serviceID', 'name price');
+      .populate({
+        path: 'customerID',
+        select: 'fullname email phone username'
+      })
+      .populate({
+        path: 'receptionistID',
+        select: 'fullname username'
+      })
+      .populate({
+        path: 'roomID',
+        select: 'roomNumber roomType price'
+      })
+      .populate({
+        path: 'services.serviceID',
+        select: 'serviceName servicePrice'
+      });
+
+    // Log để debug
+    console.log('Fetched bookings:', JSON.stringify(bookings, null, 2));
+
     res.json(bookings);
   } catch (error) {
+    console.error('Error fetching bookings:', error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -155,8 +172,8 @@ exports.createBooking = async (req, res) => {
     await session.commitTransaction();
 
     const populatedBooking = await Booking.findById(newBooking._id)
-      .populate('customerID', 'name email phone')
-      .populate('receptionistID', 'name')
+      .populate('customerID', 'fullname email phone')
+      .populate('receptionistID', 'fullname')
       .populate('roomID', 'roomNumber roomType')
       .populate('services.serviceID', 'serviceName servicePrice');
 
@@ -180,10 +197,10 @@ exports.createBooking = async (req, res) => {
 exports.getBookingById = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id)
-      .populate('customerID', 'name email phone')
-      .populate('receptionistID', 'name')
-      .populate('roomID', 'roomNumber roomType')
-      .populate('services.serviceID', 'name price');
+      .populate('customerID', 'fullname email phone')
+      .populate('receptionistID', 'fullname')
+      .populate('roomID', 'roomNumber roomType price')
+      .populate('services.serviceID', 'serviceName servicePrice');
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
@@ -233,8 +250,8 @@ exports.updateBooking = async (req, res) => {
     await session.commitTransaction();
 
     const populatedBooking = await Booking.findById(updatedBooking._id)
-      .populate('customerID', 'name email phone')
-      .populate('receptionistID', 'name')
+      .populate('customerID', 'fullname email phone')
+      .populate('receptionistID', 'fullname')
       .populate('roomID', 'roomNumber roomType')
       .populate('services.serviceID', 'serviceName servicePrice');
 

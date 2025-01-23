@@ -251,8 +251,10 @@ const BookingsManagementPage = () => {
         }
       });
       const data = await response.json();
+      console.log('Fetched bookings data:', data);
       setBookings(data);
     } catch (error) {
+      console.error('Error fetching bookings:', error);
       message.error('Failed to fetch bookings');
     }
     setLoading(false);
@@ -400,7 +402,11 @@ const BookingsManagementPage = () => {
                 <tr key={booking._id}>
                   <td>#{booking._id.slice(-6)}</td>
                   <td>Room {booking.roomID.roomNumber}</td>
-                  <td>{booking.customerID.fullname}</td>
+                  <td>
+                    {booking.customerID?.fullname || 
+                     booking.customerID?.username || 
+                     'N/A'}
+                  </td>
                   <td>{dayjs(booking.checkInDate).format('DD/MM/YYYY')}</td>
                   <td>{dayjs(booking.checkOutDate).format('DD/MM/YYYY')}</td>
                   <td>{formatVND(booking.totalPrice)}</td>
