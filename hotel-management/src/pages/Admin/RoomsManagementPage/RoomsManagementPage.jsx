@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
@@ -635,6 +636,7 @@ const RoomsManagementPage = () => {
   const [filterType, setFilterType] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [sortPrice, setSortPrice] = useState('asc');
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch rooms data
   const fetchRooms = async () => {
@@ -660,6 +662,15 @@ const RoomsManagementPage = () => {
   // Handle form submit
   const handleSubmit = async (values) => {
     try {
+      // Nếu đang edit và thay đổi status
+      if (selectedRoom && values.status !== selectedRoom.status) {
+        const hasBookings = await checkRoomHasBookings(selectedRoom._id);
+        if (hasBookings) {
+          message.error('Cannot change room status. Room has active bookings.');
+          return;
+        }
+      }
+
       const url = selectedRoom 
         ? `http://localhost:5000/api/rooms/${selectedRoom._id}`
         : 'http://localhost:5000/api/rooms';
@@ -675,12 +686,14 @@ const RoomsManagementPage = () => {
         body: JSON.stringify(values)
       });
 
+      const data = await response.json();
       if (response.ok) {
         message.success(`Room ${selectedRoom ? 'updated' : 'created'} successfully`);
         form.resetFields();
+        setIsEditing(false);
         fetchRooms();
       } else {
-        throw new Error('Failed to save room');
+        throw new Error(data.message || 'Failed to save room');
       }
     } catch (error) {
       message.error(error.message);
@@ -688,23 +701,48 @@ const RoomsManagementPage = () => {
   };
 
   // Handle delete room
-  const handleDelete = async (id) => {
+  const handleDelete = async (roomId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rooms/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         message.success('Room deleted successfully');
-        fetchRooms();
+        fetchRooms(); // Refresh danh sách phòng
       } else {
-        throw new Error('Failed to delete room');
+        if (data.bookings) {
+          // Hiển thị thông báo chi tiết về các booking đang sử dụng phòng
+          Modal.error({
+            title: 'Cannot Delete Room',
+            content: (
+              <div>
+                <p>{data.message}</p>
+                <p>Room is being used in the following bookings:</p>
+                <ul>
+                  {data.bookings.map(booking => (
+                    <li key={booking.bookingId}>
+                      Booking #{booking.bookingId}<br/>
+                      Check-in: {dayjs(booking.checkInDate).format('DD/MM/YYYY')}<br/>
+                      Check-out: {dayjs(booking.checkOutDate).format('DD/MM/YYYY')}<br/>
+                      Status: {booking.status}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ),
+          });
+        } else {
+          message.error(data.message || 'Failed to delete room');
+        }
       }
     } catch (error) {
-      message.error(error.message);
+      message.error('Failed to delete room');
     }
   };
 
@@ -725,6 +763,27 @@ const RoomsManagementPage = () => {
   }).sort((a, b) => {
     return sortPrice === 'asc' ? a.price - b.price : b.price - a.price;
   });
+
+  // Thêm hàm format tiền VND
+  const formatVND = (price) => {
+    return `${price.toLocaleString('vi-VN')}đ`;
+  };
+
+  // Thêm kiểm tra phòng có đang được booking không
+  const checkRoomHasBookings = async (roomId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}/bookings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.hasActiveBookings;
+    } catch (error) {
+      console.error('Error checking room bookings:', error);
+      return false;
+    }
+  };
 
   return (
     <PageContainer>
@@ -884,16 +943,16 @@ const RoomsManagementPage = () => {
             Type
           </div>
           <div className="header-item">
+            <i className="fas fa-tag icon"></i>
+            Price
+          </div>
+          <div className="header-item">
             <CheckCircleOutlined className="icon" />
             Status
           </div>
           <div className="header-item">
             <i className="fas fa-user icon"></i>
             Occupancy
-          </div>
-          <div className="header-item">
-            <i className="fas fa-tag icon"></i>
-            Price
           </div>
         </RoomHeader>
 
@@ -906,12 +965,12 @@ const RoomsManagementPage = () => {
             >
               <div className="room-number">Room {room.roomNumber}</div>
               <div className="room-type">{room.roomType}</div>
+              <div className="price">{formatVND(room.price)}</div>
               <div className="status">{getStatusTag(room.status)}</div>
               <div className="occupancy">
                 <i className="fas fa-user icon" />
                 {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
               </div>
-              <div className="price">${room.price.toLocaleString()}</div>
             </RoomItem>
           ))}
         </RoomListContainer>
@@ -919,75 +978,187 @@ const RoomsManagementPage = () => {
 
       <RoomDetailContainer>
         {selectedRoom ? (
-          <>
-            <RoomDetailHeader>
-              <RoomNumberBadge>
-                Room {selectedRoom.roomNumber}
-              </RoomNumberBadge>
-              <RoomTypeTag>
-                <i className="icon fas fa-bed" />
-                {selectedRoom.roomType}
-              </RoomTypeTag>
-            </RoomDetailHeader>
+          isEditing ? (
+            <FormWrapper>
+              <FormTitle>
+                <EditOutlined className="icon" />
+                Edit Room
+              </FormTitle>
+              <StyledForm
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                initialValues={selectedRoom}
+              >
+                <FormSection>
+                  <div className="section-title">Basic Information</div>
+                  <Form.Item
+                    name="roomNumber"
+                    label="Room Number"
+                    rules={[{ required: true, message: 'Please input room number!' }]}
+                  >
+                    <StyledInput placeholder="Enter room number (e.g. 101)" />
+                  </Form.Item>
 
-            <DetailSection>
-              <DetailItem>
-                <div className="label">Status</div>
-                <div className="value">
-                  {getStatusTag(selectedRoom.status)}
-                </div>
-              </DetailItem>
+                  <Form.Item
+                    name="roomType"
+                    label="Room Type"
+                    rules={[{ required: true, message: 'Please select room type!' }]}
+                  >
+                    <StyledSelect placeholder="Select room type">
+                      <Option value="Single">Single Room</Option>
+                      <Option value="Double">Double Room</Option>
+                      <Option value="Suite">Luxury Suite</Option>
+                      <Option value="Deluxe">Deluxe Room</Option>
+                      <Option value="Family">Family Room</Option>
+                    </StyledSelect>
+                  </Form.Item>
+                </FormSection>
 
-              <DetailItem>
-                <div className="label">Maximum Occupancy</div>
-                <div className="value">
-                  {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
-                </div>
-              </DetailItem>
+                <FormSection>
+                  <div className="section-title">Capacity & Pricing</div>
+                  <Form.Item
+                    name="price"
+                    label="Price per day"
+                    rules={[
+                      { required: true, message: 'Please input room price' },
+                      { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                    ]}
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND/day"
+                    />
+                  </Form.Item>
 
-              <DetailItem>
-                <div className="label">Price</div>
-                <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                  ${selectedRoom.price.toLocaleString()}
-                </div>
-              </DetailItem>
+                  <Form.Item
+                    name="maxOccupancy"
+                    label="Maximum Occupancy"
+                    rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                  >
+                    <InputNumber 
+                      min={1} 
+                      style={{ width: '100%' }} 
+                      placeholder="Enter maximum number of guests"
+                    />
+                  </Form.Item>
+                </FormSection>
 
-              {selectedRoom.description && (
-                <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                  <div className="label">Description</div>
-                  <div className="value" style={{ 
-                    padding: '12px',
-                    background: '#f0f2f5',
-                    borderRadius: '6px',
-                    width: '100%',
-                    lineHeight: '1.5'
-                  }}>
-                    {selectedRoom.description}
+                <FormSection>
+                  <div className="section-title">Room Status & Details</div>
+                  <Form.Item
+                    name="status"
+                    label="Status"
+                    rules={[{ required: true, message: 'Please select status!' }]}
+                  >
+                    <StyledSelect 
+                      placeholder="Select status"
+                      disabled={selectedRoom?.status === 'Reserved' || selectedRoom?.status === 'Occupied'}
+                    >
+                      <Option value="Available">Available</Option>
+                      <Option value="Maintenance">Maintenance</Option>
+                      {!selectedRoom && <Option value="Reserved">Reserved</Option>}
+                      {!selectedRoom && <Option value="Occupied">Occupied</Option>}
+                    </StyledSelect>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="description"
+                    label="Room Description"
+                  >
+                    <StyledTextArea 
+                      rows={4} 
+                      placeholder="Enter detailed description of the room..."
+                    />
+                  </Form.Item>
+                </FormSection>
+
+                <Form.Item>
+                  <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                    <Button onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <SubmitButton type="primary" htmlType="submit">
+                      Update Room
+                    </SubmitButton>
+                  </Space>
+                </Form.Item>
+              </StyledForm>
+            </FormWrapper>
+          ) : (
+            <>
+              <RoomDetailHeader>
+                <RoomNumberBadge>
+                  Room {selectedRoom.roomNumber}
+                </RoomNumberBadge>
+                <RoomTypeTag>
+                  <i className="icon fas fa-bed" />
+                  {selectedRoom.roomType}
+                </RoomTypeTag>
+              </RoomDetailHeader>
+
+              <DetailSection>
+                <DetailItem>
+                  <div className="label">Status</div>
+                  <div className="value">
+                    {getStatusTag(selectedRoom.status)}
                   </div>
                 </DetailItem>
-              )}
-            </DetailSection>
 
-            <ActionButtons>
-              <Button 
-                className="edit-button"
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => {
-                  form.setFieldsValue(selectedRoom);
-                }}
-              >
-                Edit Room
-              </Button>
-              <Button
-                className="delete-button"
-                icon={<DeleteOutlined />}
-                onClick={() => handleDelete(selectedRoom._id)}
-              >
-                Delete Room
-              </Button>
-            </ActionButtons>
-          </>
+                <DetailItem>
+                  <div className="label">Maximum Occupancy</div>
+                  <div className="value">
+                    {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
+                  </div>
+                </DetailItem>
+
+                <DetailItem>
+                  <div className="label">Price</div>
+                  <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                    {formatVND(selectedRoom.price)}
+                  </div>
+                </DetailItem>
+
+                {selectedRoom.description && (
+                  <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <div className="label">Description</div>
+                    <div className="value" style={{ 
+                      padding: '12px',
+                      background: '#f0f2f5',
+                      borderRadius: '6px',
+                      width: '100%',
+                      lineHeight: '1.5'
+                    }}>
+                      {selectedRoom.description}
+                    </div>
+                  </DetailItem>
+                )}
+              </DetailSection>
+
+              <ActionButtons>
+                <Button 
+                  className="edit-button"
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setIsEditing(true);
+                    form.setFieldsValue(selectedRoom);
+                  }}
+                >
+                  Edit Room
+                </Button>
+                <Button
+                  className="delete-button"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDelete(selectedRoom._id)}
+                >
+                  Delete Room
+                </Button>
+              </ActionButtons>
+            </>
+          )
         ) : (
           <FormWrapper>
             <FormTitle>
@@ -1028,15 +1199,17 @@ const RoomsManagementPage = () => {
                 <div className="section-title">Capacity & Pricing</div>
                 <Form.Item
                   name="price"
-                  label="Price"
-                  rules={[{ required: true, message: 'Please input price!' }]}
+                  label="Price per day"
+                  rules={[
+                    { required: true, message: 'Please input room price' },
+                    { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                  ]}
                 >
-                  <PriceInput
-                    formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                    min={0}
+                  <InputNumber
                     style={{ width: '100%' }}
-                    placeholder="Enter price"
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    addonAfter="VND/day"
                   />
                 </Form.Item>
 
