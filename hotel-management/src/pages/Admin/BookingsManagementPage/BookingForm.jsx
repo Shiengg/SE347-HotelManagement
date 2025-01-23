@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Form, Input, Select, DatePicker, InputNumber, Button, Space, message } from 'antd';
 import dayjs from 'dayjs';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const { Option } = Select;
 
@@ -19,6 +20,7 @@ const ServiceSection = styled.div`
 `;
 
 const BookingForm = ({ booking, onSubmit, onCancel }) => {
+  const { currentUser } = useAuth();
   const [form] = Form.useForm();
   const [rooms, setRooms] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -50,6 +52,10 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
     }
   }, [booking, form]);
 
+  useEffect(() => {
+    console.log('Current user:', currentUser);
+  }, [currentUser]);
+
   const fetchRooms = async () => {
     try {
       const response = await fetch('http://localhost:5000/api/rooms', {
@@ -58,7 +64,8 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
         }
       });
       const data = await response.json();
-      setRooms(data);
+      const availableRooms = data.filter(room => room.status === 'Available');
+      setRooms(availableRooms);
     } catch (error) {
       message.error('Failed to fetch rooms');
     }
@@ -92,15 +99,65 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
     }
   };
 
-  const handleSubmit = async (values) => {
-    const formattedValues = {
-      ...values,
-      checkInDate: values.checkInDate.toISOString(),
-      checkOutDate: values.checkOutDate.toISOString(),
-      receptionistID: JSON.parse(localStorage.getItem('user'))._id,
-    };
+  const validateDates = (_, value) => {
+    if (!value) {
+      return Promise.reject('Date is required');
+    }
+    const today = dayjs().startOf('day');
+    if (value.isBefore(today)) {
+      return Promise.reject('Date cannot be in the past');
+    }
+    return Promise.resolve();
+  };
 
-    onSubmit(formattedValues);
+  const validateCheckOutDate = ({ getFieldValue }) => ({
+    validator(_, value) {
+      if (!value) {
+        return Promise.reject('Check-out date is required');
+      }
+      const checkInDate = getFieldValue('checkInDate');
+      if (checkInDate && value.diff(checkInDate) <= 0) {
+        return Promise.reject('Check-out date must be after check-in date');
+      }
+      return Promise.resolve();
+    },
+  });
+
+  const handleSubmit = async (values) => {
+    try {
+      let userID = currentUser?.id;
+      
+      if (!userID) {
+        const localUser = localStorage.getItem('user');
+        if (localUser) {
+          const userData = JSON.parse(localUser);
+          userID = userData.id || userData._id;
+        }
+      }
+
+      if (!userID) {
+        throw new Error('User not authenticated');
+      }
+
+      const formattedValues = {
+        customerID: values.customerID,
+        roomID: values.roomID,
+        checkInDate: values.checkInDate.startOf('day').toISOString(),
+        checkOutDate: values.checkOutDate.startOf('day').toISOString(),
+        receptionistID: userID,
+        status: values.status || 'Pending',
+        services: values.services ? values.services.map(service => ({
+          serviceID: service.serviceID,
+          quantity: parseInt(service.quantity)
+        })) : []
+      };
+
+      console.log('Submitting booking:', formattedValues);
+      onSubmit(formattedValues);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      message.error(error.message || 'Failed to submit booking');
+    }
   };
 
   return (
@@ -133,10 +190,13 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
           label="Room"
           rules={[{ required: true, message: 'Please select a room' }]}
         >
-          <Select placeholder="Select room">
+          <Select 
+            placeholder="Select room"
+            notFoundContent={rooms.length === 0 ? "No available rooms" : "No rooms found"}
+          >
             {rooms.map(room => (
               <Option key={room._id} value={room._id}>
-                Room {room.roomNumber} ({room.roomType})
+                Room {room.roomNumber} ({room.roomType}) - {room.price.toLocaleString('vi-VN')}đ/day
               </Option>
             ))}
           </Select>
@@ -146,19 +206,43 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
           <Form.Item
             name="checkInDate"
             label="Check In Date"
-            rules={[{ required: true, message: 'Please select check in date' }]}
+            rules={[
+              { required: true, message: 'Please select check in date' }
+            ]}
             style={{ width: '100%' }}
           >
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker 
+              style={{ width: '100%' }} 
+              format="DD/MM/YYYY"
+              disabledDate={current => {
+                const today = dayjs().startOf('day');
+                return current && current.isBefore(today);
+              }}
+            />
           </Form.Item>
 
           <Form.Item
             name="checkOutDate"
             label="Check Out Date"
-            rules={[{ required: true, message: 'Please select check out date' }]}
+            rules={[
+              { required: true, message: 'Please select check out date' }
+            ]}
             style={{ width: '100%' }}
           >
-            <DatePicker style={{ width: '100%' }} />
+            <DatePicker 
+              style={{ width: '100%' }}
+              format="DD/MM/YYYY"
+              disabledDate={current => {
+                const checkInDate = form.getFieldValue('checkInDate');
+                const today = dayjs().startOf('day');
+                
+                if (!current || !checkInDate) {
+                  return current && current.isBefore(today);
+                }
+                
+                return current.isBefore(checkInDate) || current.isSame(checkInDate);
+              }}
+            />
           </Form.Item>
         </Space>
 
