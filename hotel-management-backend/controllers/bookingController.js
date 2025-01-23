@@ -113,18 +113,20 @@ exports.createBooking = async (req, res) => {
 
     const newBooking = await booking.save({ session });
 
-    // Tự động tạo invoice cho booking
-    const invoice = new Invoice({
-      bookingID: newBooking._id,
-      totalAmount: totalPrice,
-      paymentMethod: 'Cash', // Mặc định
-      paymentStatus: false, // Chưa thanh toán
-      paymentDate: new Date()
-    });
+    // Chỉ tạo invoice nếu status là Confirmed
+    let invoice = null;
+    if (status === 'Confirmed') {
+      invoice = new Invoice({
+        bookingID: newBooking._id,
+        totalAmount: totalPrice,
+        paymentMethod: 'Cash',
+        paymentStatus: false,
+        paymentDate: new Date()
+      });
+      await invoice.save({ session });
+    }
 
-    await invoice.save({ session });
-
-    // Cập nhật trạng thái phòng thành Reserved
+    // Cập nhật trạng thái phòng
     await Room.findByIdAndUpdate(
       roomID,
       { status: 'Reserved' },
@@ -177,68 +179,40 @@ exports.updateBooking = async (req, res) => {
   session.startTransaction();
 
   try {
-    const {
-      customerID,
-      roomID,
-      checkInDate,
-      checkOutDate,
-      services,
-      status,
-      receptionistID
-    } = req.body;
-
-    // Tính toán giá dịch vụ
-    let totalServicePrice = 0;
-    const servicesWithPrice = await Promise.all(services.map(async (service) => {
-      const serviceData = await Service.findById(service.serviceID);
-      const serviceTotal = serviceData.servicePrice * service.quantity;
-      totalServicePrice += serviceTotal;
-      return {
-        serviceID: service.serviceID,
-        quantity: service.quantity,
-        totalPrice: serviceTotal
-      };
-    }));
-
-    // Tính giá phòng
-    const room = await Room.findById(roomID);
-    const days = Math.ceil((new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24));
-    const roomPrice = room.price * days;
-    const totalPrice = roomPrice + totalServicePrice;
-
-    // Cập nhật booking
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      req.params.id,
-      {
-        customerID,
-        receptionistID,
-        roomID,
-        checkInDate,
-        checkOutDate,
-        services: servicesWithPrice,
-        status,
-        totalPrice
-      },
-      { new: true, session }
-    );
-
-    if (!updatedBooking) {
+    const { status } = req.body;
+    const oldBooking = await Booking.findById(req.params.id);
+    
+    if (!oldBooking) {
       throw new Error('Booking not found');
     }
 
-    // Cập nhật hoặc tạo invoice
-    const invoice = await Invoice.findOneAndUpdate(
-      { bookingID: updatedBooking._id },
-      {
-        totalAmount: totalPrice,
-        paymentDate: new Date()
-      },
+    // Cập nhật booking như bình thường
+    const updatedBooking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      req.body,
       { new: true, session }
     );
 
+    // Xử lý invoice dựa trên thay đổi status
+    let invoice = await Invoice.findOne({ bookingID: updatedBooking._id });
+    
+    if (status === 'Confirmed' && oldBooking.status !== 'Confirmed') {
+      // Tạo invoice mới nếu booking được confirm lần đầu
+      if (!invoice) {
+        invoice = new Invoice({
+          bookingID: updatedBooking._id,
+          totalAmount: updatedBooking.totalPrice,
+          paymentMethod: 'Cash',
+          paymentStatus: false,
+          paymentDate: new Date()
+        });
+        await invoice.save({ session });
+      }
+    }
+
     // Cập nhật trạng thái phòng
     await Room.findByIdAndUpdate(
-      roomID,
+      updatedBooking.roomID,
       { status: status === 'Cancelled' ? 'Available' : 'Reserved' },
       { session }
     );
@@ -266,13 +240,53 @@ exports.updateBooking = async (req, res) => {
 };
 
 exports.deleteBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const booking = await Booking.findByIdAndDelete(req.params.id);
+    // Kiểm tra booking có tồn tại không
+    const booking = await Booking.findById(req.params.id);
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      throw new Error('Booking not found');
     }
-    res.json({ message: 'Booking deleted successfully' });
+
+    // Kiểm tra nếu booking đã confirmed và có invoice
+    if (booking.status === 'Confirmed') {
+      const invoice = await Invoice.findOne({ bookingID: booking._id });
+      if (invoice) {
+        return res.status(400).json({ 
+          message: 'Cannot delete confirmed booking with invoice',
+          booking: {
+            id: booking._id,
+            status: booking.status,
+            invoice: invoice._id
+          }
+        });
+      }
+    }
+
+    // Nếu có thể xóa, cập nhật trạng thái phòng về Available
+    await Room.findByIdAndUpdate(
+      booking.roomID,
+      { status: 'Available' },
+      { session }
+    );
+
+    // Xóa booking
+    await Booking.findByIdAndDelete(booking._id, { session });
+
+    await session.commitTransaction();
+    res.json({ 
+      message: 'Booking deleted successfully',
+      deletedBooking: booking
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    await session.abortTransaction();
+    res.status(error.message === 'Booking not found' ? 404 : 500).json({ 
+      message: error.message 
+    });
+  } finally {
+    session.endSession();
   }
 }; 

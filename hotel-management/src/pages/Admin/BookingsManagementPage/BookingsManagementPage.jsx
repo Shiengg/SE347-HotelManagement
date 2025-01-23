@@ -262,18 +262,40 @@ const BookingsManagementPage = () => {
     fetchBookings();
   }, []);
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (bookingId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/bookings/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+
+      const data = await response.json();
+
       if (response.ok) {
         message.success('Booking deleted successfully');
         fetchBookings();
-        setSelectedBooking(null);
+      } else {
+        if (data.booking && data.booking.status === 'Confirmed') {
+          Modal.error({
+            title: 'Cannot Delete Booking',
+            content: (
+              <div>
+                <p>{data.message}</p>
+                <p>Booking Details:</p>
+                <ul>
+                  <li>Booking ID: {data.booking.id}</li>
+                  <li>Status: {data.booking.status}</li>
+                  <li>Invoice ID: {data.booking.invoice}</li>
+                </ul>
+                <p>Please cancel the booking first if you want to delete it.</p>
+              </div>
+            ),
+          });
+        } else {
+          message.error(data.message || 'Failed to delete booking');
+        }
       }
     } catch (error) {
       message.error('Failed to delete booking');
@@ -310,7 +332,7 @@ const BookingsManagementPage = () => {
       
       if (response.ok) {
         message.success(`Booking ${editingBooking ? 'updated' : 'created'} successfully`);
-        if (!editingBooking) {
+        if (data.invoice) {
           message.info(`Invoice #${data.invoice._id} has been created`);
         }
         setIsFormVisible(false);
