@@ -1,4 +1,6 @@
 const Room = require('../models/Rooms');
+const Booking = require('../models/Booking');
+const mongoose = require('mongoose');
 
 // Get all rooms
 exports.getAllRooms = async (req, res) => {
@@ -52,15 +54,48 @@ exports.updateRoom = async (req, res) => {
 
 // Delete room
 exports.deleteRoom = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const room = await Room.findById(req.params.id);
-        if (!room) {
-            return res.status(404).json({ message: 'Room not found' });
+        // Kiểm tra xem phòng có trong booking nào không
+        const existingBookings = await Booking.find({
+            roomID: req.params.id,
+            status: { $in: ['Pending', 'Confirmed'] } // Chỉ kiểm tra các booking chưa cancelled
+        });
+
+        if (existingBookings.length > 0) {
+            return res.status(400).json({ 
+                message: 'Cannot delete room. Room is currently in use in active bookings.',
+                bookings: existingBookings.map(booking => ({
+                    bookingId: booking._id,
+                    checkInDate: booking.checkInDate,
+                    checkOutDate: booking.checkOutDate,
+                    status: booking.status
+                }))
+            });
         }
 
-        await Room.findByIdAndDelete(req.params.id);
-        res.json({ message: 'Room deleted successfully' });
+        // Nếu không có booking nào đang sử dụng, tiến hành xóa phòng
+        const room = await Room.findByIdAndDelete(req.params.id, { session });
+        
+        if (!room) {
+            throw new Error('Room not found');
+        }
+
+        // Xóa thành công
+        await session.commitTransaction();
+        res.json({ 
+            message: 'Room deleted successfully',
+            deletedRoom: room
+        });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        await session.abortTransaction();
+        res.status(error.message === 'Room not found' ? 404 : 500).json({ 
+            message: error.message 
+        });
+    } finally {
+        session.endSession();
     }
 }; 

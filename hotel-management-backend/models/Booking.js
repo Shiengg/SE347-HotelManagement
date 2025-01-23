@@ -62,7 +62,7 @@ const bookingSchema = new mongoose.Schema({
 
 bookingSchema.index(
   { customerID: 1, roomID: 1, checkInDate: 1 },
-  { unique: true }
+  { unique: false }
 );
 
 const Booking = mongoose.model('Booking', bookingSchema);

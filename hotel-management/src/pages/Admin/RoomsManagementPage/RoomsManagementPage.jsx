@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Space } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
@@ -690,23 +691,48 @@ const RoomsManagementPage = () => {
   };
 
   // Handle delete room
-  const handleDelete = async (id) => {
+  const handleDelete = async (roomId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rooms/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         message.success('Room deleted successfully');
-        fetchRooms();
+        fetchRooms(); // Refresh danh sách phòng
       } else {
-        throw new Error('Failed to delete room');
+        if (data.bookings) {
+          // Hiển thị thông báo chi tiết về các booking đang sử dụng phòng
+          Modal.error({
+            title: 'Cannot Delete Room',
+            content: (
+              <div>
+                <p>{data.message}</p>
+                <p>Room is being used in the following bookings:</p>
+                <ul>
+                  {data.bookings.map(booking => (
+                    <li key={booking.bookingId}>
+                      Booking #{booking.bookingId}<br/>
+                      Check-in: {dayjs(booking.checkInDate).format('DD/MM/YYYY')}<br/>
+                      Check-out: {dayjs(booking.checkOutDate).format('DD/MM/YYYY')}<br/>
+                      Status: {booking.status}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ),
+          });
+        } else {
+          message.error(data.message || 'Failed to delete room');
+        }
       }
     } catch (error) {
-      message.error(error.message);
+      message.error('Failed to delete room');
     }
   };
 

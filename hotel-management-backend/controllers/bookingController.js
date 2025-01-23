@@ -173,6 +173,9 @@ exports.getBookingById = async (req, res) => {
 };
 
 exports.updateBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const {
       customerID,
@@ -184,7 +187,7 @@ exports.updateBooking = async (req, res) => {
       receptionistID
     } = req.body;
 
-    // Tính toán giá tiền tương tự như createBooking
+    // Tính toán giá dịch vụ
     let totalServicePrice = 0;
     const servicesWithPrice = await Promise.all(services.map(async (service) => {
       const serviceData = await Service.findById(service.serviceID);
@@ -197,12 +200,14 @@ exports.updateBooking = async (req, res) => {
       };
     }));
 
+    // Tính giá phòng
     const room = await Room.findById(roomID);
     const days = Math.ceil((new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24));
     const roomPrice = room.price * days;
     const totalPrice = roomPrice + totalServicePrice;
 
-    const booking = await Booking.findByIdAndUpdate(
+    // Cập nhật booking
+    const updatedBooking = await Booking.findByIdAndUpdate(
       req.params.id,
       {
         customerID,
@@ -214,21 +219,49 @@ exports.updateBooking = async (req, res) => {
         status,
         totalPrice
       },
-      { new: true }
-    )
-    .populate('customerID', 'name email phone')
-    .populate('receptionistID', 'name')
-    .populate('roomID', 'roomNumber roomType')
-    .populate('services.serviceID', 'serviceName servicePrice');
+      { new: true, session }
+    );
 
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    if (!updatedBooking) {
+      throw new Error('Booking not found');
     }
 
-    res.json(booking);
+    // Cập nhật hoặc tạo invoice
+    const invoice = await Invoice.findOneAndUpdate(
+      { bookingID: updatedBooking._id },
+      {
+        totalAmount: totalPrice,
+        paymentDate: new Date()
+      },
+      { new: true, session }
+    );
+
+    // Cập nhật trạng thái phòng
+    await Room.findByIdAndUpdate(
+      roomID,
+      { status: status === 'Cancelled' ? 'Available' : 'Reserved' },
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    const populatedBooking = await Booking.findById(updatedBooking._id)
+      .populate('customerID', 'name email phone')
+      .populate('receptionistID', 'name')
+      .populate('roomID', 'roomNumber roomType')
+      .populate('services.serviceID', 'serviceName servicePrice');
+
+    res.json({
+      booking: populatedBooking,
+      invoice: invoice
+    });
+
   } catch (error) {
+    await session.abortTransaction();
     console.error('Update booking error:', error);
     res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };
 
