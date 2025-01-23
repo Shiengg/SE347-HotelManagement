@@ -8,6 +8,6 @@ router.use(authMiddleware);
 router.get('/', invoiceController.getInvoices);
 router.get('/:id', invoiceController.getInvoiceById);
 router.get('/customer/:id', invoiceController.getCustomerInvoices);
-router.delete('/:id',invoiceController.deleteInvoice);
+router.delete('/:id', invoiceController.deleteInvoice);
 
 module.exports = router; 

@@ -635,6 +635,7 @@ const RoomsManagementPage = () => {
   const [filterType, setFilterType] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [sortPrice, setSortPrice] = useState('asc');
+  const [isEditing, setIsEditing] = useState(false);
 
   // Fetch rooms data
   const fetchRooms = async () => {
@@ -678,6 +679,7 @@ const RoomsManagementPage = () => {
       if (response.ok) {
         message.success(`Room ${selectedRoom ? 'updated' : 'created'} successfully`);
         form.resetFields();
+        setIsEditing(false);
         fetchRooms();
       } else {
         throw new Error('Failed to save room');
@@ -919,75 +921,202 @@ const RoomsManagementPage = () => {
 
       <RoomDetailContainer>
         {selectedRoom ? (
-          <>
-            <RoomDetailHeader>
-              <RoomNumberBadge>
-                Room {selectedRoom.roomNumber}
-              </RoomNumberBadge>
-              <RoomTypeTag>
-                <i className="icon fas fa-bed" />
-                {selectedRoom.roomType}
-              </RoomTypeTag>
-            </RoomDetailHeader>
+          isEditing ? (
+            <FormWrapper>
+              <FormTitle>
+                <EditOutlined className="icon" />
+                Edit Room
+              </FormTitle>
+              <StyledForm
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                initialValues={selectedRoom}
+              >
+                <FormSection>
+                  <div className="section-title">Basic Information</div>
+                  <Form.Item
+                    name="roomNumber"
+                    label="Room Number"
+                    rules={[{ required: true, message: 'Please input room number!' }]}
+                  >
+                    <StyledInput placeholder="Enter room number (e.g. 101)" />
+                  </Form.Item>
 
-            <DetailSection>
-              <DetailItem>
-                <div className="label">Status</div>
-                <div className="value">
-                  {getStatusTag(selectedRoom.status)}
-                </div>
-              </DetailItem>
+                  <Form.Item
+                    name="roomType"
+                    label="Room Type"
+                    rules={[{ required: true, message: 'Please select room type!' }]}
+                  >
+                    <StyledSelect placeholder="Select room type">
+                      <Option value="Single">Single Room</Option>
+                      <Option value="Double">Double Room</Option>
+                      <Option value="Suite">Luxury Suite</Option>
+                      <Option value="Deluxe">Deluxe Room</Option>
+                      <Option value="Family">Family Room</Option>
+                    </StyledSelect>
+                  </Form.Item>
+                </FormSection>
 
-              <DetailItem>
-                <div className="label">Maximum Occupancy</div>
-                <div className="value">
-                  {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
-                </div>
-              </DetailItem>
+                <FormSection>
+                  <div className="section-title">Capacity & Pricing</div>
+                  <Form.Item
+                    name="price"
+                    label="Price"
+                    rules={[{ required: true, message: 'Please input price!' }]}
+                  >
+                    <PriceInput
+                      formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      min={0}
+                      style={{ width: '100%' }}
+                      placeholder="Enter price"
+                    />
+                  </Form.Item>
 
-              <DetailItem>
-                <div className="label">Price</div>
-                <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                  ${selectedRoom.price.toLocaleString()}
-                </div>
-              </DetailItem>
+                  <Form.Item
+                    name="maxOccupancy"
+                    label="Maximum Occupancy"
+                    rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                  >
+                    <InputNumber 
+                      min={1} 
+                      style={{ width: '100%' }} 
+                      placeholder="Enter maximum number of guests"
+                    />
+                  </Form.Item>
+                </FormSection>
 
-              {selectedRoom.description && (
-                <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                  <div className="label">Description</div>
-                  <div className="value" style={{ 
-                    padding: '12px',
-                    background: '#f0f2f5',
-                    borderRadius: '6px',
-                    width: '100%',
-                    lineHeight: '1.5'
-                  }}>
-                    {selectedRoom.description}
+                <FormSection>
+                  <div className="section-title">Room Status & Details</div>
+                  <Form.Item
+                    name="status"
+                    label="Current Status"
+                    rules={[{ required: true, message: 'Please select status!' }]}
+                  >
+                    <StyledSelect placeholder="Select room status">
+                      <Option value="Available">
+                        <Space>
+                          <span style={{ color: '#10b981' }}>●</span>
+                          Available
+                        </Space>
+                      </Option>
+                      <Option value="Occupied">
+                        <Space>
+                          <span style={{ color: '#ef4444' }}>●</span>
+                          Occupied
+                        </Space>
+                      </Option>
+                      <Option value="Maintenance">
+                        <Space>
+                          <span style={{ color: '#f59e0b' }}>●</span>
+                          Maintenance
+                        </Space>
+                      </Option>
+                      <Option value="Reserved">
+                        <Space>
+                          <span style={{ color: '#6366f1' }}>●</span>
+                          Reserved
+                        </Space>
+                      </Option>
+                    </StyledSelect>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="description"
+                    label="Room Description"
+                  >
+                    <StyledTextArea 
+                      rows={4} 
+                      placeholder="Enter detailed description of the room..."
+                    />
+                  </Form.Item>
+                </FormSection>
+
+                <Form.Item>
+                  <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                    <Button onClick={() => setIsEditing(false)}>
+                      Cancel
+                    </Button>
+                    <SubmitButton type="primary" htmlType="submit">
+                      Update Room
+                    </SubmitButton>
+                  </Space>
+                </Form.Item>
+              </StyledForm>
+            </FormWrapper>
+          ) : (
+            <>
+              <RoomDetailHeader>
+                <RoomNumberBadge>
+                  Room {selectedRoom.roomNumber}
+                </RoomNumberBadge>
+                <RoomTypeTag>
+                  <i className="icon fas fa-bed" />
+                  {selectedRoom.roomType}
+                </RoomTypeTag>
+              </RoomDetailHeader>
+
+              <DetailSection>
+                <DetailItem>
+                  <div className="label">Status</div>
+                  <div className="value">
+                    {getStatusTag(selectedRoom.status)}
                   </div>
                 </DetailItem>
-              )}
-            </DetailSection>
 
-            <ActionButtons>
-              <Button 
-                className="edit-button"
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => {
-                  form.setFieldsValue(selectedRoom);
-                }}
-              >
-                Edit Room
-              </Button>
-              <Button
-                className="delete-button"
-                icon={<DeleteOutlined />}
-                onClick={() => handleDelete(selectedRoom._id)}
-              >
-                Delete Room
-              </Button>
-            </ActionButtons>
-          </>
+                <DetailItem>
+                  <div className="label">Maximum Occupancy</div>
+                  <div className="value">
+                    {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
+                  </div>
+                </DetailItem>
+
+                <DetailItem>
+                  <div className="label">Price</div>
+                  <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                    ${selectedRoom.price.toLocaleString()}
+                  </div>
+                </DetailItem>
+
+                {selectedRoom.description && (
+                  <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <div className="label">Description</div>
+                    <div className="value" style={{ 
+                      padding: '12px',
+                      background: '#f0f2f5',
+                      borderRadius: '6px',
+                      width: '100%',
+                      lineHeight: '1.5'
+                    }}>
+                      {selectedRoom.description}
+                    </div>
+                  </DetailItem>
+                )}
+              </DetailSection>
+
+              <ActionButtons>
+                <Button 
+                  className="edit-button"
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setIsEditing(true);
+                    form.setFieldsValue(selectedRoom);
+                  }}
+                >
+                  Edit Room
+                </Button>
+                <Button
+                  className="delete-button"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDelete(selectedRoom._id)}
+                >
+                  Delete Room
+                </Button>
+              </ActionButtons>
+            </>
+          )
         ) : (
           <FormWrapper>
             <FormTitle>

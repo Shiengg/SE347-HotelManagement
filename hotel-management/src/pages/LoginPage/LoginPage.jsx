@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import styled from "styled-components";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../svg/AppLogo.svg";
+import { message } from "antd";
 
 export const LogoWrapper = styled.div`
   display: flex;
@@ -244,6 +245,29 @@ const LoginPage = React.memo(() => {
     },
     [formData, login]
   );
+
+  const handleLogin = async (values) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(values)
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user)); // Lưu toàn bộ thông tin user
+        // ... rest of the code
+      } else {
+        message.error(data.message);
+      }
+    } catch (error) {
+      message.error('Failed to login');
+    }
+  };
 
   return (
     <LoginContainer>
