@@ -37,6 +37,11 @@ const bookingSchema = new mongoose.Schema({
     ref: 'Room',
     required: true
   },
+  bookingType: {
+    type: String,
+    enum: ['Daily', 'Hourly'],
+    required: true
+  },
   checkInDate: {
     type: Date,
     required: true
@@ -44,6 +49,14 @@ const bookingSchema = new mongoose.Schema({
   checkOutDate: {
     type: Date,
     required: true
+  },
+  totalDays: {
+    type: Number,
+    min: 0
+  },
+  totalHours: {
+    type: Number,
+    min: 0
   },
   totalPrice: {
     type: Number,
@@ -53,7 +66,7 @@ const bookingSchema = new mongoose.Schema({
   services: [serviceSchema],
   status: {
     type: String,
-    enum: ['Pending', 'Confirmed', 'Cancelled'],
+    enum: ['Pending', 'Confirmed'],
     default: 'Pending'
   }
 }, {

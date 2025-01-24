@@ -26,6 +26,8 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
   const [customers, setCustomers] = useState([]);
   const [services, setServices] = useState([]);
   const [selectedServices, setSelectedServices] = useState([]);
+  const [bookingType, setBookingType] = useState(booking?.bookingType || 'Daily');
+  const [selectedRoom, setSelectedRoom] = useState(null);
 
   useEffect(() => {
     fetchRooms();
@@ -147,17 +149,44 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
         throw new Error('User not authenticated');
       }
 
+      // Tính toán totalDays hoặc totalHours
+      const checkIn = dayjs(values.checkInDate);
+      const checkOut = dayjs(values.checkOutDate);
+      let totalDays = null;
+      let totalHours = null;
+
+      if (bookingType === 'Daily') {
+        totalDays = Math.ceil(checkOut.diff(checkIn, 'day', true));
+      } else {
+        totalHours = Math.ceil(checkOut.diff(checkIn, 'hour', true));
+        // Đảm bảo số giờ không nhỏ hơn minHours
+        if (selectedRoom) {
+          totalHours = Math.max(totalHours, selectedRoom.minHours || 3);
+        }
+      }
+
+      // Tính tổng tiền
+      const roomPrice = calculatePrice();
+      const servicesPrice = values.services ? values.services.reduce((total, service) => {
+        const serviceData = services.find(s => s._id === service.serviceID);
+        return total + (serviceData?.servicePrice || 0) * service.quantity;
+      }, 0) : 0;
+
       const formattedValues = {
         customerID: values.customerID,
         roomID: values.roomID,
-        checkInDate: values.checkInDate.startOf('day').toISOString(),
-        checkOutDate: values.checkOutDate.startOf('day').toISOString(),
+        bookingType: bookingType,
+        checkInDate: values.checkInDate.toISOString(),
+        checkOutDate: values.checkOutDate.toISOString(),
+        totalDays: totalDays,
+        totalHours: totalHours,
         receptionistID: userID,
         status: values.status || 'Pending',
         services: values.services ? values.services.map(service => ({
           serviceID: service.serviceID,
           quantity: parseInt(service.quantity)
-        })) : []
+        })) : [],
+        totalPrice: roomPrice + servicesPrice
       };
 
       console.log('Submitting booking:', formattedValues);
@@ -165,6 +194,24 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
     } catch (error) {
       console.error('Form submission error:', error);
       message.error(error.message || 'Failed to submit booking');
+    }
+  };
+
+  const calculatePrice = () => {
+    if (!selectedRoom || !form.getFieldValue('checkInDate') || !form.getFieldValue('checkOutDate')) {
+      return 0;
+    }
+
+    const checkIn = dayjs(form.getFieldValue('checkInDate'));
+    const checkOut = dayjs(form.getFieldValue('checkOutDate'));
+    
+    if (bookingType === 'Daily') {
+      const days = Math.ceil(checkOut.diff(checkIn, 'day', true));
+      return selectedRoom.dailyPrice * days;
+    } else {
+      const hours = Math.ceil(checkOut.diff(checkIn, 'hour', true));
+      const minHours = selectedRoom.minHours || 3;
+      return selectedRoom.hourlyPrice * Math.max(hours, minHours);
     }
   };
 
@@ -201,58 +248,60 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
           <Select 
             placeholder="Select room"
             notFoundContent={rooms.length === 0 ? "No available rooms" : "No rooms found"}
+            onChange={(value) => {
+              const room = rooms.find(r => r._id === value);
+              setSelectedRoom(room);
+            }}
           >
             {rooms.map(room => (
               <Option key={room._id} value={room._id}>
-                Room {room.roomNumber} ({room.roomType}) - {room.price.toLocaleString('vi-VN')}đ/day
+                Room {room.roomNumber} ({room.roomType}) - Daily: {room.dailyPrice.toLocaleString('vi-VN')}đ | Hourly: {room.hourlyPrice.toLocaleString('vi-VN')}đ
               </Option>
             ))}
+          </Select>
+        </Form.Item>
+
+        <Form.Item
+          name="bookingType"
+          label="Booking Type"
+          rules={[{ required: true }]}
+        >
+          <Select 
+            value={bookingType}
+            onChange={(value) => setBookingType(value)}
+          >
+            <Option value="Daily">Book by Day</Option>
+            <Option value="Hourly">Book by Hour</Option>
           </Select>
         </Form.Item>
 
         <Space style={{ width: '100%' }} size={16}>
           <Form.Item
             name="checkInDate"
-            label="Check In Date"
-            rules={[
-              { required: true, message: 'Please select check in date' }
-            ]}
-            style={{ width: '100%' }}
+            label="Check In"
+            rules={[{ required: true }]}
           >
             <DatePicker 
-              style={{ width: '100%' }} 
-              format="DD/MM/YYYY"
-              disabledDate={current => {
-                const today = dayjs().startOf('day');
-                return current && current.isBefore(today);
-              }}
+              showTime={bookingType === 'Hourly'}
+              format={bookingType === 'Hourly' ? "DD/MM/YYYY HH:mm" : "DD/MM/YYYY"}
             />
           </Form.Item>
 
           <Form.Item
             name="checkOutDate"
-            label="Check Out Date"
-            rules={[
-              { required: true, message: 'Please select check out date' }
-            ]}
-            style={{ width: '100%' }}
+            label="Check Out"
+            rules={[{ required: true }]}
           >
             <DatePicker 
-              style={{ width: '100%' }}
-              format="DD/MM/YYYY"
-              disabledDate={current => {
-                const checkInDate = form.getFieldValue('checkInDate');
-                const today = dayjs().startOf('day');
-                
-                if (!current || !checkInDate) {
-                  return current && current.isBefore(today);
-                }
-                
-                return current.isBefore(checkInDate) || current.isSame(checkInDate);
-              }}
+              showTime={bookingType === 'Hourly'}
+              format={bookingType === 'Hourly' ? "DD/MM/YYYY HH:mm" : "DD/MM/YYYY"}
             />
           </Form.Item>
         </Space>
+
+        <div>
+          Estimated Price: {calculatePrice().toLocaleString('vi-VN')}đ
+        </div>
 
         <Form.Item
           name="status"
@@ -262,7 +311,6 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
           <Select>
             <Option value="Pending">Pending</Option>
             <Option value="Confirmed">Confirmed</Option>
-            <Option value="Cancelled">Cancelled</Option>
           </Select>
         </Form.Item>
 

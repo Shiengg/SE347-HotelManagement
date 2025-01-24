@@ -18,17 +18,27 @@ exports.getAllBookings = async (req, res) => {
       })
       .populate({
         path: 'roomID',
-        select: 'roomNumber roomType price'
+        select: 'roomNumber roomType dailyPrice hourlyPrice'
       })
       .populate({
         path: 'services.serviceID',
         select: 'serviceName servicePrice'
       });
 
-    // Log để debug
-    console.log('Fetched bookings:', JSON.stringify(bookings, null, 2));
+    // Tính lại tổng tiền cho mỗi booking để đảm bảo chính xác
+    const calculatedBookings = bookings.map(booking => {
+      const roomPrice = booking.bookingType === 'Daily' 
+        ? booking.roomID.dailyPrice * booking.totalDays
+        : booking.roomID.hourlyPrice * booking.totalHours;
 
-    res.json(bookings);
+      const servicesPrice = booking.services.reduce((total, service) => 
+        total + (service.serviceID.servicePrice * service.quantity), 0);
+
+      booking.totalPrice = roomPrice + servicesPrice;
+      return booking;
+    });
+
+    res.json(calculatedBookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ message: error.message });
@@ -66,28 +76,24 @@ exports.createBooking = async (req, res) => {
     const {
       customerID,
       roomID,
+      bookingType,
       checkInDate,
       checkOutDate,
+      totalDays,
+      totalHours,
       services,
       status,
-      receptionistID
+      receptionistID,
+      totalPrice: submittedTotalPrice
     } = req.body;
 
     // Log request data để debug
     console.log('Received booking data:', req.body);
 
     // Validate required fields
-    if (!customerID || !roomID || !checkInDate || !checkOutDate || !receptionistID) {
+    if (!customerID || !roomID || !checkInDate || !checkOutDate || !receptionistID || !bookingType) {
       return res.status(400).json({ 
-        message: 'Missing required fields',
-        required: ['customerID', 'roomID', 'checkInDate', 'checkOutDate', 'receptionistID'],
-        received: {
-          customerID,
-          roomID,
-          checkInDate,
-          checkOutDate,
-          receptionistID
-        }
+        message: 'Missing required fields'
       });
     }
 
@@ -135,20 +141,30 @@ exports.createBooking = async (req, res) => {
       throw new Error('Room not found');
     }
 
-    const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-    const roomPrice = room.price * days;
-    const totalPrice = roomPrice + totalServicePrice;
+    // Tính giá phòng dựa trên loại booking
+    let roomPrice;
+    if (bookingType === 'Daily') {
+      roomPrice = room.dailyPrice * totalDays;
+    } else {
+      roomPrice = room.hourlyPrice * totalHours;
+    }
 
-    // Tạo booking
+    // Tính tổng tiền cuối cùng
+    const calculatedTotalPrice = roomPrice + totalServicePrice;
+
+    // Tạo booking với giá đã tính
     const booking = new Booking({
       customerID,
       receptionistID,
       roomID,
+      bookingType,
       checkInDate,
       checkOutDate,
+      totalDays,
+      totalHours,
       services: servicesWithPrice,
       status: status || 'Pending',
-      totalPrice
+      totalPrice: calculatedTotalPrice
     });
 
     const newBooking = await booking.save({ session });
@@ -158,7 +174,7 @@ exports.createBooking = async (req, res) => {
     if (status === 'Confirmed') {
       invoice = new Invoice({
         bookingID: newBooking._id,
-        totalAmount: totalPrice,
+        totalAmount: calculatedTotalPrice,
         paymentMethod: 'Cash',
         paymentStatus: false,
         paymentDate: new Date()
@@ -215,54 +231,102 @@ exports.updateBooking = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { status } = req.body;
-    const oldBooking = await Booking.findById(req.params.id);
-    
-    if (!oldBooking) {
-      throw new Error('Booking not found');
+    const {
+      customerID,
+      roomID,
+      bookingType,
+      checkInDate,
+      checkOutDate,
+      totalDays,
+      totalHours,
+      services,
+      status
+    } = req.body;
+
+    // Tính lại tổng tiền dịch vụ
+    let totalServicePrice = 0;
+    const servicesWithPrice = await Promise.all(services.map(async (service) => {
+      const serviceData = await Service.findById(service.serviceID);
+      if (!serviceData) {
+        throw new Error(`Service not found: ${service.serviceID}`);
+      }
+      const serviceTotal = serviceData.servicePrice * service.quantity;
+      totalServicePrice += serviceTotal;
+      return {
+        serviceID: service.serviceID,
+        quantity: service.quantity,
+        totalPrice: serviceTotal
+      };
+    }));
+
+    // Lấy thông tin phòng để tính giá
+    const room = await Room.findById(roomID);
+    if (!room) {
+      throw new Error('Room not found');
     }
 
-    // Cập nhật booking
+    // Tính giá phòng dựa trên loại booking
+    let roomPrice;
+    if (bookingType === 'Daily') {
+      roomPrice = room.dailyPrice * totalDays;
+    } else {
+      roomPrice = room.hourlyPrice * totalHours;
+    }
+
+    // Tính tổng tiền cuối cùng
+    const calculatedTotalPrice = roomPrice + totalServicePrice;
+
+    // Cập nhật booking với giá mới
     const updatedBooking = await Booking.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      {
+        customerID,
+        roomID,
+        bookingType,
+        checkInDate,
+        checkOutDate,
+        totalDays,
+        totalHours,
+        services: servicesWithPrice,
+        status,
+        totalPrice: calculatedTotalPrice
+      },
       { new: true, session }
     );
 
-    // Xử lý invoice khi chuyển sang Confirmed
-    let invoice = await Invoice.findOne({ bookingID: updatedBooking._id });
-    if (status === 'Confirmed' && oldBooking.status !== 'Confirmed') {
-      if (!invoice) {
-        invoice = new Invoice({
+    // Cập nhật hoặc tạo mới invoice nếu status là Confirmed
+    if (status === 'Confirmed') {
+      const existingInvoice = await Invoice.findOne({ bookingID: req.params.id });
+      if (existingInvoice) {
+        await Invoice.findByIdAndUpdate(
+          existingInvoice._id,
+          { totalAmount: calculatedTotalPrice },
+          { session }
+        );
+      } else {
+        const newInvoice = new Invoice({
           bookingID: updatedBooking._id,
-          totalAmount: updatedBooking.totalPrice,
+          totalAmount: calculatedTotalPrice,
           paymentMethod: 'Cash',
           paymentStatus: false,
           paymentDate: new Date()
         });
-        await invoice.save({ session });
+        await newInvoice.save({ session });
       }
     }
 
-    // Cập nhật trạng thái phòng dựa theo status mới của booking
-    await updateRoomStatus(updatedBooking.roomID, status, session);
-
     await session.commitTransaction();
 
+    // Populate và trả về booking đã cập nhật
     const populatedBooking = await Booking.findById(updatedBooking._id)
       .populate('customerID', 'fullname email phone')
       .populate('receptionistID', 'fullname')
-      .populate('roomID', 'roomNumber roomType')
+      .populate('roomID', 'roomNumber roomType dailyPrice hourlyPrice')
       .populate('services.serviceID', 'serviceName servicePrice');
 
-    res.json({
-      booking: populatedBooking,
-      invoice: invoice
-    });
-
+    res.json(populatedBooking);
   } catch (error) {
     await session.abortTransaction();
-    console.error('Update booking error:', error);
     res.status(400).json({ message: error.message });
   } finally {
     session.endSession();

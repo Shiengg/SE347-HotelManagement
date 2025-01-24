@@ -174,7 +174,6 @@ const StatusTag = styled.span`
   
   &.pending { color: #f59e0b; background: #fef3c7; }
   &.confirmed { color: #10b981; background: #d1fae5; }
-  &.cancelled { color: #ef4444; background: #fee2e2; }
 `;
 
 const ActionButtons = styled(Space)`
@@ -307,8 +306,7 @@ const BookingsManagementPage = () => {
   const getStatusTag = (status) => {
     const classNames = {
       'Pending': 'pending',
-      'Confirmed': 'confirmed',
-      'Cancelled': 'cancelled'
+      'Confirmed': 'confirmed'
     };
     return <StatusTag className={classNames[status]}>{status}</StatusTag>;
   };

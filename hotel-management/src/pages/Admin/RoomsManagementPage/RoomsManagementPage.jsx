@@ -662,21 +662,18 @@ const RoomsManagementPage = () => {
   // Handle form submit
   const handleSubmit = async (values) => {
     try {
-      // Nếu đang edit và thay đổi status
-      if (selectedRoom && values.status !== selectedRoom.status) {
-        const hasBookings = await checkRoomHasBookings(selectedRoom._id);
-        if (hasBookings) {
-          message.error('Cannot change room status. Room has active bookings.');
-          return;
-        }
-      }
-
       const url = selectedRoom 
         ? `http://localhost:5000/api/rooms/${selectedRoom._id}`
         : 'http://localhost:5000/api/rooms';
       
       const method = selectedRoom ? 'PUT' : 'POST';
       
+      // Đảm bảo giá theo giờ không cao hơn giá theo ngày
+      if (values.hourlyPrice * 24 > values.dailyPrice) {
+        message.warning('Daily price should be higher than hourly price × 24');
+        return;
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -934,42 +931,48 @@ const RoomsManagementPage = () => {
         </FilterSection>
 
         <RoomHeader>
-          <div className="header-item">
-            <HomeOutlined className="icon" />
-            Room No.
-          </div>
-          <div className="header-item">
-            <i className="fas fa-bed icon"></i>
-            Type
-          </div>
-          <div className="header-item">
-            <i className="fas fa-tag icon"></i>
-            Price
-          </div>
-          <div className="header-item">
-            <CheckCircleOutlined className="icon" />
-            Status
-          </div>
-          <div className="header-item">
-            <i className="fas fa-user icon"></i>
-            Occupancy
-          </div>
+          <div className="header-item">Room Number</div>
+          <div className="header-item">Type</div>
+          <div className="header-item">Daily Price</div>
+          <div className="header-item">Hourly Price</div>
+          <div className="header-item">Status</div>
+          <div className="header-item">Actions</div>
         </RoomHeader>
 
         <RoomListContainer>
           {filteredRooms.map(room => (
             <RoomItem 
-              key={room._id}
-              isSelected={selectedRoom?._id === room._id}
+              key={room._id} 
               onClick={() => setSelectedRoom(room)}
+              isSelected={selectedRoom?._id === room._id}
             >
-              <div className="room-number">Room {room.roomNumber}</div>
-              <div className="room-type">{room.roomType}</div>
-              <div className="price">{formatVND(room.price)}</div>
-              <div className="status">{getStatusTag(room.status)}</div>
-              <div className="occupancy">
-                <i className="fas fa-user icon" />
-                {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
+              <div>Room {room.roomNumber}</div>
+              <div>{room.roomType}</div>
+              <div>{formatVND(room.dailyPrice)}</div>
+              <div>{formatVND(room.hourlyPrice)}</div>
+              <div>{getStatusTag(room.status)}</div>
+              <div>
+                <Space>
+                  <Button 
+                    type="text" 
+                    icon={<EditOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRoom(room);
+                      setIsEditing(true);
+                      form.setFieldsValue(room);
+                    }}
+                  />
+                  <Button 
+                    type="text" 
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(room._id);
+                    }}
+                  />
+                </Space>
               </div>
             </RoomItem>
           ))}
@@ -1018,10 +1021,10 @@ const RoomsManagementPage = () => {
                 <FormSection>
                   <div className="section-title">Capacity & Pricing</div>
                   <Form.Item
-                    name="price"
-                    label="Price per day"
+                    name="dailyPrice"
+                    label="Daily Price"
                     rules={[
-                      { required: true, message: 'Please input room price' },
+                      { required: true, message: 'Please input daily price' },
                       { type: 'number', min: 0, message: 'Price must be greater than 0' }
                     ]}
                   >
@@ -1030,6 +1033,38 @@ const RoomsManagementPage = () => {
                       formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={value => value.replace(/\$\s?|(,*)/g, '')}
                       addonAfter="VND/day"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="hourlyPrice"
+                    label="Hourly Price"
+                    rules={[
+                      { required: true, message: 'Please input hourly price' },
+                      { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                    ]}
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND/hour"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="minHours"
+                    label="Minimum Booking Hours"
+                    rules={[
+                      { required: true, message: 'Please input minimum hours' },
+                      { type: 'number', min: 1, message: 'Minimum hours must be at least 1' }
+                    ]}
+                    tooltip="Minimum number of hours required for hourly booking"
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      min={1}
+                      addonAfter="hours"
                     />
                   </Form.Item>
 
@@ -1108,16 +1143,30 @@ const RoomsManagementPage = () => {
                 </DetailItem>
 
                 <DetailItem>
-                  <div className="label">Maximum Occupancy</div>
-                  <div className="value">
-                    {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
+                  <div className="label">Daily Price</div>
+                  <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                    {formatVND(selectedRoom?.dailyPrice || 0)}
                   </div>
                 </DetailItem>
 
                 <DetailItem>
-                  <div className="label">Price</div>
+                  <div className="label">Hourly Price</div>
                   <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                    {formatVND(selectedRoom.price)}
+                    {formatVND(selectedRoom?.hourlyPrice || 0)}
+                  </div>
+                </DetailItem>
+
+                <DetailItem>
+                  <div className="label">Minimum Booking Hours</div>
+                  <div className="value">
+                    {selectedRoom.minHours} hours
+                  </div>
+                </DetailItem>
+
+                <DetailItem>
+                  <div className="label">Maximum Occupancy</div>
+                  <div className="value">
+                    {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
                   </div>
                 </DetailItem>
 
@@ -1198,10 +1247,10 @@ const RoomsManagementPage = () => {
               <FormSection>
                 <div className="section-title">Capacity & Pricing</div>
                 <Form.Item
-                  name="price"
-                  label="Price per day"
+                  name="dailyPrice"
+                  label="Daily Price"
                   rules={[
-                    { required: true, message: 'Please input room price' },
+                    { required: true, message: 'Please input daily price' },
                     { type: 'number', min: 0, message: 'Price must be greater than 0' }
                   ]}
                 >
@@ -1210,6 +1259,38 @@ const RoomsManagementPage = () => {
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={value => value.replace(/\$\s?|(,*)/g, '')}
                     addonAfter="VND/day"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="hourlyPrice"
+                  label="Hourly Price"
+                  rules={[
+                    { required: true, message: 'Please input hourly price' },
+                    { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                  ]}
+                >
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    addonAfter="VND/hour"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="minHours"
+                  label="Minimum Booking Hours"
+                  rules={[
+                    { required: true, message: 'Please input minimum hours' },
+                    { type: 'number', min: 1, message: 'Minimum hours must be at least 1' }
+                  ]}
+                  tooltip="Minimum number of hours required for hourly booking"
+                >
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    min={1}
+                    addonAfter="hours"
                   />
                 </Form.Item>
 

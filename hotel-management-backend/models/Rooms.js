@@ -13,10 +13,20 @@ const roomSchema = new mongoose.Schema({
         enum: ['Single', 'Double', 'Suite', 'Deluxe', 'Family'],
         default: 'Single'
     },
-    price: {
+    dailyPrice: {
         type: Number,
         required: true,
         min: 0
+    },
+    hourlyPrice: {
+        type: Number,
+        required: true,
+        min: 0
+    },
+    minHours: {
+        type: Number,
+        default: 3,
+        min: 1
     },
     maxOccupancy: {
         type: Number,
