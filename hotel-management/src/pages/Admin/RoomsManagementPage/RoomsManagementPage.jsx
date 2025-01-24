@@ -667,13 +667,13 @@ const RoomsManagementPage = () => {
         : 'http://localhost:5000/api/rooms';
       
       const method = selectedRoom ? 'PUT' : 'POST';
-      
-      // Đảm bảo giá theo giờ không cao hơn giá theo ngày
-      if (values.hourlyPrice * 24 > values.dailyPrice) {
-        message.warning('Daily price should be higher than hourly price × 24');
+
+      // Kiểm tra tỉ lệ giá ngày và giờ
+      if (values.dailyPrice < values.hourlyPrice * 20) {
+        message.error('Daily price must be at least 20 times the hourly price');
         return;
       }
-
+      
       const response = await fetch(url, {
         method,
         headers: {
@@ -1021,34 +1021,45 @@ const RoomsManagementPage = () => {
                 <FormSection>
                   <div className="section-title">Capacity & Pricing</div>
                   <Form.Item
-                    name="dailyPrice"
-                    label="Daily Price"
-                    rules={[
-                      { required: true, message: 'Please input daily price' },
-                      { type: 'number', min: 0, message: 'Price must be greater than 0' }
-                    ]}
-                  >
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                      addonAfter="VND/day"
-                    />
-                  </Form.Item>
-
-                  <Form.Item
                     name="hourlyPrice"
                     label="Hourly Price"
                     rules={[
                       { required: true, message: 'Please input hourly price' },
                       { type: 'number', min: 0, message: 'Price must be greater than 0' }
                     ]}
+                    tooltip="Daily price should be 20 times the hourly price"
                   >
                     <InputNumber
                       style={{ width: '100%' }}
                       formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={value => value.replace(/\$\s?|(,*)/g, '')}
                       addonAfter="VND/hour"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="dailyPrice"
+                    label="Daily Price"
+                    rules={[
+                      { required: true, message: 'Please input daily price' },
+                      { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          const hourlyPrice = getFieldValue('hourlyPrice');
+                          if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                        },
+                      }),
+                    ]}
+                    tooltip="Daily price should be at least 20 times the hourly price"
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND/day"
                     />
                   </Form.Item>
 
@@ -1247,34 +1258,45 @@ const RoomsManagementPage = () => {
               <FormSection>
                 <div className="section-title">Capacity & Pricing</div>
                 <Form.Item
-                  name="dailyPrice"
-                  label="Daily Price"
-                  rules={[
-                    { required: true, message: 'Please input daily price' },
-                    { type: 'number', min: 0, message: 'Price must be greater than 0' }
-                  ]}
-                >
-                  <InputNumber
-                    style={{ width: '100%' }}
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                    addonAfter="VND/day"
-                  />
-                </Form.Item>
-
-                <Form.Item
                   name="hourlyPrice"
                   label="Hourly Price"
                   rules={[
                     { required: true, message: 'Please input hourly price' },
                     { type: 'number', min: 0, message: 'Price must be greater than 0' }
                   ]}
+                  tooltip="Daily price should be 20 times the hourly price"
                 >
                   <InputNumber
                     style={{ width: '100%' }}
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={value => value.replace(/\$\s?|(,*)/g, '')}
                     addonAfter="VND/hour"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="dailyPrice"
+                  label="Daily Price"
+                  rules={[
+                    { required: true, message: 'Please input daily price' },
+                    { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        const hourlyPrice = getFieldValue('hourlyPrice');
+                        if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                      },
+                    }),
+                  ]}
+                  tooltip="Daily price should be at least 20 times the hourly price"
+                >
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    addonAfter="VND/day"
                   />
                 </Form.Item>
 
