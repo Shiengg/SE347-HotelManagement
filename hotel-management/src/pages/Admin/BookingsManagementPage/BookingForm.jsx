@@ -158,11 +158,11 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
       if (bookingType === 'Daily') {
         totalDays = Math.ceil(checkOut.diff(checkIn, 'day', true));
       } else {
-        totalHours = Math.ceil(checkOut.diff(checkIn, 'hour', true));
-        // Đảm bảo số giờ không nhỏ hơn minHours
-        if (selectedRoom) {
-          totalHours = Math.max(totalHours, selectedRoom.minHours || 3);
-        }
+        // Lấy giờ từ thời gian check-in và check-out
+        const checkInHour = checkIn.hour();
+        const checkOutHour = checkOut.hour();
+        // Tính số giờ = giờ check-out - giờ check-in
+        totalHours = checkOutHour - checkInHour;
       }
 
       // Tính tổng tiền
@@ -209,9 +209,12 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
       const days = Math.ceil(checkOut.diff(checkIn, 'day', true));
       return selectedRoom.dailyPrice * days;
     } else {
-      const hours = Math.ceil(checkOut.diff(checkIn, 'hour', true));
-      const minHours = selectedRoom.minHours || 3;
-      return selectedRoom.hourlyPrice * Math.max(hours, minHours);
+      // Lấy giờ từ thời gian check-in và check-out
+      const checkInHour = checkIn.hour();
+      const checkOutHour = checkOut.hour();
+      // Tính số giờ = giờ check-out - giờ check-in
+      const diffInHours = checkOutHour - checkInHour;
+      return selectedRoom.hourlyPrice * diffInHours;
     }
   };
 

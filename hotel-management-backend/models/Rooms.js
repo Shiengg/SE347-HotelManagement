@@ -23,11 +23,6 @@ const roomSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
-    minHours: {
-        type: Number,
-        default: 3,
-        min: 1
-    },
     maxOccupancy: {
         type: Number,
         required: true,

@@ -1080,22 +1080,6 @@ const RoomsManagementPage = () => {
                   </Form.Item>
 
                   <Form.Item
-                    name="minHours"
-                    label="Minimum Booking Hours"
-                    rules={[
-                      { required: true, message: 'Please input minimum hours' },
-                      { type: 'number', min: 1, message: 'Minimum hours must be at least 1' }
-                    ]}
-                    tooltip="Minimum number of hours required for hourly booking"
-                  >
-                    <InputNumber
-                      style={{ width: '100%' }}
-                      min={1}
-                      addonAfter="hours"
-                    />
-                  </Form.Item>
-
-                  <Form.Item
                     name="maxOccupancy"
                     label="Maximum Occupancy"
                     rules={[{ required: true, message: 'Please input max occupancy!' }]}
@@ -1180,13 +1164,6 @@ const RoomsManagementPage = () => {
                   <div className="label">Hourly Price</div>
                   <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
                     {formatVND(selectedRoom?.hourlyPrice || 0)}
-                  </div>
-                </DetailItem>
-
-                <DetailItem>
-                  <div className="label">Minimum Booking Hours</div>
-                  <div className="value">
-                    {selectedRoom.minHours} hours
                   </div>
                 </DetailItem>
 
@@ -1313,22 +1290,6 @@ const RoomsManagementPage = () => {
                     formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                     parser={value => value.replace(/\$\s?|(,*)/g, '')}
                     addonAfter="VND/day"
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="minHours"
-                  label="Minimum Booking Hours"
-                  rules={[
-                    { required: true, message: 'Please input minimum hours' },
-                    { type: 'number', min: 1, message: 'Minimum hours must be at least 1' }
-                  ]}
-                  tooltip="Minimum number of hours required for hourly booking"
-                >
-                  <InputNumber
-                    style={{ width: '100%' }}
-                    min={1}
-                    addonAfter="hours"
                   />
                 </Form.Item>
 
