@@ -18,17 +18,27 @@ exports.getAllBookings = async (req, res) => {
       })
       .populate({
         path: 'roomID',
-        select: 'roomNumber roomType price'
+        select: 'roomNumber roomType dailyPrice hourlyPrice'
       })
       .populate({
         path: 'services.serviceID',
         select: 'serviceName servicePrice'
       });
 
-    // Log để debug
-    console.log('Fetched bookings:', JSON.stringify(bookings, null, 2));
+    // Tính lại tổng tiền cho mỗi booking để đảm bảo chính xác
+    const calculatedBookings = bookings.map(booking => {
+      const roomPrice = booking.bookingType === 'Daily' 
+        ? booking.roomID.dailyPrice * booking.totalDays
+        : booking.roomID.hourlyPrice * booking.totalHours;
 
-    res.json(bookings);
+      const servicesPrice = booking.services.reduce((total, service) => 
+        total + (service.serviceID.servicePrice * service.quantity), 0);
+
+      booking.totalPrice = roomPrice + servicesPrice;
+      return booking;
+    });
+
+    res.json(calculatedBookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ message: error.message });
@@ -66,28 +76,24 @@ exports.createBooking = async (req, res) => {
     const {
       customerID,
       roomID,
+      bookingType,
       checkInDate,
       checkOutDate,
+      totalDays,
+      totalHours,
       services,
       status,
-      receptionistID
+      receptionistID,
+      totalPrice: submittedTotalPrice
     } = req.body;
 
     // Log request data để debug
     console.log('Received booking data:', req.body);
 
     // Validate required fields
-    if (!customerID || !roomID || !checkInDate || !checkOutDate || !receptionistID) {
+    if (!customerID || !roomID || !checkInDate || !checkOutDate || !receptionistID || !bookingType) {
       return res.status(400).json({ 
-        message: 'Missing required fields',
-        required: ['customerID', 'roomID', 'checkInDate', 'checkOutDate', 'receptionistID'],
-        received: {
-          customerID,
-          roomID,
-          checkInDate,
-          checkOutDate,
-          receptionistID
-        }
+        message: 'Missing required fields'
       });
     }
 
@@ -135,60 +141,47 @@ exports.createBooking = async (req, res) => {
       throw new Error('Room not found');
     }
 
-    const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-    const roomPrice = room.price * days;
-    const totalPrice = roomPrice + totalServicePrice;
+    // Tính giá phòng dựa trên loại booking
+    let roomPrice;
+    if (bookingType === 'Daily') {
+      roomPrice = room.dailyPrice * totalDays;
+    } else {
+      roomPrice = room.hourlyPrice * totalHours;
+    }
 
-    // Tạo booking
+    // Tính tổng tiền cuối cùng
+    const calculatedTotalPrice = roomPrice + totalServicePrice;
+
+    // Tạo booking với giá đã tính
     const booking = new Booking({
       customerID,
       receptionistID,
       roomID,
+      bookingType,
       checkInDate,
       checkOutDate,
+      totalDays,
+      totalHours,
       services: servicesWithPrice,
       status: status || 'Pending',
-      totalPrice
+      totalPrice: calculatedTotalPrice
     });
 
     const newBooking = await booking.save({ session });
 
-    // Chỉ tạo invoice nếu status là Confirmed
-    let invoice = null;
-    if (status === 'Confirmed') {
-      invoice = new Invoice({
-        bookingID: newBooking._id,
-        totalAmount: totalPrice,
-        paymentMethod: 'Cash',
-        paymentStatus: false,
-        paymentDate: new Date()
-      });
-      await invoice.save({ session });
-    }
-
-    // Cập nhật trạng thái phòng dựa theo status của booking
-    await updateRoomStatus(roomID, status || 'Pending', session);
+    // Cập nhật trạng thái phòng dựa trên trạng thái booking
+    const roomStatus = booking.status === 'Confirmed' ? 'Occupied' : 'Reserved';
+    await Room.findByIdAndUpdate(
+      booking.roomID,
+      { status: roomStatus },
+      { session }
+    );
 
     await session.commitTransaction();
-
-    const populatedBooking = await Booking.findById(newBooking._id)
-      .populate('customerID', 'fullname email phone')
-      .populate('receptionistID', 'fullname')
-      .populate('roomID', 'roomNumber roomType')
-      .populate('services.serviceID', 'serviceName servicePrice');
-
-    res.status(201).json({
-      booking: populatedBooking,
-      invoice: invoice
-    });
-
+    res.status(201).json(newBooking);
   } catch (error) {
     await session.abortTransaction();
-    console.error('Create booking error:', error);
-    res.status(400).json({ 
-      message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
   }
@@ -216,11 +209,19 @@ exports.updateBooking = async (req, res) => {
 
   try {
     const { status } = req.body;
-    const oldBooking = await Booking.findById(req.params.id);
-    
-    if (!oldBooking) {
+    const booking = await Booking.findById(req.params.id);
+
+    if (!booking) {
       throw new Error('Booking not found');
     }
+
+    // Cập nhật trạng thái phòng dựa trên trạng thái booking mới
+    const roomStatus = status === 'Confirmed' ? 'Occupied' : 'Reserved';
+    await Room.findByIdAndUpdate(
+      booking.roomID,
+      { status: roomStatus },
+      { session }
+    );
 
     // Cập nhật booking
     const updatedBooking = await Booking.findByIdAndUpdate(
@@ -229,40 +230,10 @@ exports.updateBooking = async (req, res) => {
       { new: true, session }
     );
 
-    // Xử lý invoice khi chuyển sang Confirmed
-    let invoice = await Invoice.findOne({ bookingID: updatedBooking._id });
-    if (status === 'Confirmed' && oldBooking.status !== 'Confirmed') {
-      if (!invoice) {
-        invoice = new Invoice({
-          bookingID: updatedBooking._id,
-          totalAmount: updatedBooking.totalPrice,
-          paymentMethod: 'Cash',
-          paymentStatus: false,
-          paymentDate: new Date()
-        });
-        await invoice.save({ session });
-      }
-    }
-
-    // Cập nhật trạng thái phòng dựa theo status mới của booking
-    await updateRoomStatus(updatedBooking.roomID, status, session);
-
     await session.commitTransaction();
-
-    const populatedBooking = await Booking.findById(updatedBooking._id)
-      .populate('customerID', 'fullname email phone')
-      .populate('receptionistID', 'fullname')
-      .populate('roomID', 'roomNumber roomType')
-      .populate('services.serviceID', 'serviceName servicePrice');
-
-    res.json({
-      booking: populatedBooking,
-      invoice: invoice
-    });
-
+    res.json(updatedBooking);
   } catch (error) {
     await session.abortTransaction();
-    console.error('Update booking error:', error);
     res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
@@ -279,38 +250,33 @@ exports.deleteBooking = async (req, res) => {
       throw new Error('Booking not found');
     }
 
-    // Kiểm tra nếu booking đã confirmed và có invoice
-    if (booking.status === 'Confirmed') {
-      const invoice = await Invoice.findOne({ bookingID: booking._id });
-      if (invoice) {
-        return res.status(400).json({ 
-          message: 'Cannot delete confirmed booking with invoice',
-          booking: {
-            id: booking._id,
-            status: booking.status,
-            invoice: invoice._id
-          }
-        });
-      }
-    }
-
-    // Cập nhật trạng thái phòng về Available
-    await updateRoomStatus(booking.roomID, 'Cancelled', session);
+    // Lấy roomId trước khi xóa booking
+    const roomId = booking.roomID;
 
     // Xóa booking
     await Booking.findByIdAndDelete(booking._id, { session });
 
-    await session.commitTransaction();
-    res.json({ 
-      message: 'Booking deleted successfully',
-      deletedBooking: booking
-    });
+    // Kiểm tra xem còn booking nào khác cho phòng này không
+    const otherBookings = await Booking.find({
+      roomID: roomId,
+      status: { $in: ['Pending', 'Confirmed'] },
+      _id: { $ne: booking._id }
+    }).session(session);
 
+    if (otherBookings.length === 0) {
+      // Nếu không còn booking nào, đặt phòng về trạng thái Available
+      await Room.findByIdAndUpdate(
+        roomId,
+        { status: 'Available' },
+        { session }
+      );
+    }
+
+    await session.commitTransaction();
+    res.json({ message: 'Booking deleted successfully' });
   } catch (error) {
     await session.abortTransaction();
-    res.status(error.message === 'Booking not found' ? 404 : 500).json({ 
-      message: error.message 
-    });
+    res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
   }

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Form, Input, Select, DatePicker, message, Space, Modal } from 'antd';
+import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import BookingForm from './BookingForm';
@@ -174,7 +174,6 @@ const StatusTag = styled.span`
   
   &.pending { color: #f59e0b; background: #fef3c7; }
   &.confirmed { color: #10b981; background: #d1fae5; }
-  &.cancelled { color: #ef4444; background: #fee2e2; }
 `;
 
 const ActionButtons = styled(Space)`
@@ -234,6 +233,184 @@ const DetailModal = styled(Modal)`
   }
 `;
 
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #fff;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  margin: 24px 0;
+
+  .icon {
+    font-size: 48px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: #64748b;
+    text-align: center;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+
+  .add-button {
+    margin-top: 24px;
+    height: 40px;
+    padding: 0 24px;
+    border-radius: 20px;
+    background: #1a3353;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      background: #264773;
+    }
+  }
+`;
+
+const LoadingState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #fff;
+  border-radius: 8px;
+  margin: 24px 0;
+
+  .ant-spin {
+    margin-bottom: 16px;
+  }
+
+  .text {
+    color: #64748b;
+    font-size: 0.95em;
+  }
+`;
+
+const formatDateTime = (date, bookingType) => {
+  if (bookingType === 'Hourly') {
+    return dayjs(date).format('DD/MM/YYYY HH:mm');
+  }
+  return dayjs(date).format('DD/MM/YYYY');
+};
+
+const getStatusTag = (status) => {
+  const classNames = {
+    'Pending': 'pending',
+    'Confirmed': 'confirmed'
+  };
+  return <StatusTag className={classNames[status]}>{status}</StatusTag>;
+};
+
+const BookingDetailModal = ({ booking, visible, onClose }) => {
+  if (!booking) return null;
+
+  return (
+    <DetailModal
+      title="Booking Details"
+      open={visible}
+      onCancel={onClose}
+      footer={null}
+      width={600}
+    >
+      <DetailSection>
+        <DetailItem>
+          <div className="label">Booking ID</div>
+          <div className="value">#{booking._id.slice(-6)}</div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Room</div>
+          <div className="value">Room {booking.roomID.roomNumber}</div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Customer</div>
+          <div className="value">
+            {booking.customerID?.fullname || booking.customerID?.username || 'N/A'}
+          </div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Booking Type</div>
+          <div className="value">{booking.bookingType}</div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Check In</div>
+          <div className="value">{formatDateTime(booking.checkInDate, booking.bookingType)}</div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Check Out</div>
+          <div className="value">{formatDateTime(booking.checkOutDate, booking.bookingType)}</div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Duration</div>
+          <div className="value">
+            {booking.bookingType === 'Daily' 
+              ? `${booking.totalDays} days`
+              : `${booking.totalHours} hours`
+            }
+          </div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Status</div>
+          <div className="value">{getStatusTag(booking.status)}</div>
+        </DetailItem>
+
+        <DetailItem>
+          <div className="label">Total Price</div>
+          <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+            {formatVND(booking.totalPrice)}
+          </div>
+        </DetailItem>
+
+        {booking.services.length > 0 && (
+          <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+            <div className="label">Services</div>
+            <div className="value" style={{ width: '100%' }}>
+              {booking.services.map((service, index) => (
+                <div key={index} style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  padding: '8px',
+                  background: '#f8f9fa',
+                  borderRadius: '4px',
+                  marginBottom: '4px'
+                }}>
+                  <span>{service.serviceID.serviceName} × {service.quantity}</span>
+                  <span>{formatVND(service.totalPrice)}</span>
+                </div>
+              ))}
+            </div>
+          </DetailItem>
+        )}
+      </DetailSection>
+    </DetailModal>
+  );
+};
+
 const BookingsManagementPage = () => {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -241,6 +418,8 @@ const BookingsManagementPage = () => {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingBooking, setEditingBooking] = useState(null);
   const [formMode, setFormMode] = useState('create');
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const formRef = useRef(null);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -304,15 +483,6 @@ const BookingsManagementPage = () => {
     }
   };
 
-  const getStatusTag = (status) => {
-    const classNames = {
-      'Pending': 'pending',
-      'Confirmed': 'confirmed',
-      'Cancelled': 'cancelled'
-    };
-    return <StatusTag className={classNames[status]}>{status}</StatusTag>;
-  };
-
   const handleSubmit = async (values) => {
     try {
       const url = editingBooking 
@@ -354,6 +524,21 @@ const BookingsManagementPage = () => {
     setFormMode('create');
   };
 
+  const handleViewDetail = (booking) => {
+    setSelectedBooking(booking);
+    setIsDetailModalVisible(true);
+  };
+
+  const resetForm = () => {
+    setSelectedBooking(null);
+    setEditingBooking(null);
+    setFormMode('create');
+    setIsFormVisible(true);
+    if (formRef.current) {
+      formRef.current.resetFields();
+    }
+  };
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -371,79 +556,99 @@ const BookingsManagementPage = () => {
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
-            onClick={() => {
-              setSelectedBooking(null);
-              setEditingBooking(null);
-              setFormMode('create');
-              setIsFormVisible(true);
-            }}
+            onClick={resetForm}
           >
             Add New Booking
           </Button>
         </HeaderSection>
 
         <TableContainer>
-          <BookingTable>
-            <thead>
-              <tr>
-                <th>Booking ID</th>
-                <th>Room</th>
-                <th>Customer</th>
-                <th>Check In</th>
-                <th>Check Out</th>
-                <th>Total Price</th>
-                <th>Status</th>
-                <th>Services</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map(booking => (
-                <tr key={booking._id}>
-                  <td>#{booking._id.slice(-6)}</td>
-                  <td>Room {booking.roomID.roomNumber}</td>
-                  <td>
-                    {booking.customerID?.fullname || 
-                     booking.customerID?.username || 
-                     'N/A'}
-                  </td>
-                  <td>{dayjs(booking.checkInDate).format('DD/MM/YYYY')}</td>
-                  <td>{dayjs(booking.checkOutDate).format('DD/MM/YYYY')}</td>
-                  <td>{formatVND(booking.totalPrice)}</td>
-                  <td>{getStatusTag(booking.status)}</td>
-                  <td>{booking.services.length} services</td>
-                  <td>
-                    <Space>
-                      <Button 
-                        type="text" 
-                        icon={<InfoCircleOutlined />}
-                        onClick={() => setSelectedBooking(booking)}
-                      />
-                      <Button 
-                        type="text" 
-                        icon={<EditOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingBooking(booking);
-                          setFormMode('edit');
-                          setIsFormVisible(true);
-                        }}
-                      />
-                      <Button 
-                        type="text" 
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(booking._id);
-                        }}
-                      />
-                    </Space>
-                  </td>
+          {loading ? (
+            <LoadingState>
+              <Spin size="large" />
+              <div className="text">Loading bookings...</div>
+            </LoadingState>
+          ) : bookings.length > 0 ? (
+            <BookingTable>
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Room</th>
+                  <th>Customer</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Total Price</th>
+                  <th>Status</th>
+                  <th>Services</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </BookingTable>
+              </thead>
+              <tbody>
+                {bookings.map(booking => (
+                  <tr key={booking._id}>
+                    <td>#{booking._id.slice(-6)}</td>
+                    <td>Room {booking.roomID.roomNumber}</td>
+                    <td>
+                      {booking.customerID?.fullname || 
+                       booking.customerID?.username || 
+                       'N/A'}
+                    </td>
+                    <td>{formatDateTime(booking.checkInDate, booking.bookingType)}</td>
+                    <td>{formatDateTime(booking.checkOutDate, booking.bookingType)}</td>
+                    <td>{formatVND(booking.totalPrice)}</td>
+                    <td>{getStatusTag(booking.status)}</td>
+                    <td>{booking.services.length} services</td>
+                    <td>
+                      <Space>
+                        <Button 
+                          type="text" 
+                          icon={<InfoCircleOutlined />}
+                          onClick={() => {
+                            setSelectedBooking(booking);
+                            setIsDetailModalVisible(true);
+                          }}
+                        />
+                        <Button 
+                          type="text" 
+                          icon={<EditOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingBooking(booking);
+                            setFormMode('edit');
+                            setIsFormVisible(true);
+                          }}
+                        />
+                        <Button 
+                          type="text" 
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(booking._id);
+                          }}
+                        />
+                      </Space>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </BookingTable>
+          ) : (
+            <EmptyState>
+              <CalendarOutlined className="icon" />
+              <div className="title">No Bookings Found</div>
+              <div className="subtitle">
+                {/* ... existing subtitle content ... */}
+              </div>
+              <Button
+                className="add-button"
+                icon={<PlusOutlined />}
+                onClick={resetForm}
+              >
+                Create New Booking
+              </Button>
+            </EmptyState>
+          )}
         </TableContainer>
       </ContentWrapper>
 
@@ -455,107 +660,21 @@ const BookingsManagementPage = () => {
         width={800}
       >
         <BookingForm
+          ref={formRef}
           booking={formMode === 'edit' ? editingBooking : null}
           onSubmit={handleSubmit}
           onCancel={resetFormState}
         />
       </Modal>
 
-      <DetailModal
-        title="Booking Details"
-        open={!!selectedBooking}
-        onCancel={() => setSelectedBooking(null)}
-        footer={[
-          <Button
-            key="edit"
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => {
-              setEditingBooking(selectedBooking);
-              setFormMode('edit');
-              setIsFormVisible(true);
-              setSelectedBooking(null);
-            }}
-          >
-            Edit Booking
-          </Button>,
-          <Button
-            key="delete"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              handleDelete(selectedBooking._id);
-              setSelectedBooking(null);
-            }}
-          >
-            Delete Booking
-          </Button>
-        ]}
-        width={600}
-      >
-        {selectedBooking && (
-          <DetailSection>
-            <DetailItem>
-              <div className="label">Status</div>
-              <div className="value">
-                {getStatusTag(selectedBooking.status)}
-              </div>
-            </DetailItem>
-
-            <DetailItem>
-              <div className="label">Room</div>
-              <div className="value">
-                Room {selectedBooking.roomID.roomNumber} ({selectedBooking.roomID.roomType})
-              </div>
-            </DetailItem>
-
-            <DetailItem>
-              <div className="label">Customer</div>
-              <div className="value">
-                {selectedBooking.customerID.name}
-              </div>
-            </DetailItem>
-
-            <DetailItem>
-              <div className="label">Check In</div>
-              <div className="value">
-                {dayjs(selectedBooking.checkInDate).format('DD/MM/YYYY')}
-              </div>
-            </DetailItem>
-
-            <DetailItem>
-              <div className="label">Check Out</div>
-              <div className="value">
-                {dayjs(selectedBooking.checkOutDate).format('DD/MM/YYYY')}
-              </div>
-            </DetailItem>
-
-            <DetailItem>
-              <div className="label">Total Price</div>
-              <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                {formatVND(selectedBooking.totalPrice)}
-              </div>
-            </DetailItem>
-
-            <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-              <div className="label">Services</div>
-              <div style={{ width: '100%' }}>
-                {selectedBooking.services.map(service => (
-                  <div key={service._id} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '8px 0',
-                    borderBottom: '1px dashed #eee'
-                  }}>
-                    <span>{service.serviceID.name} x{service.quantity}</span>
-                    <span>{formatVND(service.totalPrice)}</span>
-                  </div>
-                ))}
-              </div>
-            </DetailItem>
-          </DetailSection>
-        )}
-      </DetailModal>
+      <BookingDetailModal
+        booking={selectedBooking}
+        visible={isDetailModalVisible}
+        onClose={() => {
+          setSelectedBooking(null);
+          setIsDetailModalVisible(false);
+        }}
+      />
     </PageContainer>
   );
 };

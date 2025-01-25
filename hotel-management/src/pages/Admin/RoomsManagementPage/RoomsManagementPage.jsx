@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Space } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
@@ -182,33 +182,26 @@ const FilterGroup = styled.div`
 `;
 
 const RoomHeader = styled.div`
-  font-size: 1em;
   display: grid;
-  align-items: center;
-  grid-template-columns: 100px 1fr 140px 140px 120px;
-  padding: 16px 20px;
-  background: linear-gradient(to right, #f8f9fa, #ffffff);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  grid-template-columns: 1fr 1fr 1.2fr 1.2fr 1fr 0.8fr;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #e2e8f0;
+  margin-bottom: -1px;
 
   .header-item {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #1a3353;
-    font-weight: 500;
-    font-size: 0.95em;
-    
-    .icon {
-      color: #666;
-      font-size: 14px;
-    }
-  }
 
-  @media (max-width: 680px) {
-    display: none;
+    .icon {
+      color: #64748b;
+      font-size: 1rem;
+    }
   }
 `;
 
@@ -230,90 +223,37 @@ const RoomFilter = styled.select`
 `;
 
 const RoomItem = styled.div`
-  border-radius: 10px;
-  background: white;
   display: grid;
-  grid-template-columns: 100px 1fr 140px 140px 120px;
-  padding: 16px;
+  grid-template-columns: 1fr 1fr 1.2fr 1.2fr 1fr 0.8fr;
+  padding: 16px 24px;
+  border: 1px solid #e2e8f0;
+  background: ${props => props.isSelected ? '#f1f5f9' : '#fff'};
+  transition: all 0.2s ease;
   cursor: pointer;
-  align-items: center;
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
-  
-  ${props => props.isSelected && `
-    background: linear-gradient(45deg, #ffd700, #ffed4a);
-    border-color: #ffd700;
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  `}
 
   &:hover {
-    background: ${props => props.isSelected ? 
-      'linear-gradient(45deg, #ffd700, #ffed4a)' : 
-      'linear-gradient(45deg, #ffffff, #f8f9fa)'};
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background: #f8fafc;
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
   }
 
   .room-number {
     font-weight: 600;
-    color: #1a3353;
-    font-size: 1.1em;
+    color: #1e293b;
   }
 
   .room-type {
-    color: #666;
-  }
-
-  .occupancy {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #666;
-
-    .icon {
-      color: #ffd700;
-      font-size: 14px;
-    }
+    color: #475569;
   }
 
   .price {
-    font-weight: 600;
-    color: #00a854;
-  }
-
-  @media (max-width: 1080px) {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    padding: 12px;
-
-    .room-number {
-      grid-column: 1;
-      grid-row: 1;
-    }
-
-    .room-type {
-      grid-column: 2;
-      grid-row: 1;
-      text-align: right;
-    }
-
-    .status {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    .occupancy {
-      grid-column: 1;
-      grid-row: 3;
-    }
-
-    .price {
-      grid-column: 2;
-      grid-row: 2/4;
-      text-align: right;
-      font-size: 1.2em;
-    }
+    font-weight: 500;
+    color: #059669;
   }
 `;
 
@@ -433,14 +373,40 @@ const ActionButtons = styled(Space)`
 `;
 
 const StatusTag = styled.span`
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
   font-weight: 500;
-  
-  &.available { color: #10b981; background: #d1fae5; }
-  &.occupied { color: #ef4444; background: #fee2e2; }
-  &.maintenance { color: #f59e0b; background: #fef3c7; }
-  &.reserved { color: #6366f1; background: #e0e7ff; }
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &.available {
+    color: #059669;
+    background: #d1fae5;
+  }
+
+  &.occupied {
+    color: #dc2626;
+    background: #fee2e2;
+  }
+
+  &.maintenance {
+    color: #d97706;
+    background: #fef3c7;
+  }
+
+  &.reserved {
+    color: #4f46e5;
+    background: #e0e7ff;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
 `;
 
 const TotalPrice = styled.div`
@@ -662,20 +628,17 @@ const RoomsManagementPage = () => {
   // Handle form submit
   const handleSubmit = async (values) => {
     try {
-      // Nếu đang edit và thay đổi status
-      if (selectedRoom && values.status !== selectedRoom.status) {
-        const hasBookings = await checkRoomHasBookings(selectedRoom._id);
-        if (hasBookings) {
-          message.error('Cannot change room status. Room has active bookings.');
-          return;
-        }
-      }
-
       const url = selectedRoom 
         ? `http://localhost:5000/api/rooms/${selectedRoom._id}`
         : 'http://localhost:5000/api/rooms';
       
       const method = selectedRoom ? 'PUT' : 'POST';
+
+      // Kiểm tra tỉ lệ giá ngày và giờ
+      if (values.dailyPrice < values.hourlyPrice * 20) {
+        message.error('Daily price must be at least 20 times the hourly price');
+        return;
+      }
       
       const response = await fetch(url, {
         method,
@@ -747,13 +710,33 @@ const RoomsManagementPage = () => {
   };
 
   const getStatusTag = (status) => {
-    const classNames = {
-      'Available': 'available',
-      'Occupied': 'occupied',
-      'Maintenance': 'maintenance',
-      'Reserved': 'reserved'
+    const statusConfig = {
+      'Available': {
+        icon: <CheckCircleOutlined />,
+        className: 'available'
+      },
+      'Occupied': {
+        icon: <CloseCircleOutlined />,
+        className: 'occupied'
+      },
+      'Maintenance': {
+        icon: <ToolOutlined />,
+        className: 'maintenance'
+      },
+      'Reserved': {
+        icon: <CalendarOutlined />,
+        className: 'reserved'
+      }
     };
-    return <StatusTag className={classNames[status]}>{status}</StatusTag>;
+
+    const config = statusConfig[status];
+    return (
+      <StatusTag className={config.className}>
+        <span className="status-dot"></span>
+        {config.icon}
+        {status}
+      </StatusTag>
+    );
   };
 
   const filteredRooms = rooms.filter(room => {
@@ -936,40 +919,76 @@ const RoomsManagementPage = () => {
         <RoomHeader>
           <div className="header-item">
             <HomeOutlined className="icon" />
-            Room No.
+            Room Number
           </div>
           <div className="header-item">
             <i className="fas fa-bed icon"></i>
-            Type
+            Room Type
           </div>
           <div className="header-item">
-            <i className="fas fa-tag icon"></i>
-            Price
+            <DollarOutlined className="icon" />
+            Daily Price
+          </div>
+          <div className="header-item">
+            <ClockCircleOutlined className="icon" />
+            Hourly Price
           </div>
           <div className="header-item">
             <CheckCircleOutlined className="icon" />
             Status
           </div>
           <div className="header-item">
-            <i className="fas fa-user icon"></i>
-            Occupancy
+            <SettingOutlined className="icon" />
+            Actions
           </div>
         </RoomHeader>
 
         <RoomListContainer>
           {filteredRooms.map(room => (
             <RoomItem 
-              key={room._id}
-              isSelected={selectedRoom?._id === room._id}
+              key={room._id} 
               onClick={() => setSelectedRoom(room)}
+              isSelected={selectedRoom?._id === room._id}
             >
-              <div className="room-number">Room {room.roomNumber}</div>
-              <div className="room-type">{room.roomType}</div>
-              <div className="price">{formatVND(room.price)}</div>
-              <div className="status">{getStatusTag(room.status)}</div>
-              <div className="occupancy">
-                <i className="fas fa-user icon" />
-                {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
+              <div className="room-number">
+                <HomeOutlined style={{ color: '#64748b' }} />
+                Room {room.roomNumber}
+              </div>
+              <div className="room-type">
+                {room.roomType}
+              </div>
+              <div className="price">
+                {formatVND(room.dailyPrice)}
+              </div>
+              <div className="price">
+                {formatVND(room.hourlyPrice)}
+              </div>
+              <div>
+                {getStatusTag(room.status)}
+              </div>
+              <div>
+                <Space>
+                  <Button
+                    type="text"
+                    icon={<EditOutlined />}
+                    style={{ color: '#0ea5e9' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRoom(room);
+                      setIsEditing(true);
+                      form.setFieldsValue(room);
+                    }}
+                  />
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(room._id);
+                    }}
+                  />
+                </Space>
               </div>
             </RoomItem>
           ))}
@@ -1018,12 +1037,39 @@ const RoomsManagementPage = () => {
                 <FormSection>
                   <div className="section-title">Capacity & Pricing</div>
                   <Form.Item
-                    name="price"
-                    label="Price per day"
+                    name="hourlyPrice"
+                    label="Hourly Price"
                     rules={[
-                      { required: true, message: 'Please input room price' },
+                      { required: true, message: 'Please input hourly price' },
                       { type: 'number', min: 0, message: 'Price must be greater than 0' }
                     ]}
+                    tooltip="Daily price should be 20 times the hourly price"
+                  >
+                    <InputNumber
+                      style={{ width: '100%' }}
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND/hour"
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="dailyPrice"
+                    label="Daily Price"
+                    rules={[
+                      { required: true, message: 'Please input daily price' },
+                      { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                      ({ getFieldValue }) => ({
+                        validator(_, value) {
+                          const hourlyPrice = getFieldValue('hourlyPrice');
+                          if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                            return Promise.resolve();
+                          }
+                          return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                        },
+                      }),
+                    ]}
+                    tooltip="Daily price should be at least 20 times the hourly price"
                   >
                     <InputNumber
                       style={{ width: '100%' }}
@@ -1108,16 +1154,23 @@ const RoomsManagementPage = () => {
                 </DetailItem>
 
                 <DetailItem>
-                  <div className="label">Maximum Occupancy</div>
-                  <div className="value">
-                    {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
+                  <div className="label">Daily Price</div>
+                  <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                    {formatVND(selectedRoom?.dailyPrice || 0)}
                   </div>
                 </DetailItem>
 
                 <DetailItem>
-                  <div className="label">Price</div>
+                  <div className="label">Hourly Price</div>
                   <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                    {formatVND(selectedRoom.price)}
+                    {formatVND(selectedRoom?.hourlyPrice || 0)}
+                  </div>
+                </DetailItem>
+
+                <DetailItem>
+                  <div className="label">Maximum Occupancy</div>
+                  <div className="value">
+                    {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
                   </div>
                 </DetailItem>
 
@@ -1198,12 +1251,39 @@ const RoomsManagementPage = () => {
               <FormSection>
                 <div className="section-title">Capacity & Pricing</div>
                 <Form.Item
-                  name="price"
-                  label="Price per day"
+                  name="hourlyPrice"
+                  label="Hourly Price"
                   rules={[
-                    { required: true, message: 'Please input room price' },
+                    { required: true, message: 'Please input hourly price' },
                     { type: 'number', min: 0, message: 'Price must be greater than 0' }
                   ]}
+                  tooltip="Daily price should be 20 times the hourly price"
+                >
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    addonAfter="VND/hour"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="dailyPrice"
+                  label="Daily Price"
+                  rules={[
+                    { required: true, message: 'Please input daily price' },
+                    { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        const hourlyPrice = getFieldValue('hourlyPrice');
+                        if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                      },
+                    }),
+                  ]}
+                  tooltip="Daily price should be at least 20 times the hourly price"
                 >
                   <InputNumber
                     style={{ width: '100%' }}

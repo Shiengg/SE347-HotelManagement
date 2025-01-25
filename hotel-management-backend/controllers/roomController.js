@@ -15,6 +15,15 @@ exports.getAllRooms = async (req, res) => {
 // Create new room
 exports.createRoom = async (req, res) => {
     try {
+        const { dailyPrice, hourlyPrice } = req.body;
+
+        // Kiểm tra tỉ lệ giá
+        if (dailyPrice < hourlyPrice * 20) {
+            return res.status(400).json({ 
+                message: 'Daily price must be at least 20 times the hourly price' 
+            });
+        }
+
         const room = new Room(req.body);
         const newRoom = await room.save();
         res.status(201).json(newRoom);
@@ -45,6 +54,15 @@ exports.updateRoom = async (req, res) => {
         const room = await Room.findById(req.params.id);
         if (!room) {
             throw new Error('Room not found');
+        }
+
+        const { dailyPrice, hourlyPrice } = req.body;
+
+        // Kiểm tra tỉ lệ giá
+        if (dailyPrice < hourlyPrice * 20) {
+            return res.status(400).json({ 
+                message: 'Daily price must be at least 20 times the hourly price' 
+            });
         }
 
         // Kiểm tra nếu đang thay đổi status
