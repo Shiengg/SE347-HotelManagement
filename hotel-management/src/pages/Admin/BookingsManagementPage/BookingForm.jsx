@@ -143,6 +143,20 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
     },
   });
 
+  const calculateHours = (checkIn, checkOut) => {
+    // Tính tổng số giờ giữa hai thời điểm
+    const totalHours = checkOut.diff(checkIn, 'hour');
+    
+    if (totalHours === 0) {
+      // Nếu cùng giờ nhưng khác ngày
+      if (checkOut.format('YYYY-MM-DD') !== checkIn.format('YYYY-MM-DD')) {
+        return 24;
+      }
+    }
+    
+    return totalHours;
+  };
+
   const handleSubmit = async (values) => {
     try {
       let userID = currentUser?.id;
@@ -168,11 +182,7 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
       if (bookingType === 'Daily') {
         totalDays = Math.ceil(checkOut.diff(checkIn, 'day', true));
       } else {
-        // Lấy giờ từ thời gian check-in và check-out
-        const checkInHour = checkIn.hour();
-        const checkOutHour = checkOut.hour();
-        // Tính số giờ = giờ check-out - giờ check-in
-        totalHours = checkOutHour - checkInHour;
+        totalHours = calculateHours(checkIn, checkOut);
       }
 
       // Tính tổng tiền
@@ -219,12 +229,8 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
       const days = Math.ceil(checkOut.diff(checkIn, 'day', true));
       return selectedRoom.dailyPrice * days;
     } else {
-      // Lấy giờ từ thời gian check-in và check-out
-      const checkInHour = checkIn.hour();
-      const checkOutHour = checkOut.hour();
-      // Tính số giờ = giờ check-out - giờ check-in
-      const diffInHours = checkOutHour - checkInHour;
-      return selectedRoom.hourlyPrice * diffInHours;
+      const hours = calculateHours(checkIn, checkOut);
+      return selectedRoom.hourlyPrice * hours;
     }
   };
 
