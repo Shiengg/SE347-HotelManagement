@@ -664,6 +664,7 @@ const BookingsManagementPage = () => {
           booking={formMode === 'edit' ? editingBooking : null}
           onSubmit={handleSubmit}
           onCancel={resetFormState}
+          isFormVisible={isFormVisible}
         />
       </Modal>
 

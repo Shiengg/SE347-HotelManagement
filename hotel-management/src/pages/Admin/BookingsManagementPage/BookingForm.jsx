@@ -28,6 +28,7 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   const [selectedServices, setSelectedServices] = useState([]);
   const [bookingType, setBookingType] = useState(booking?.bookingType || 'Daily');
   const [selectedRoom, setSelectedRoom] = useState(null);
+  const [isFormVisible, setIsFormVisible] = useState(true);
 
   useEffect(() => {
     fetchRooms();
@@ -58,13 +59,12 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
     console.log('Current user:', currentUser);
   }, [currentUser]);
 
-  // Expose form instance through ref
   useImperativeHandle(ref, () => ({
     resetFields: () => {
       form.resetFields();
       setSelectedRoom(null);
       setBookingType('Daily');
-      // Reset các state khác nếu cần
+      fetchRooms();
     }
   }));
 
@@ -144,11 +144,9 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   });
 
   const calculateHours = (checkIn, checkOut) => {
-    // Tính tổng số giờ giữa hai thời điểm
     const totalHours = checkOut.diff(checkIn, 'hour');
     
     if (totalHours === 0) {
-      // Nếu cùng giờ nhưng khác ngày
       if (checkOut.format('YYYY-MM-DD') !== checkIn.format('YYYY-MM-DD')) {
         return 24;
       }
@@ -173,7 +171,6 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
         throw new Error('User not authenticated');
       }
 
-      // Tính toán totalDays hoặc totalHours
       const checkIn = dayjs(values.checkInDate);
       const checkOut = dayjs(values.checkOutDate);
       let totalDays = null;
@@ -185,7 +182,6 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
         totalHours = calculateHours(checkIn, checkOut);
       }
 
-      // Tính tổng tiền
       const roomPrice = calculatePrice();
       const servicesPrice = values.services ? values.services.reduce((total, service) => {
         const serviceData = services.find(s => s._id === service.serviceID);
@@ -210,7 +206,9 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
       };
 
       console.log('Submitting booking:', formattedValues);
-      onSubmit(formattedValues);
+      await onSubmit(formattedValues);
+      
+      fetchRooms();
     } catch (error) {
       console.error('Form submission error:', error);
       message.error(error.message || 'Failed to submit booking');
@@ -233,6 +231,12 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
       return selectedRoom.hourlyPrice * hours;
     }
   };
+
+  useEffect(() => {
+    if (isFormVisible) {
+      fetchRooms();
+    }
+  }, [isFormVisible]);
 
   return (
     <FormContainer>
