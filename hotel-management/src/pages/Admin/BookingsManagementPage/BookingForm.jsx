@@ -29,6 +29,7 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   const [bookingType, setBookingType] = useState(booking?.bookingType || 'Daily');
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(true);
+  const [estimatedPrice, setEstimatedPrice] = useState(0);
 
   useEffect(() => {
     fetchRooms();
@@ -238,12 +239,49 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
     }
   }, [isFormVisible]);
 
+  useEffect(() => {
+    const checkInDate = form.getFieldValue('checkInDate');
+    const checkOutDate = form.getFieldValue('checkOutDate');
+    const services = form.getFieldValue('services') || [];
+
+    if (selectedRoom && checkInDate && checkOutDate) {
+      const roomPrice = calculatePrice();
+      const servicesPrice = services.reduce((total, service) => {
+        const serviceData = services.find(s => s._id === service.serviceID);
+        return total + (serviceData?.servicePrice || 0) * service.quantity;
+      }, 0);
+
+      setEstimatedPrice(roomPrice + servicesPrice);
+    }
+  }, [
+    selectedRoom, 
+    form.getFieldValue('checkInDate'),
+    form.getFieldValue('checkOutDate'),
+    form.getFieldValue('services'),
+    bookingType
+  ]);
+
   return (
     <FormContainer>
       <Form
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
+        onValuesChange={() => {
+          const checkInDate = form.getFieldValue('checkInDate');
+          const checkOutDate = form.getFieldValue('checkOutDate');
+          const services = form.getFieldValue('services') || [];
+
+          if (selectedRoom && checkInDate && checkOutDate) {
+            const roomPrice = calculatePrice();
+            const servicesPrice = services.reduce((total, service) => {
+              const serviceData = services.find(s => s._id === service.serviceID);
+              return total + (serviceData?.servicePrice || 0) * service.quantity;
+            }, 0);
+
+            setEstimatedPrice(roomPrice + servicesPrice);
+          }
+        }}
         initialValues={{
           status: 'Pending',
           services: [],
@@ -323,8 +361,14 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
           </Form.Item>
         </Space>
 
-        <div>
-          Estimated Price: {calculatePrice().toLocaleString('vi-VN')}đ
+        <div style={{ 
+          marginTop: '16px', 
+          padding: '12px',
+          background: '#f6ffed',
+          border: '1px solid #b7eb8f',
+          borderRadius: '6px'
+        }}>
+          <strong>Estimated Price:</strong> {estimatedPrice.toLocaleString('vi-VN')}đ
         </div>
 
         <Form.Item
