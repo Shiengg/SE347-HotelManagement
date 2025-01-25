@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import styled from 'styled-components';
 import { Form, Input, Select, DatePicker, InputNumber, Button, Space, message } from 'antd';
 import dayjs from 'dayjs';
@@ -19,7 +19,7 @@ const ServiceSection = styled.div`
   border-radius: 8px;
 `;
 
-const BookingForm = ({ booking, onSubmit, onCancel }) => {
+const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   const { currentUser } = useAuth();
   const [form] = Form.useForm();
   const [rooms, setRooms] = useState([]);
@@ -57,6 +57,16 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
   useEffect(() => {
     console.log('Current user:', currentUser);
   }, [currentUser]);
+
+  // Expose form instance through ref
+  useImperativeHandle(ref, () => ({
+    resetFields: () => {
+      form.resetFields();
+      setSelectedRoom(null);
+      setBookingType('Daily');
+      // Reset các state khác nếu cần
+    }
+  }));
 
   const fetchRooms = async () => {
     try {
@@ -226,7 +236,8 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
         onFinish={handleSubmit}
         initialValues={{
           status: 'Pending',
-          services: []
+          services: [],
+          bookingType: 'Daily'
         }}
       >
         <Form.Item
@@ -372,6 +383,6 @@ const BookingForm = ({ booking, onSubmit, onCancel }) => {
       </Form>
     </FormContainer>
   );
-};
+});
 
 export default BookingForm; 

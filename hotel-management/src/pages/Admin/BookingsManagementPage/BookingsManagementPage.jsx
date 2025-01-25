@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined } from '@ant-design/icons';
@@ -419,6 +419,7 @@ const BookingsManagementPage = () => {
   const [editingBooking, setEditingBooking] = useState(null);
   const [formMode, setFormMode] = useState('create');
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const formRef = useRef(null);
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -528,6 +529,16 @@ const BookingsManagementPage = () => {
     setIsDetailModalVisible(true);
   };
 
+  const resetForm = () => {
+    setSelectedBooking(null);
+    setEditingBooking(null);
+    setFormMode('create');
+    setIsFormVisible(true);
+    if (formRef.current) {
+      formRef.current.resetFields();
+    }
+  };
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -545,12 +556,7 @@ const BookingsManagementPage = () => {
           <Button 
             type="primary" 
             icon={<PlusOutlined />}
-            onClick={() => {
-              setSelectedBooking(null);
-              setEditingBooking(null);
-              setFormMode('create');
-              setIsFormVisible(true);
-            }}
+            onClick={resetForm}
           >
             Add New Booking
           </Button>
@@ -637,12 +643,7 @@ const BookingsManagementPage = () => {
               <Button
                 className="add-button"
                 icon={<PlusOutlined />}
-                onClick={() => {
-                  setSelectedBooking(null);
-                  setEditingBooking(null);
-                  setFormMode('create');
-                  setIsFormVisible(true);
-                }}
+                onClick={resetForm}
               >
                 Create New Booking
               </Button>
@@ -659,6 +660,7 @@ const BookingsManagementPage = () => {
         width={800}
       >
         <BookingForm
+          ref={formRef}
           booking={formMode === 'edit' ? editingBooking : null}
           onSubmit={handleSubmit}
           onCancel={resetFormState}
