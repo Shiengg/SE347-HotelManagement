@@ -411,6 +411,18 @@ const BookingDetailModal = ({ booking, visible, onClose }) => {
   );
 };
 
+const StyledModal = styled(Modal)`
+  .ant-modal-content {
+    margin-top: 5px;
+  }
+  
+  @media (max-width: 768px) {
+    .ant-modal-content {
+      margin-top: 10px;
+    }
+  }
+`;
+
 const BookingsManagementPage = () => {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -652,12 +664,14 @@ const BookingsManagementPage = () => {
         </TableContainer>
       </ContentWrapper>
 
-      <Modal
+      <StyledModal
         title={formMode === 'edit' ? 'Edit Booking' : 'Create New Booking'}
         open={isFormVisible}
         onCancel={resetFormState}
         footer={null}
         width={800}
+        style={{ top: 5 }}
+        maskStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
       >
         <BookingForm
           ref={formRef}
@@ -666,7 +680,7 @@ const BookingsManagementPage = () => {
           onCancel={resetFormState}
           isFormVisible={isFormVisible}
         />
-      </Modal>
+      </StyledModal>
 
       <BookingDetailModal
         booking={selectedBooking}
