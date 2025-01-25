@@ -65,9 +65,16 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
       form.resetFields();
       setSelectedRoom(null);
       setBookingType('Daily');
+      setEstimatedPrice(0);
       fetchRooms();
     }
   }));
+
+  useEffect(() => {
+    if (!booking) {
+      setEstimatedPrice(0);
+    }
+  }, [booking]);
 
   const fetchRooms = async () => {
     try {
