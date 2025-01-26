@@ -8,6 +8,7 @@ const { TextArea } = Input;
 
 const PageContainer = styled.div`
   padding: 12px;
+  height: calc(100vh - 84px);
 `;
 
 const ContentWrapper = styled.div`
@@ -15,6 +16,22 @@ const ContentWrapper = styled.div`
   border-radius: 10px;
   padding: 16px;
   border: 2px solid gold;
+  height: 100%;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ffd700;
+    border-radius: 4px;
+  }
 `;
 
 const HeaderSection = styled.div`
@@ -80,6 +97,7 @@ const GridContainer = styled.div`
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 12px;
+  height: 100%;
 
   @media (max-width: 1080px) {
     grid-template-columns: 1fr;
@@ -198,10 +216,22 @@ const DetailContainer = styled.div`
   border-radius: 10px;
   padding: 12px;
   border: 2px solid gold;
-  height: fit-content;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  height: 100%;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ffd700;
+    border-radius: 4px;
+  }
 `;
 
 const FormWrapper = styled.div`
@@ -265,20 +295,58 @@ const ImageUpload = styled.div`
   background: #fafafa;
   cursor: pointer;
   transition: all 0.3s;
+  width: 100%;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 
   &:hover {
     border-color: #ffd700;
+    background: #fffef0;
   }
 
-  .ant-upload-text {
-    margin-top: 8px;
-    color: #666;
+  input[type="file"] {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
   }
 
-  img {
-    max-width: 100%;
-    max-height: 200px;
-    object-fit: cover;
+  .upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    gap: 8px;
+
+    .icon {
+      font-size: 24px;
+      color: #bfbfbf;
+      margin-bottom: 4px;
+    }
+
+    .ant-upload-text {
+      font-size: 13px;
+      color: #8c8c8c;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .main-text {
+        font-weight: 500;
+      }
+
+      .sub-text {
+        font-size: 12px;
+        color: #bfbfbf;
+      }
+    }
   }
 `;
 
@@ -370,34 +438,52 @@ const RestaurantManagementPage = () => {
     fetchItems();
   }, []);
 
-  // Handle form submission
+  // Cập nhật hàm resetForm
+  const resetForm = () => {
+    setIsModalVisible(false);
+    setEditingItem(null);
+    setImageUrl(''); // Reset image URL
+    form.resetFields();
+  };
+
+  // Cập nhật hàm handleSubmit
   const handleSubmit = async (values) => {
     try {
-      const url = editingItem 
-        ? `http://localhost:5000/api/restaurant/${editingItem._id}`
-        : 'http://localhost:5000/api/restaurant';
-      
-      const method = editingItem ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(values)
-      });
+      if (editingItem) {
+        // Xử lý update
+        const response = await fetch(`http://localhost:5000/api/restaurant/${editingItem._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(values)
+        });
 
-      if (response.ok) {
-        message.success(`Item ${editingItem ? 'updated' : 'created'} successfully`);
-        setIsModalVisible(false);
-        form.resetFields();
-        fetchItems();
+        if (response.ok) {
+          message.success('Item updated successfully');
+          fetchItems();
+          resetForm(); // Sử dụng hàm resetForm
+        }
       } else {
-        throw new Error('Failed to save item');
+        // Xử lý create
+        const response = await fetch('http://localhost:5000/api/restaurant', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(values)
+        });
+
+        if (response.ok) {
+          message.success('Item created successfully');
+          fetchItems();
+          resetForm(); // Sử dụng hàm resetForm
+        }
       }
     } catch (error) {
-      message.error(error.message);
+      message.error('Failed to save item');
     }
   };
 
@@ -635,22 +721,22 @@ const RestaurantManagementPage = () => {
                   name="image"
                   label="Image"
                 >
-                  <ImageUpload onClick={() => document.getElementById('imageInput').click()}>
-                    {imageUrl ? (
-                      <img src={imageUrl} alt="Item" />
-                    ) : (
-                      <div>
-                        {uploading ? <LoadingOutlined /> : <PlusOutlined />}
-                        <div className="ant-upload-text">Upload Image</div>
-                      </div>
-                    )}
+                  <ImageUpload>
                     <input
                       type="file"
                       id="imageInput"
-                      hidden
                       accept="image/*"
                       onChange={handleImageUpload}
                     />
+                    <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
+                      <div className="icon">
+                        {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                      </div>
+                      <div className="ant-upload-text">
+                        <span className="main-text">Click to upload</span>
+                        <span className="sub-text">PNG, JPG up to 10MB</span>
+                      </div>
+                    </div>
                   </ImageUpload>
                 </Form.Item>
 
@@ -666,13 +752,7 @@ const RestaurantManagementPage = () => {
 
                 <Form.Item>
                   <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                    <Button onClick={() => {
-                      setIsModalVisible(false);
-                      setEditingItem(null);
-                      form.resetFields();
-                    }}>
-                      Cancel
-                    </Button>
+                    <Button onClick={resetForm}>Cancel</Button>
                     <Button type="primary" htmlType="submit">
                       {editingItem ? 'Update' : 'Create'}
                     </Button>
@@ -777,11 +857,7 @@ const RestaurantManagementPage = () => {
       <StyledModal
         title={editingItem ? 'Edit Item' : 'Add New Item'}
         open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          setEditingItem(null);
-          form.resetFields();
-        }}
+        onCancel={resetForm} // Sử dụng hàm resetForm
         footer={null}
       >
         <StyledForm
@@ -834,22 +910,22 @@ const RestaurantManagementPage = () => {
             name="image"
             label="Image"
           >
-            <ImageUpload onClick={() => document.getElementById('imageInput').click()}>
-              {imageUrl ? (
-                <img src={imageUrl} alt="Item" />
-              ) : (
-                <div>
-                  {uploading ? <LoadingOutlined /> : <PlusOutlined />}
-                  <div className="ant-upload-text">Upload Image</div>
-                </div>
-              )}
+            <ImageUpload>
               <input
                 type="file"
                 id="imageInput"
-                hidden
                 accept="image/*"
                 onChange={handleImageUpload}
               />
+              <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
+                <div className="icon">
+                  {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                </div>
+                <div className="ant-upload-text">
+                  <span className="main-text">Click to upload</span>
+                  <span className="sub-text">PNG, JPG up to 10MB</span>
+                </div>
+              </div>
             </ImageUpload>
           </Form.Item>
 
@@ -865,13 +941,7 @@ const RestaurantManagementPage = () => {
 
           <Form.Item>
             <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-              <Button onClick={() => {
-                setIsModalVisible(false);
-                setEditingItem(null);
-                form.resetFields();
-              }}>
-                Cancel
-              </Button>
+              <Button onClick={resetForm}>Cancel</Button>
               <Button type="primary" htmlType="submit">
                 {editingItem ? 'Update' : 'Create'}
               </Button>
