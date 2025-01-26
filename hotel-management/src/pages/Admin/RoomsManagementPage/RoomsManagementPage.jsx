@@ -227,12 +227,16 @@ const RoomItem = styled.div`
   grid-template-columns: 1fr 1fr 1.2fr 1.2fr 1fr 0.8fr;
   padding: 16px 24px;
   border: 1px solid #e2e8f0;
-  background: ${props => props.isSelected ? '#f1f5f9' : '#fff'};
+  background: ${props => props.isSelected ? 'linear-gradient(45deg, #ffd700, #ffed4a)' : '#fff'};
+  border-color: ${props => props.isSelected ? '#ffd700' : '#e2e8f0'};
   transition: all 0.2s ease;
   cursor: pointer;
+  border-radius: 10px;
+  margin-bottom: 8px;
 
   &:hover {
-    background: #f8fafc;
+    background: ${props => props.isSelected ? 'linear-gradient(45deg, #ffd700, #ffed4a)' : '#f8fafc'};
+    border-color: ${props => props.isSelected ? '#ffd700' : '#e2e8f0'};
   }
 
   > div {
@@ -244,17 +248,20 @@ const RoomItem = styled.div`
 
   .room-number {
     font-weight: 600;
-    color: #1e293b;
+    color: ${props => props.isSelected ? '#1a3353' : '#1e293b'};
   }
 
   .room-type {
-    color: #475569;
+    color: ${props => props.isSelected ? '#1a3353' : '#475569'};
   }
 
   .price {
     font-weight: 500;
-    color: #059669;
+    color: ${props => props.isSelected ? '#1a3353' : '#059669'};
   }
+
+  box-shadow: ${props => props.isSelected ? '0 4px 12px rgba(255, 215, 0, 0.15)' : 'none'};
+  transform: ${props => props.isSelected ? 'translateY(-1px)' : 'none'};
 `;
 
 const RoomDetailContainer = styled.div`

@@ -470,19 +470,21 @@ const BookingsManagementPage = () => {
         message.success('Booking deleted successfully');
         fetchBookings();
       } else {
-        if (data.booking && data.booking.status === 'Confirmed') {
+        if (data.invoice) {
           Modal.error({
             title: 'Cannot Delete Booking',
             content: (
               <div>
                 <p>{data.message}</p>
-                <p>Booking Details:</p>
-                <ul>
-                  <li>Booking ID: {data.booking.id}</li>
-                  <li>Status: {data.booking.status}</li>
-                  <li>Invoice ID: {data.booking.invoice}</li>
+                <p>This booking has an associated invoice:</p>
+                <ul style={{ listStyle: 'none', padding: '10px', background: '#f5f5f5', borderRadius: '5px' }}>
+                  <li>Invoice ID: #{data.invoice.id}</li>
+                  <li>Total Amount: {formatVND(data.invoice.totalAmount)}</li>
+                  <li>Payment Status: {data.invoice.paymentStatus ? 'Paid' : 'Unpaid'}</li>
                 </ul>
-                <p>Please cancel the booking first if you want to delete it.</p>
+                <p style={{ marginTop: '10px', color: '#ff4d4f' }}>
+                  Please handle the invoice first before attempting to delete this booking.
+                </p>
               </div>
             ),
           });
@@ -517,16 +519,18 @@ const BookingsManagementPage = () => {
       if (response.ok) {
         message.success(`Booking ${editingBooking ? 'updated' : 'created'} successfully`);
         if (data.invoice) {
-          message.info(`Invoice #${data.invoice._id} has been created`);
+          message.success('Invoice created successfully');
         }
         setIsFormVisible(false);
         setEditingBooking(null);
         fetchBookings();
+        return data;
       } else {
         throw new Error(data.message || `Failed to ${editingBooking ? 'update' : 'create'} booking`);
       }
     } catch (error) {
       message.error(error.message);
+      throw error;
     }
   };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import styled from 'styled-components';
-import { Form, Input, Select, DatePicker, InputNumber, Button, Space, message } from 'antd';
+import { Form, Input, Select, DatePicker, InputNumber, Button, Space, message, Modal } from 'antd';
 import dayjs from 'dayjs';
 import { useAuth } from '../../../contexts/AuthContext';
 import { 
@@ -10,7 +10,8 @@ import {
   ClockCircleOutlined, 
   DeleteOutlined, 
   PlusOutlined,
-  CoffeeOutlined
+  CoffeeOutlined,
+  CheckCircleOutlined
 } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -102,6 +103,78 @@ const PriceDisplay = styled.div`
   }
 `;
 
+const StatusSection = styled.div`
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #e2e8f0;
+
+  .status-title {
+    font-weight: 600;
+    color: #1a3353;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .status-buttons {
+    display: flex;
+    gap: 12px;
+  }
+
+  .status-button {
+    flex: 1;
+    height: 40px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.pending {
+      background: ${props => props.status === 'Pending' ? '#fff7e6' : '#fff'};
+      color: #fa8c16;
+      border: 1px solid #ffd591;
+      
+      &:hover {
+        background: #fff7e6;
+      }
+    }
+
+    &.confirmed {
+      background: ${props => props.status === 'Confirmed' ? '#f6ffed' : '#fff'};
+      color: #52c41a;
+      border: 1px solid #b7eb8f;
+      
+      &:hover {
+        background: #f6ffed;
+      }
+    }
+  }
+`;
+
+const StyledButton = styled(Button)`
+  &.active {
+    transform: scale(1.02);
+    font-weight: 600;
+  }
+
+  &.pending.active {
+    background: #fff7e6 !important;
+    border-color: #ffa940;
+  }
+
+  &.confirmed.active {
+    background: #f6ffed !important;
+    border-color: #73d13d;
+  }
+`;
+
 const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   const { currentUser } = useAuth();
   const [form] = Form.useForm();
@@ -113,6 +186,7 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [isFormVisible, setIsFormVisible] = useState(true);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
+  const [previousStatus, setPreviousStatus] = useState(booking?.status || 'Pending');
 
   useEffect(() => {
     fetchRooms();
@@ -157,6 +231,10 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
     if (!booking) {
       setEstimatedPrice(0);
     }
+  }, [booking]);
+
+  useEffect(() => {
+    setPreviousStatus(booking?.status || 'Pending');
   }, [booking]);
 
   const fetchRooms = async () => {
@@ -214,10 +292,14 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
     if (!value) {
       return Promise.reject('Date is required');
     }
-    const today = dayjs().startOf('day');
-    if (value.isBefore(today)) {
-      return Promise.reject('Date cannot be in the past');
+
+    if (!booking) {
+      const today = dayjs().startOf('day');
+      if (value.isBefore(today)) {
+        return Promise.reject('Date cannot be in the past');
+      }
     }
+    
     return Promise.resolve();
   };
 
@@ -296,13 +378,46 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
         totalPrice: roomPrice + servicesPrice
       };
 
-      console.log('Submitting booking:', formattedValues);
-      await onSubmit(formattedValues);
-      
-      fetchRooms();
+      if (booking && previousStatus === 'Pending' && values.status === 'Confirmed') {
+        try {
+          await new Promise((resolve, reject) => {
+            Modal.confirm({
+              title: 'Confirm Booking',
+              content: 'This will create an invoice for the booking. Continue?',
+              okText: 'Yes',
+              cancelText: 'No',
+              onOk: async () => {
+                try {
+                  const result = await onSubmit(formattedValues);
+                  if (result.invoice) {
+                    message.success('Booking confirmed and invoice created successfully');
+                  }
+                  resolve();
+                  fetchRooms();
+                } catch (error) {
+                  message.error('Failed to confirm booking');
+                  reject(error);
+                }
+              },
+              onCancel: () => {
+                form.setFieldsValue({ status: 'Pending' });
+                setPreviousStatus('Pending');
+                resolve();
+              }
+            });
+          });
+        } catch (error) {
+          console.error('Confirmation error:', error);
+        }
+      } else {
+        await onSubmit(formattedValues);
+        fetchRooms();
+      }
     } catch (error) {
       console.error('Form submission error:', error);
-      message.error(error.message || 'Failed to submit booking');
+      if (error.message !== 'User cancelled confirmation') {
+        message.error(error.message || 'Failed to submit booking');
+      }
     }
   };
 
@@ -489,7 +604,10 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
                 format={bookingType === 'Hourly' ? "DD/MM/YYYY HH:mm" : "DD/MM/YYYY"}
                 showNow={false}
                 disabledDate={(current) => {
-                  return current && current < dayjs().startOf('day');
+                  if (!booking) {
+                    return current && current < dayjs().startOf('day');
+                  }
+                  return false;
                 }}
                 placeholder={bookingType === 'Hourly' ? "Select check-in date and time" : "Select check-in date"}
               />
@@ -584,6 +702,37 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
               </>
             )}
           </Form.List>
+        </FormSection>
+
+        <FormSection>
+          <div className="section-title">
+            <CheckCircleOutlined />
+            Booking Status
+          </div>
+          
+          <Form.Item
+            name="status"
+            initialValue={booking?.status || 'Pending'}
+          >
+            <StatusSection status={form.getFieldValue('status')}>
+              <div className="status-buttons">
+                <Button
+                  className={`status-button pending ${form.getFieldValue('status') === 'Pending' ? 'active' : ''}`}
+                  onClick={() => form.setFieldsValue({ status: 'Pending' })}
+                >
+                  <ClockCircleOutlined />
+                  Pending
+                </Button>
+                <Button
+                  className={`status-button confirmed ${form.getFieldValue('status') === 'Confirmed' ? 'active' : ''}`}
+                  onClick={() => form.setFieldsValue({ status: 'Confirmed' })}
+                >
+                  <CheckCircleOutlined />
+                  Confirmed
+                </Button>
+              </div>
+            </StatusSection>
+          </Form.Item>
         </FormSection>
 
         <Form.Item>
