@@ -9,6 +9,12 @@ const { TextArea } = Input;
 const PageContainer = styled.div`
   padding: 12px;
   height: calc(100vh - 84px);
+  overflow-x: hidden;
+
+  @media (max-width: 768px) {
+    padding: 8px;
+    height: auto;
+  }
 `;
 
 const ContentWrapper = styled.div`
@@ -35,15 +41,25 @@ const ContentWrapper = styled.div`
 `;
 
 const HeaderSection = styled.div`
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 12px;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eee;
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+
+    .text-content {
+      text-align: center;
+      
+      h1 {
+        font-size: 20px;
+      }
+    }
+  }
 `;
 
 const TitleSection = styled.div`
@@ -82,8 +98,41 @@ const TitleSection = styled.div`
 `;
 
 const StyledModal = styled(Modal)`
-  .ant-modal-content {
-    border-radius: 10px;
+  @media (max-width: 576px) {
+    .ant-modal-content {
+      padding: 16px;
+    }
+
+    .ant-modal-body {
+      padding: 12px;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .ant-modal {
+      max-width: 100% !important;
+      margin: 0;
+      top: 0;
+    }
+
+    .ant-modal-content {
+      min-height: 100vh;
+      border-radius: 0;
+      padding: 0;
+    }
+
+    .ant-modal-header {
+      padding: 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .ant-modal-body {
+      padding: 0;
+    }
+
+    .ant-modal-close {
+      top: 8px;
+    }
   }
 `;
 
@@ -99,24 +148,25 @@ const GridContainer = styled.div`
   gap: 12px;
   height: 100%;
 
-  @media (max-width: 1080px) {
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 350px;
+  }
+
+  @media (max-width: 992px) {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 `;
 
 const MenuContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  padding: 16px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
 
-  @media (max-width: 1400px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 1080px) {
+  @media (max-width: 576px) {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 `;
 
@@ -138,6 +188,10 @@ const ItemCard = styled.div`
     width: 100%;
     height: 200px;
     position: relative;
+
+    @media (max-width: 576px) {
+      height: 180px;
+    }
 
     img {
       width: 100%;
@@ -187,6 +241,11 @@ const ItemCard = styled.div`
         font-weight: 500;
         opacity: 0.8;
       }
+
+      @media (max-width: 576px) {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
     }
   }
 
@@ -227,6 +286,24 @@ const ItemCard = styled.div`
         }
       }
     }
+
+    @media (max-width: 576px) {
+      padding: 12px;
+
+      .header {
+        .name {
+          font-size: 15px;
+        }
+      }
+
+      .stats {
+        gap: 16px;
+        
+        .stat-item {
+          font-size: 12px;
+        }
+      }
+    }
   }
 `;
 
@@ -250,6 +327,11 @@ const DetailContainer = styled.div`
   &::-webkit-scrollbar-thumb {
     background: #ffd700;
     border-radius: 4px;
+  }
+
+  @media (max-width: 992px) {
+    height: auto;
+    max-height: none;
   }
 `;
 
@@ -387,6 +469,36 @@ const ItemDetailSection = styled.div`
           font-size: 18px;
           font-weight: 600;
           opacity: 0.9;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 576px) {
+    padding: 16px;
+
+    .section-title {
+      font-size: 15px;
+    }
+
+    .detail-row {
+      padding: 10px 12px;
+
+      .label {
+        font-size: 13px;
+      }
+
+      .value {
+        font-size: 14px;
+      }
+
+      &.price-row {
+        .value {
+          font-size: 22px;
+
+          .currency {
+            font-size: 16px;
+          }
         }
       }
     }
@@ -546,6 +658,20 @@ const ActionButtons = styled.div`
   border-radius: 12px;
   border: 1px solid #e2e8f0;
 
+  @media (max-width: 576px) {
+    padding: 12px;
+    gap: 8px;
+
+    .action-button {
+      height: 38px;
+      font-size: 13px;
+
+      .anticon {
+        font-size: 14px;
+      }
+    }
+  }
+
   .action-button {
     flex: 1;
     height: 42px;
@@ -629,6 +755,7 @@ const CategoryFilter = styled.div`
   gap: 12px;
   margin-bottom: 24px;
   padding: 0 4px;
+  flex-wrap: wrap;
 
   .filter-button {
     padding: 8px 16px;
@@ -668,6 +795,21 @@ const CategoryFilter = styled.div`
       font-size: 16px;
     }
   }
+
+  @media (max-width: 576px) {
+    gap: 8px;
+    justify-content: center;
+
+    .filter-button {
+      padding: 6px 12px;
+      font-size: 13px;
+
+      .count {
+        padding: 1px 6px;
+        font-size: 11px;
+      }
+    }
+  }
 `;
 
 const RestaurantManagementPage = () => {
@@ -679,10 +821,25 @@ const RestaurantManagementPage = () => {
   const [formMode, setFormMode] = useState('create');
   const [form] = Form.useForm();
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6;
+  const [pageSize, setPageSize] = useState(window.innerWidth <= 768 ? 3 : 6);
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [isAddModalVisible, setIsAddModalVisible] = useState(false);
+
+  // Cập nhật useEffect để theo dõi kích thước màn hình
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 992;
+      setIsMobile(mobile);
+      setPageSize(window.innerWidth <= 768 ? 3 : 6);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Fetch all items
   const fetchItems = async () => {
@@ -891,6 +1048,9 @@ const RestaurantManagementPage = () => {
                 setSelectedItem(null);
                 setFormMode('create');
                 form.resetFields();
+                if (isMobile) {
+                  setIsAddModalVisible(true);
+                }
               }}
             >
               Add New Item
@@ -942,6 +1102,9 @@ const RestaurantManagementPage = () => {
                     onClick={() => {
                       setSelectedItem(item);
                       setFormMode('detail');
+                      if (isMobile) {
+                        setIsDetailModalVisible(true);
+                      }
                     }}
                   >
                     <div className="image-container">
@@ -993,6 +1156,7 @@ const RestaurantManagementPage = () => {
                   pageSize={pageSize}
                   onChange={(page) => setCurrentPage(page)}
                   showSizeChanger={false}
+                  size={window.innerWidth <= 768 ? 'small' : 'default'}
                 />
               </div>
             </>
@@ -1018,248 +1182,250 @@ const RestaurantManagementPage = () => {
           )}
         </ContentWrapper>
 
-        <DetailContainer>
-          {formMode === 'create' ? (
-            <FormWrapper>
-              <DetailHeader>
-                <div className="icon-wrapper">
-                  <PlusOutlined />
-                </div>
-                <div>
-                  <h2 style={{ margin: 0 }}>Add New Item</h2>
-                  <p style={{ margin: '4px 0 0', color: '#6b7280' }}>Create a new menu item</p>
-                </div>
-              </DetailHeader>
-              <StyledForm
-                form={form}
-                layout="vertical"
-                onFinish={handleSubmit}
-                initialValues={{ isAvailable: true }}
-              >
-                <Form.Item
-                  name="name"
-                  label="Name"
-                  rules={[{ required: true, message: 'Please enter item name' }]}
-                >
-                  <Input />
-                </Form.Item>
-
-                <Form.Item
-                  name="description"
-                  label="Description"
-                >
-                  <TextArea rows={4} />
-                </Form.Item>
-
-                <Form.Item
-                  name="category"
-                  label="Category"
-                  rules={[{ required: true, message: 'Please select a category' }]}
-                >
-                  <Select>
-                    <Option value="Food">Food</Option>
-                    <Option value="Beverage">Beverage</Option>
-                    <Option value="Dessert">Dessert</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item
-                  name="price"
-                  label="Price"
-                  rules={[{ required: true, message: 'Please enter price' }]}
-                >
-                  <InputNumber
-                    min={0}
-                    style={{ width: '100%' }}
-                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="image"
-                  label="Image"
-                >
-                  <ImageUpload>
-                    <input
-                      type="file"
-                      id="imageInput"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-                    {imageUrl ? (
-                      <div className="image-preview" onClick={() => document.getElementById('imageInput').click()}>
-                        <img src={imageUrl} alt="Preview" />
-                      </div>
-                    ) : (
-                      <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
-                        <div className="icon">
-                          {uploading ? <LoadingOutlined /> : <PlusOutlined />}
-                        </div>
-                        <div className="ant-upload-text">
-                          <span className="main-text">Click to upload</span>
-                          <span className="sub-text">PNG, JPG up to 10MB</span>
-                        </div>
-                      </div>
-                    )}
-                  </ImageUpload>
-                </Form.Item>
-
-                <Form.Item
-                  name="isAvailable"
-                  valuePropName="checked"
-                >
-                  <Select>
-                    <Option value={true}>Available</Option>
-                    <Option value={false}>Unavailable</Option>
-                  </Select>
-                </Form.Item>
-
-                <Form.Item>
-                  <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                    <Button onClick={resetForm}>Cancel</Button>
-                    <Button type="primary" htmlType="submit">
-                      {editingItem ? 'Update' : 'Create'}
-                    </Button>
-                  </Space>
-                </Form.Item>
-              </StyledForm>
-            </FormWrapper>
-          ) : (
-            selectedItem && (
-              <>
+        {!isMobile && (
+          <DetailContainer>
+            {formMode === 'create' ? (
+              <FormWrapper>
                 <DetailHeader>
                   <div className="icon-wrapper">
-                    <CoffeeOutlined />
+                    <PlusOutlined />
                   </div>
                   <div>
-                    <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
-                    <Tag color={
-                      selectedItem.category === 'Food' ? 'green' :
-                      selectedItem.category === 'Beverage' ? 'blue' :
-                      'purple'
-                    }>
-                      {selectedItem.category}
-                    </Tag>
+                    <h2 style={{ margin: 0 }}>Add New Item</h2>
+                    <p style={{ margin: '4px 0 0', color: '#6b7280' }}>Create a new menu item</p>
                   </div>
                 </DetailHeader>
+                <StyledForm
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmit}
+                  initialValues={{ isAvailable: true }}
+                >
+                  <Form.Item
+                    name="name"
+                    label="Name"
+                    rules={[{ required: true, message: 'Please enter item name' }]}
+                  >
+                    <Input />
+                  </Form.Item>
 
-                <ItemDetailSection isAvailable={selectedItem.isAvailable}>
-                  <div className="section-title">
-                    <CoffeeOutlined />
-                    Item Details
-                  </div>
-                  <div className="detail-row price-row">
-                    <span className="label">
-                      <DollarOutlined className="icon" />
-                      Price
-                    </span>
-                    <span className="value">
-                      {selectedItem.price.toLocaleString('vi-VN')}
-                      <span className="currency">₫</span>
-                    </span>
-                  </div>
-                  <div className="detail-row status-row">
-                    <span className="label">
-                      <CheckCircleOutlined className="icon" />
-                      Status
-                    </span>
-                    <div className="status-toggle">
-                      <Switch
-                        checked={selectedItem.isAvailable}
-                        onChange={handleStatusChange}
+                  <Form.Item
+                    name="description"
+                    label="Description"
+                  >
+                    <TextArea rows={4} />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="category"
+                    label="Category"
+                    rules={[{ required: true, message: 'Please select a category' }]}
+                  >
+                    <Select>
+                      <Option value="Food">Food</Option>
+                      <Option value="Beverage">Beverage</Option>
+                      <Option value="Dessert">Dessert</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="price"
+                    label="Price"
+                    rules={[{ required: true, message: 'Please enter price' }]}
+                  >
+                    <InputNumber
+                      min={0}
+                      style={{ width: '100%' }}
+                      formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                    />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="image"
+                    label="Image"
+                  >
+                    <ImageUpload>
+                      <input
+                        type="file"
+                        id="imageInput"
+                        accept="image/*"
+                        onChange={handleImageUpload}
                       />
-                      <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
-                        {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                      {imageUrl ? (
+                        <div className="image-preview" onClick={() => document.getElementById('imageInput').click()}>
+                          <img src={imageUrl} alt="Preview" />
+                        </div>
+                      ) : (
+                        <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
+                          <div className="icon">
+                            {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                          </div>
+                          <div className="ant-upload-text">
+                            <span className="main-text">Click to upload</span>
+                            <span className="sub-text">PNG, JPG up to 10MB</span>
+                          </div>
+                        </div>
+                      )}
+                    </ImageUpload>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="isAvailable"
+                    valuePropName="checked"
+                  >
+                    <Select>
+                      <Option value={true}>Available</Option>
+                      <Option value={false}>Unavailable</Option>
+                    </Select>
+                  </Form.Item>
+
+                  <Form.Item>
+                    <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                      <Button onClick={resetForm}>Cancel</Button>
+                      <Button type="primary" htmlType="submit">
+                        {editingItem ? 'Update' : 'Create'}
+                      </Button>
+                    </Space>
+                  </Form.Item>
+                </StyledForm>
+              </FormWrapper>
+            ) : (
+              selectedItem && (
+                <>
+                  <DetailHeader>
+                    <div className="icon-wrapper">
+                      <CoffeeOutlined />
+                    </div>
+                    <div>
+                      <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                      <Tag color={
+                        selectedItem.category === 'Food' ? 'green' :
+                        selectedItem.category === 'Beverage' ? 'blue' :
+                        'purple'
+                      }>
+                        {selectedItem.category}
                       </Tag>
                     </div>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">
-                      <TagOutlined className="icon" />
-                      Category
-                    </span>
-                    <Tag color={
-                      selectedItem.category === 'Food' ? 'green' :
-                      selectedItem.category === 'Beverage' ? 'blue' :
-                      'purple'
-                    }>
-                      {selectedItem.category}
-                    </Tag>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">
-                      <FileTextOutlined className="icon" />
-                      Description
-                    </span>
-                    <span className="value">{selectedItem.description || 'No description'}</span>
-                  </div>
-                </ItemDetailSection>
+                  </DetailHeader>
 
-                <ItemDetailSection>
-                  <div className="section-title">
-                    <BarChartOutlined />
-                    Statistics
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Total Orders</span>
-                    <span className="value">123</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Order Rate</span>
-                    <span className="value">85%</span>
-                  </div>
-                  <div className="detail-row">
-                    <span className="label">Revenue</span>
-                    <span className="value">{(selectedItem.price * 123).toLocaleString('vi-VN')}đ</span>
-                  </div>
-                </ItemDetailSection>
+                  <ItemDetailSection isAvailable={selectedItem.isAvailable}>
+                    <div className="section-title">
+                      <CoffeeOutlined />
+                      Item Details
+                    </div>
+                    <div className="detail-row price-row">
+                      <span className="label">
+                        <DollarOutlined className="icon" />
+                        Price
+                      </span>
+                      <span className="value">
+                        {selectedItem.price.toLocaleString('vi-VN')}
+                        <span className="currency">₫</span>
+                      </span>
+                    </div>
+                    <div className="detail-row status-row">
+                      <span className="label">
+                        <CheckCircleOutlined className="icon" />
+                        Status
+                      </span>
+                      <div className="status-toggle">
+                        <Switch
+                          checked={selectedItem.isAvailable}
+                          onChange={handleStatusChange}
+                        />
+                        <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                          {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                        </Tag>
+                      </div>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">
+                        <TagOutlined className="icon" />
+                        Category
+                      </span>
+                      <Tag color={
+                        selectedItem.category === 'Food' ? 'green' :
+                        selectedItem.category === 'Beverage' ? 'blue' :
+                        'purple'
+                      }>
+                        {selectedItem.category}
+                      </Tag>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">
+                        <FileTextOutlined className="icon" />
+                        Description
+                      </span>
+                      <span className="value">{selectedItem.description || 'No description'}</span>
+                    </div>
+                  </ItemDetailSection>
 
-                <ActionButtons>
-                  <Button 
-                    className="action-button edit-button"
-                    icon={<EditOutlined />}
-                    onClick={() => {
-                      setEditingItem(selectedItem);
-                      form.setFieldsValue(selectedItem);
-                      setIsModalVisible(true);
-                    }}
-                  >
-                    Edit Item
-                  </Button>
-                  <Button 
-                    className="action-button delete-button"
-                    icon={<DeleteOutlined />}
-                    onClick={() => {
-                      Modal.confirm({
-                        title: 'Delete Item',
-                        icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
-                        content: (
-                          <div>
-                            <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
-                            <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
-                          </div>
-                        ),
-                        okText: 'Yes, Delete',
-                        okButtonProps: {
-                          danger: true,
-                          icon: <DeleteOutlined />
-                        },
-                        cancelText: 'Cancel',
-                        onOk: () => handleDelete(selectedItem._id),
-                        okType: 'danger',
-                        centered: true,
-                        maskClosable: true
-                      });
-                    }}
-                  >
-                    Delete Item
-                  </Button>
-                </ActionButtons>
-              </>
-            )
-          )}
-        </DetailContainer>
+                  <ItemDetailSection>
+                    <div className="section-title">
+                      <BarChartOutlined />
+                      Statistics
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Total Orders</span>
+                      <span className="value">123</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Order Rate</span>
+                      <span className="value">85%</span>
+                    </div>
+                    <div className="detail-row">
+                      <span className="label">Revenue</span>
+                      <span className="value">{(selectedItem.price * 123).toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  </ItemDetailSection>
+
+                  <ActionButtons>
+                    <Button 
+                      className="action-button edit-button"
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        setEditingItem(selectedItem);
+                        form.setFieldsValue(selectedItem);
+                        setIsModalVisible(true);
+                      }}
+                    >
+                      Edit Item
+                    </Button>
+                    <Button 
+                      className="action-button delete-button"
+                      icon={<DeleteOutlined />}
+                      onClick={() => {
+                        Modal.confirm({
+                          title: 'Delete Item',
+                          icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
+                          content: (
+                            <div>
+                              <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
+                              <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
+                            </div>
+                          ),
+                          okText: 'Yes, Delete',
+                          okButtonProps: {
+                            danger: true,
+                            icon: <DeleteOutlined />
+                          },
+                          cancelText: 'Cancel',
+                          onOk: () => handleDelete(selectedItem._id),
+                          okType: 'danger',
+                          centered: true,
+                          maskClosable: true
+                        });
+                      }}
+                    >
+                      Delete Item
+                    </Button>
+                  </ActionButtons>
+                </>
+              )
+            )}
+          </DetailContainer>
+        )}
       </GridContainer>
 
       <StyledModal
@@ -1362,6 +1528,277 @@ const RestaurantManagementPage = () => {
             </Space>
           </Form.Item>
         </StyledForm>
+      </StyledModal>
+
+      <StyledModal
+        title={selectedItem?.name || 'Item Details'}
+        open={isMobile && isDetailModalVisible}
+        onCancel={() => setIsDetailModalVisible(false)}
+        footer={null}
+        width="100%"
+        styles={{
+          body: { padding: 0 },
+          modal: { top: 0 }
+        }}
+      >
+        <DetailContainer>
+          {selectedItem && (
+            <>
+              <DetailHeader>
+                <div className="icon-wrapper">
+                  <CoffeeOutlined />
+                </div>
+                <div>
+                  <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                  <Tag color={
+                    selectedItem.category === 'Food' ? 'green' :
+                    selectedItem.category === 'Beverage' ? 'blue' :
+                    'purple'
+                  }>
+                    {selectedItem.category}
+                  </Tag>
+                </div>
+              </DetailHeader>
+
+              <ItemDetailSection isAvailable={selectedItem.isAvailable}>
+                <div className="section-title">
+                  <CoffeeOutlined />
+                  Item Details
+                </div>
+                <div className="detail-row price-row">
+                  <span className="label">
+                    <DollarOutlined className="icon" />
+                    Price
+                  </span>
+                  <span className="value">
+                    {selectedItem.price.toLocaleString('vi-VN')}
+                    <span className="currency">₫</span>
+                  </span>
+                </div>
+                <div className="detail-row status-row">
+                  <span className="label">
+                    <CheckCircleOutlined className="icon" />
+                    Status
+                  </span>
+                  <div className="status-toggle">
+                    <Switch
+                      checked={selectedItem.isAvailable}
+                      onChange={handleStatusChange}
+                    />
+                    <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                      {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                    </Tag>
+                  </div>
+                </div>
+                <div className="detail-row">
+                  <span className="label">
+                    <TagOutlined className="icon" />
+                    Category
+                  </span>
+                  <Tag color={
+                    selectedItem.category === 'Food' ? 'green' :
+                    selectedItem.category === 'Beverage' ? 'blue' :
+                    'purple'
+                  }>
+                    {selectedItem.category}
+                  </Tag>
+                </div>
+                <div className="detail-row">
+                  <span className="label">
+                    <FileTextOutlined className="icon" />
+                    Description
+                  </span>
+                  <span className="value">{selectedItem.description || 'No description'}</span>
+                </div>
+              </ItemDetailSection>
+
+              <ItemDetailSection>
+                <div className="section-title">
+                  <BarChartOutlined />
+                  Statistics
+                </div>
+                <div className="detail-row">
+                  <span className="label">Total Orders</span>
+                  <span className="value">123</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Order Rate</span>
+                  <span className="value">85%</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Revenue</span>
+                  <span className="value">{(selectedItem.price * 123).toLocaleString('vi-VN')}đ</span>
+                </div>
+              </ItemDetailSection>
+
+              <ActionButtons>
+                <Button 
+                  className="action-button edit-button"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setEditingItem(selectedItem);
+                    form.setFieldsValue(selectedItem);
+                    setIsModalVisible(true);
+                    setIsDetailModalVisible(false);
+                  }}
+                >
+                  Edit Item
+                </Button>
+                <Button 
+                  className="action-button delete-button"
+                  icon={<DeleteOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Delete Item',
+                      icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
+                      content: (
+                        <div>
+                          <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
+                          <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
+                        </div>
+                      ),
+                      okText: 'Yes, Delete',
+                      okButtonProps: {
+                        danger: true,
+                        icon: <DeleteOutlined />
+                      },
+                      cancelText: 'Cancel',
+                      onOk: () => {
+                        handleDelete(selectedItem._id);
+                        setIsDetailModalVisible(false);
+                      },
+                      okType: 'danger',
+                      centered: true,
+                      maskClosable: true
+                    });
+                  }}
+                >
+                  Delete Item
+                </Button>
+              </ActionButtons>
+            </>
+          )}
+        </DetailContainer>
+      </StyledModal>
+
+      <StyledModal
+        title="Add New Item"
+        open={isMobile && isAddModalVisible}
+        onCancel={() => setIsAddModalVisible(false)}
+        footer={null}
+        width="100%"
+        styles={{
+          body: { padding: 0 },
+          modal: { top: 0 }
+        }}
+      >
+        <DetailContainer>
+          <FormWrapper>
+            <DetailHeader>
+              <div className="icon-wrapper">
+                <PlusOutlined />
+              </div>
+              <div>
+                <h2 style={{ margin: 0 }}>Add New Item</h2>
+                <p style={{ margin: '4px 0 0', color: '#6b7280' }}>Create a new menu item</p>
+              </div>
+            </DetailHeader>
+            <StyledForm
+              form={form}
+              layout="vertical"
+              onFinish={handleSubmit}
+              initialValues={{ isAvailable: true }}
+            >
+              <Form.Item
+                name="name"
+                label="Name"
+                rules={[{ required: true, message: 'Please enter item name' }]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                name="description"
+                label="Description"
+              >
+                <TextArea rows={4} />
+              </Form.Item>
+
+              <Form.Item
+                name="category"
+                label="Category"
+                rules={[{ required: true, message: 'Please select a category' }]}
+              >
+                <Select>
+                  <Option value="Food">Food</Option>
+                  <Option value="Beverage">Beverage</Option>
+                  <Option value="Dessert">Dessert</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="price"
+                label="Price"
+                rules={[{ required: true, message: 'Please enter price' }]}
+              >
+                <InputNumber
+                  min={0}
+                  style={{ width: '100%' }}
+                  formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="image"
+                label="Image"
+              >
+                <ImageUpload>
+                  <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                  />
+                  {imageUrl ? (
+                    <div className="image-preview" onClick={() => document.getElementById('imageInput').click()}>
+                      <img src={imageUrl} alt="Preview" />
+                    </div>
+                  ) : (
+                    <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
+                      <div className="icon">
+                        {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                      </div>
+                      <div className="ant-upload-text">
+                        <span className="main-text">Click to upload</span>
+                        <span className="sub-text">PNG, JPG up to 10MB</span>
+                      </div>
+                    </div>
+                  )}
+                </ImageUpload>
+              </Form.Item>
+
+              <Form.Item
+                name="isAvailable"
+                valuePropName="checked"
+              >
+                <Select>
+                  <Option value={true}>Available</Option>
+                  <Option value={false}>Unavailable</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item>
+                <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                  <Button onClick={resetForm}>Cancel</Button>
+                  <Button type="primary" htmlType="submit">
+                    {editingItem ? 'Update' : 'Create'}
+                  </Button>
+                </Space>
+              </Form.Item>
+            </StyledForm>
+          </FormWrapper>
+        </DetailContainer>
       </StyledModal>
     </PageContainer>
   );
