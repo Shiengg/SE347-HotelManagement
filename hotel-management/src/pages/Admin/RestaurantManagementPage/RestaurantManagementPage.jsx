@@ -315,6 +315,20 @@ const ImageUpload = styled.div`
     overflow: hidden;
   }
 
+  .image-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+  }
+
   .upload-placeholder {
     display: flex;
     flex-direction: column;
@@ -728,15 +742,21 @@ const RestaurantManagementPage = () => {
                       accept="image/*"
                       onChange={handleImageUpload}
                     />
-                    <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
-                      <div className="icon">
-                        {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                    {imageUrl ? (
+                      <div className="image-preview" onClick={() => document.getElementById('imageInput').click()}>
+                        <img src={imageUrl} alt="Preview" />
                       </div>
-                      <div className="ant-upload-text">
-                        <span className="main-text">Click to upload</span>
-                        <span className="sub-text">PNG, JPG up to 10MB</span>
+                    ) : (
+                      <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
+                        <div className="icon">
+                          {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                        </div>
+                        <div className="ant-upload-text">
+                          <span className="main-text">Click to upload</span>
+                          <span className="sub-text">PNG, JPG up to 10MB</span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </ImageUpload>
                 </Form.Item>
 
@@ -917,15 +937,21 @@ const RestaurantManagementPage = () => {
                 accept="image/*"
                 onChange={handleImageUpload}
               />
-              <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
-                <div className="icon">
-                  {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+              {imageUrl ? (
+                <div className="image-preview" onClick={() => document.getElementById('imageInput').click()}>
+                  <img src={imageUrl} alt="Preview" />
                 </div>
-                <div className="ant-upload-text">
-                  <span className="main-text">Click to upload</span>
-                  <span className="sub-text">PNG, JPG up to 10MB</span>
+              ) : (
+                <div className="upload-placeholder" onClick={() => document.getElementById('imageInput').click()}>
+                  <div className="icon">
+                    {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                  </div>
+                  <div className="ant-upload-text">
+                    <span className="main-text">Click to upload</span>
+                    <span className="sub-text">PNG, JPG up to 10MB</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </ImageUpload>
           </Form.Item>
 
