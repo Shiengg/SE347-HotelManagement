@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Table, Tag } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CoffeeOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Table, Tag, Pagination } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CoffeeOutlined, BarChartOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -88,9 +88,18 @@ const GridContainer = styled.div`
 
 const MenuContainer = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
   padding: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  @media (max-width: 1080px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const ItemCard = styled.div`
@@ -100,6 +109,7 @@ const ItemCard = styled.div`
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
+  width: 100%;
 
   &:hover {
     transform: translateY(-2px);
@@ -108,8 +118,7 @@ const ItemCard = styled.div`
 
   .image-container {
     width: 100%;
-    height: 180px;
-    overflow: hidden;
+    height: 200px;
     position: relative;
 
     img {
@@ -129,44 +138,48 @@ const ItemCard = styled.div`
       background: ${props => props.isAvailable ? '#10b981' : '#ef4444'};
       color: white;
     }
+
+    .price-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.9);
+      color: #059669;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
   }
 
   .content {
     padding: 16px;
 
-    .name {
-      font-size: 16px;
-      font-weight: 600;
-      color: #1a3353;
-      margin-bottom: 8px;
-    }
-
-    .category {
-      margin-bottom: 8px;
-    }
-
-    .price {
-      font-size: 15px;
-      font-weight: 500;
-      color: #059669;
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 12px;
+
+      .name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1a3353;
+      }
     }
 
     .stats {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid #e2e8f0;
+      gap: 24px;
 
       .stat-item {
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 6px;
 
         .label {
-          font-size: 12px;
+          font-size: 13px;
           color: #6b7280;
         }
 
@@ -178,14 +191,6 @@ const ItemCard = styled.div`
       }
     }
   }
-
-  .actions {
-    padding: 12px;
-    border-top: 1px solid #e2e8f0;
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-  }
 `;
 
 const DetailContainer = styled.div`
@@ -194,6 +199,62 @@ const DetailContainer = styled.div`
   padding: 12px;
   border: 2px solid gold;
   height: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const FormWrapper = styled.div`
+  padding: 16px;
+`;
+
+const DetailHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+`;
+
+const ItemDetailSection = styled.div`
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 8px;
+  margin-bottom: 16px;
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a3353;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #ffd700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .anticon {
+      color: #ffd700;
+    }
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px dashed #e2e8f0;
+
+    .label {
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .value {
+      color: #1a3353;
+      font-weight: 600;
+    }
+  }
 `;
 
 const RestaurantManagementPage = () => {
@@ -201,7 +262,11 @@ const RestaurantManagementPage = () => {
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [formMode, setFormMode] = useState('create');
   const [form] = Form.useForm();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
 
   // Fetch all items
   const fetchItems = async () => {
@@ -277,6 +342,12 @@ const RestaurantManagementPage = () => {
     }
   };
 
+  // Tính toán items cho trang hiện tại
+  const getCurrentPageItems = () => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return items.slice(startIndex, startIndex + pageSize);
+  };
+
   return (
     <PageContainer>
       <GridContainer>
@@ -297,8 +368,9 @@ const RestaurantManagementPage = () => {
               icon={<PlusOutlined />}
               onClick={() => {
                 setEditingItem(null);
+                setSelectedItem(null);
+                setFormMode('create');
                 form.resetFields();
-                setIsModalVisible(true);
               }}
             >
               Add New Item
@@ -306,8 +378,15 @@ const RestaurantManagementPage = () => {
           </HeaderSection>
 
           <MenuContainer>
-            {items.map(item => (
-              <ItemCard key={item._id} isAvailable={item.isAvailable}>
+            {getCurrentPageItems().map(item => (
+              <ItemCard 
+                key={item._id} 
+                isAvailable={item.isAvailable}
+                onClick={() => {
+                  setSelectedItem(item);
+                  setFormMode('detail');
+                }}
+              >
                 <div className="image-container">
                   <img 
                     src={item.image || 'https://via.placeholder.com/300x200'} 
@@ -319,63 +398,229 @@ const RestaurantManagementPage = () => {
                   <div className="status-badge">
                     {item.isAvailable ? 'Available' : 'Unavailable'}
                   </div>
+                  <div className="price-badge">
+                    {item.price.toLocaleString('vi-VN')}đ
+                  </div>
                 </div>
                 <div className="content">
-                  <div className="name">{item.name}</div>
-                  <Tag className="category" color={
-                    item.category === 'Food' ? 'green' :
-                    item.category === 'Beverage' ? 'blue' :
-                    'purple'
-                  }>
-                    {item.category}
-                  </Tag>
-                  <div className="price">
-                    {item.price.toLocaleString('vi-VN')}đ
+                  <div className="header">
+                    <div className="name">{item.name}</div>
+                    <Tag color={
+                      item.category === 'Food' ? 'green' :
+                      item.category === 'Beverage' ? 'blue' :
+                      'purple'
+                    }>
+                      {item.category}
+                    </Tag>
                   </div>
                   <div className="stats">
                     <div className="stat-item">
-                      <span className="label">Orders</span>
+                      <span className="label">Orders:</span>
                       <span className="value">123</span>
                     </div>
                     <div className="stat-item">
-                      <span className="label">Rate</span>
+                      <span className="label">Rate:</span>
                       <span className="value">85%</span>
                     </div>
                   </div>
                 </div>
-                <div className="actions">
-                  <Button
+              </ItemCard>
+            ))}
+          </MenuContainer>
+          
+          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+            <Pagination
+              current={currentPage}
+              total={items.length}
+              pageSize={pageSize}
+              onChange={(page) => setCurrentPage(page)}
+              showSizeChanger={false}
+            />
+          </div>
+        </ContentWrapper>
+
+        <DetailContainer>
+          {formMode === 'create' ? (
+            <FormWrapper>
+              <DetailHeader>
+                <div className="icon-wrapper">
+                  <PlusOutlined />
+                </div>
+                <div>
+                  <h2 style={{ margin: 0 }}>Add New Item</h2>
+                  <p style={{ margin: '4px 0 0', color: '#6b7280' }}>Create a new menu item</p>
+                </div>
+              </DetailHeader>
+              <StyledForm
+                form={form}
+                layout="vertical"
+                onFinish={handleSubmit}
+                initialValues={{ isAvailable: true }}
+              >
+                <Form.Item
+                  name="name"
+                  label="Name"
+                  rules={[{ required: true, message: 'Please enter item name' }]}
+                >
+                  <Input />
+                </Form.Item>
+
+                <Form.Item
+                  name="description"
+                  label="Description"
+                >
+                  <TextArea rows={4} />
+                </Form.Item>
+
+                <Form.Item
+                  name="category"
+                  label="Category"
+                  rules={[{ required: true, message: 'Please select a category' }]}
+                >
+                  <Select>
+                    <Option value="Food">Food</Option>
+                    <Option value="Beverage">Beverage</Option>
+                    <Option value="Dessert">Dessert</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="price"
+                  label="Price"
+                  rules={[{ required: true, message: 'Please enter price' }]}
+                >
+                  <InputNumber
+                    min={0}
+                    style={{ width: '100%' }}
+                    formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="image"
+                  label="Image URL"
+                >
+                  <Input />
+                </Form.Item>
+
+                <Form.Item
+                  name="isAvailable"
+                  valuePropName="checked"
+                >
+                  <Select>
+                    <Option value={true}>Available</Option>
+                    <Option value={false}>Unavailable</Option>
+                  </Select>
+                </Form.Item>
+
+                <Form.Item>
+                  <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                    <Button onClick={() => {
+                      setIsModalVisible(false);
+                      setEditingItem(null);
+                      form.resetFields();
+                    }}>
+                      Cancel
+                    </Button>
+                    <Button type="primary" htmlType="submit">
+                      {editingItem ? 'Update' : 'Create'}
+                    </Button>
+                  </Space>
+                </Form.Item>
+              </StyledForm>
+            </FormWrapper>
+          ) : (
+            selectedItem && (
+              <>
+                <DetailHeader>
+                  <div className="icon-wrapper">
+                    <CoffeeOutlined />
+                  </div>
+                  <div>
+                    <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                    <Tag color={
+                      selectedItem.category === 'Food' ? 'green' :
+                      selectedItem.category === 'Beverage' ? 'blue' :
+                      'purple'
+                    }>
+                      {selectedItem.category}
+                    </Tag>
+                  </div>
+                </DetailHeader>
+
+                <ItemDetailSection>
+                  <div className="section-title">
+                    <CoffeeOutlined />
+                    Item Details
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Price</span>
+                    <span className="value">{selectedItem.price.toLocaleString('vi-VN')}đ</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Status</span>
+                    <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                      {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                    </Tag>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Description</span>
+                    <span className="value">{selectedItem.description || 'No description'}</span>
+                  </div>
+                </ItemDetailSection>
+
+                <ItemDetailSection>
+                  <div className="section-title">
+                    <BarChartOutlined />
+                    Statistics
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Total Orders</span>
+                    <span className="value">123</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Order Rate</span>
+                    <span className="value">85%</span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Revenue</span>
+                    <span className="value">{(selectedItem.price * 123).toLocaleString('vi-VN')}đ</span>
+                  </div>
+                </ItemDetailSection>
+
+                <Space style={{ justifyContent: 'flex-end' }}>
+                  <Button 
+                    type="primary"
                     icon={<EditOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEditingItem(item);
-                      form.setFieldsValue(item);
+                    onClick={() => {
+                      setEditingItem(selectedItem);
+                      form.setFieldsValue(selectedItem);
                       setIsModalVisible(true);
                     }}
-                  />
-                  <Button
-                    danger
+                  >
+                    Edit Item
+                  </Button>
+                  <Button 
+                    danger 
                     icon={<DeleteOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    onClick={() => {
                       Modal.confirm({
                         title: 'Are you sure you want to delete this item?',
                         content: 'This action cannot be undone.',
                         okText: 'Yes',
                         okType: 'danger',
                         cancelText: 'No',
-                        onOk: () => handleDelete(item._id)
+                        onOk: () => handleDelete(selectedItem._id)
                       });
                     }}
-                  />
-                </div>
-              </ItemCard>
-            ))}
-          </MenuContainer>
-        </ContentWrapper>
-
-        <DetailContainer>
-          <h2>Restaurant Statistics</h2>
+                  >
+                    Delete
+                  </Button>
+                </Space>
+              </>
+            )
+          )}
         </DetailContainer>
       </GridContainer>
 
