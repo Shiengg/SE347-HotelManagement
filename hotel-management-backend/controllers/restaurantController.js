@@ -1,0 +1,90 @@
+const RestaurantItem = require('../models/Restaurant');
+
+// Lấy tất cả món ăn
+exports.getAllItems = async (req, res) => {
+  try {
+    const items = await RestaurantItem.find();
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Tạo món ăn mới
+exports.createItem = async (req, res) => {
+  try {
+    const item = new RestaurantItem(req.body);
+    const newItem = await item.save();
+    res.status(201).json(newItem);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Lấy món ăn theo ID
+exports.getItemById = async (req, res) => {
+  try {
+    const item = await RestaurantItem.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+    res.json(item);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Cập nhật món ăn
+exports.updateItem = async (req, res) => {
+  try {
+    const item = await RestaurantItem.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    // Kiểm tra và cập nhật từng trường
+    const updates = Object.keys(req.body);
+    const allowedUpdates = ['name', 'description', 'price', 'category', 'image', 'isAvailable'];
+    const isValidOperation = updates.every(update => allowedUpdates.includes(update));
+
+    if (!isValidOperation) {
+      return res.status(400).json({ message: 'Invalid updates!' });
+    }
+
+    const updatedItem = await RestaurantItem.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+
+    res.json(updatedItem);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Xóa món ăn
+exports.deleteItem = async (req, res) => {
+  try {
+    const item = await RestaurantItem.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    await RestaurantItem.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Item deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Lấy món ăn theo category
+exports.getItemsByCategory = async (req, res) => {
+  try {
+    const { category } = req.params;
+    const items = await RestaurantItem.find({ category });
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}; 

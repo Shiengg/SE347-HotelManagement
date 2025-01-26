@@ -7,6 +7,7 @@ const roomRoutes = require('./routes/roomRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
+const restaurantRoutes = require('./routes/restaurantRoutes');
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/restaurant', restaurantRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
