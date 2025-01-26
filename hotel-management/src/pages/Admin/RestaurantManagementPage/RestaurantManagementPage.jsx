@@ -305,8 +305,8 @@ const ItemDetailSection = styled.div`
     }
 
     .label {
-      color: #64748b;
-      font-weight: 500;
+      color: #1a3353;
+      font-weight: 600;
       font-size: 14px;
       display: flex;
       align-items: center;
@@ -321,7 +321,7 @@ const ItemDetailSection = styled.div`
     .value {
       color: #1a3353;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 15px;
     }
 
     &.status-row {
@@ -335,6 +335,11 @@ const ItemDetailSection = styled.div`
 
         .ant-switch {
           background-color: ${props => props.isAvailable ? '#10b981' : '#ef4444'};
+        }
+
+        .ant-tag {
+          font-size: 14px;
+          font-weight: 600;
         }
       }
     }
@@ -361,15 +366,15 @@ const ItemDetailSection = styled.div`
 
       .label {
         color: #1a3353;
-        font-weight: 500;
-        font-size: 14px;
+        font-weight: 600;
+        font-size: 15px;
         z-index: 2;
         position: relative;
-        opacity: 0.8;
+        opacity: 0.9;
       }
 
       .value {
-        font-size: 24px;
+        font-size: 26px;
         color: #1a3353;
         font-weight: 700;
         display: flex;
@@ -379,9 +384,9 @@ const ItemDetailSection = styled.div`
         position: relative;
 
         .currency {
-          font-size: 16px;
-          font-weight: 500;
-          opacity: 0.8;
+          font-size: 18px;
+          font-weight: 600;
+          opacity: 0.9;
         }
       }
     }
