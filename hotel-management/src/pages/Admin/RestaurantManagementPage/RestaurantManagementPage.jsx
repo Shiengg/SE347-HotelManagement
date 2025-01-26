@@ -159,15 +159,34 @@ const ItemCard = styled.div`
 
     .price-badge {
       position: absolute;
-      bottom: 8px;
-      right: 8px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 600;
-      background: rgba(255, 255, 255, 0.9);
-      color: #059669;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      bottom: 12px;
+      right: 12px;
+      padding: 10px 16px;
+      border-radius: 25px;
+      background: #ffcc00;
+      color: #1a3353;
+      font-size: 16px;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      backdrop-filter: blur(4px);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      transform: translateY(0);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(255, 204, 0, 0.4);
+        background: #ffd700;
+      }
+
+      .currency {
+        font-size: 14px;
+        font-weight: 500;
+        opacity: 0.8;
+      }
     }
   }
 
@@ -283,6 +302,53 @@ const ItemDetailSection = styled.div`
     .value {
       color: #1a3353;
       font-weight: 600;
+    }
+
+    &.price-row {
+      padding: 20px;
+      margin: 16px 0;
+      background: linear-gradient(135deg, #ffcc00, #ffd700);
+      border-radius: 12px;
+      border: none;
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(255,255,255,0.2), transparent);
+        z-index: 1;
+      }
+
+      .label {
+        color: #1a3353;
+        font-weight: 500;
+        font-size: 14px;
+        z-index: 2;
+        position: relative;
+        opacity: 0.8;
+      }
+
+      .value {
+        font-size: 24px;
+        color: #1a3353;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 2;
+        position: relative;
+
+        .currency {
+          font-size: 16px;
+          font-weight: 500;
+          opacity: 0.8;
+        }
+      }
     }
   }
 `;
@@ -612,7 +678,8 @@ const RestaurantManagementPage = () => {
                         {item.isAvailable ? 'Available' : 'Unavailable'}
                       </div>
                       <div className="price-badge">
-                        {item.price.toLocaleString('vi-VN')}đ
+                        <span>{item.price.toLocaleString('vi-VN')}</span>
+                        <span className="currency">₫</span>
                       </div>
                     </div>
                     <div className="content">
@@ -629,7 +696,7 @@ const RestaurantManagementPage = () => {
                       <div className="stats">
                         <div className="stat-item">
                           <span className="label">Orders:</span>
-                          <span className="value">123</span>
+                          <span className="value">120</span>
                         </div>
                         <div className="stat-item">
                           <span className="label">Rate:</span>
@@ -804,9 +871,12 @@ const RestaurantManagementPage = () => {
                     <CoffeeOutlined />
                     Item Details
                   </div>
-                  <div className="detail-row">
+                  <div className="detail-row price-row">
                     <span className="label">Price</span>
-                    <span className="value">{selectedItem.price.toLocaleString('vi-VN')}đ</span>
+                    <span className="value">
+                      {selectedItem.price.toLocaleString('vi-VN')}
+                      <span className="currency">₫</span>
+                    </span>
                   </div>
                   <div className="detail-row">
                     <span className="label">Status</span>
