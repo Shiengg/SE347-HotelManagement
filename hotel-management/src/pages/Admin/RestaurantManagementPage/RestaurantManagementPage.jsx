@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Table, Tag, Pagination } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CoffeeOutlined, BarChartOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CoffeeOutlined, BarChartOutlined, LoadingOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -257,6 +257,84 @@ const ItemDetailSection = styled.div`
   }
 `;
 
+const ImageUpload = styled.div`
+  border: 2px dashed #d9d9d9;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    border-color: #ffd700;
+  }
+
+  .ant-upload-text {
+    margin-top: 8px;
+    color: #666;
+  }
+
+  img {
+    max-width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+  }
+`;
+
+// Thêm styled component cho EmptyState
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #fff;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+  margin: 24px 0;
+
+  .icon {
+    font-size: 48px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: #64748b;
+    text-align: center;
+    max-width: 400px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+
+  .add-button {
+    padding: 12px 24px;
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    border: none;
+    border-radius: 8px;
+    color: #1a3353;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+`;
+
 const RestaurantManagementPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -267,6 +345,8 @@ const RestaurantManagementPage = () => {
   const [form] = Form.useForm();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 6;
+  const [imageUrl, setImageUrl] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   // Fetch all items
   const fetchItems = async () => {
@@ -348,6 +428,37 @@ const RestaurantManagementPage = () => {
     return items.slice(startIndex, startIndex + pageSize);
   };
 
+  // Thêm hàm xử lý upload ảnh
+  const handleImageUpload = async (e) => {
+    try {
+      setUploading(true);
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('http://localhost:5000/api/restaurant/upload', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setImageUrl(data.imageUrl);
+        form.setFieldsValue({ image: data.imageUrl });
+        message.success('Image uploaded successfully');
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      message.error('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <PageContainer>
       <GridContainer>
@@ -377,66 +488,89 @@ const RestaurantManagementPage = () => {
             </Button>
           </HeaderSection>
 
-          <MenuContainer>
-            {getCurrentPageItems().map(item => (
-              <ItemCard 
-                key={item._id} 
-                isAvailable={item.isAvailable}
+          {items.length > 0 ? (
+            <>
+              <MenuContainer>
+                {getCurrentPageItems().map(item => (
+                  <ItemCard 
+                    key={item._id} 
+                    isAvailable={item.isAvailable}
+                    onClick={() => {
+                      setSelectedItem(item);
+                      setFormMode('detail');
+                    }}
+                  >
+                    <div className="image-container">
+                      <img 
+                        src={item.image || 'https://via.placeholder.com/300x200'} 
+                        alt={item.name}
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/300x200';
+                        }}
+                      />
+                      <div className="status-badge">
+                        {item.isAvailable ? 'Available' : 'Unavailable'}
+                      </div>
+                      <div className="price-badge">
+                        {item.price.toLocaleString('vi-VN')}đ
+                      </div>
+                    </div>
+                    <div className="content">
+                      <div className="header">
+                        <div className="name">{item.name}</div>
+                        <Tag color={
+                          item.category === 'Food' ? 'green' :
+                          item.category === 'Beverage' ? 'blue' :
+                          'purple'
+                        }>
+                          {item.category}
+                        </Tag>
+                      </div>
+                      <div className="stats">
+                        <div className="stat-item">
+                          <span className="label">Orders:</span>
+                          <span className="value">123</span>
+                        </div>
+                        <div className="stat-item">
+                          <span className="label">Rate:</span>
+                          <span className="value">85%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </ItemCard>
+                ))}
+              </MenuContainer>
+              
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                <Pagination
+                  current={currentPage}
+                  total={items.length}
+                  pageSize={pageSize}
+                  onChange={(page) => setCurrentPage(page)}
+                  showSizeChanger={false}
+                />
+              </div>
+            </>
+          ) : (
+            <EmptyState>
+              <CoffeeOutlined className="icon" />
+              <div className="title">No Menu Items Found</div>
+              <div className="subtitle">
+                Get started by adding your first menu item. You can add food, beverages, or desserts to your restaurant menu.
+              </div>
+              <button 
+                className="add-button"
                 onClick={() => {
-                  setSelectedItem(item);
-                  setFormMode('detail');
+                  setEditingItem(null);
+                  setSelectedItem(null);
+                  setFormMode('create');
+                  form.resetFields();
                 }}
               >
-                <div className="image-container">
-                  <img 
-                    src={item.image || 'https://via.placeholder.com/300x200'} 
-                    alt={item.name}
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/300x200';
-                    }}
-                  />
-                  <div className="status-badge">
-                    {item.isAvailable ? 'Available' : 'Unavailable'}
-                  </div>
-                  <div className="price-badge">
-                    {item.price.toLocaleString('vi-VN')}đ
-                  </div>
-                </div>
-                <div className="content">
-                  <div className="header">
-                    <div className="name">{item.name}</div>
-                    <Tag color={
-                      item.category === 'Food' ? 'green' :
-                      item.category === 'Beverage' ? 'blue' :
-                      'purple'
-                    }>
-                      {item.category}
-                    </Tag>
-                  </div>
-                  <div className="stats">
-                    <div className="stat-item">
-                      <span className="label">Orders:</span>
-                      <span className="value">123</span>
-                    </div>
-                    <div className="stat-item">
-                      <span className="label">Rate:</span>
-                      <span className="value">85%</span>
-                    </div>
-                  </div>
-                </div>
-              </ItemCard>
-            ))}
-          </MenuContainer>
-          
-          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
-            <Pagination
-              current={currentPage}
-              total={items.length}
-              pageSize={pageSize}
-              onChange={(page) => setCurrentPage(page)}
-              showSizeChanger={false}
-            />
-          </div>
+                <PlusOutlined /> Add First Item
+              </button>
+            </EmptyState>
+          )}
         </ContentWrapper>
 
         <DetailContainer>
@@ -499,9 +633,25 @@ const RestaurantManagementPage = () => {
 
                 <Form.Item
                   name="image"
-                  label="Image URL"
+                  label="Image"
                 >
-                  <Input />
+                  <ImageUpload onClick={() => document.getElementById('imageInput').click()}>
+                    {imageUrl ? (
+                      <img src={imageUrl} alt="Item" />
+                    ) : (
+                      <div>
+                        {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                        <div className="ant-upload-text">Upload Image</div>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      id="imageInput"
+                      hidden
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                  </ImageUpload>
                 </Form.Item>
 
                 <Form.Item
@@ -682,9 +832,25 @@ const RestaurantManagementPage = () => {
 
           <Form.Item
             name="image"
-            label="Image URL"
+            label="Image"
           >
-            <Input />
+            <ImageUpload onClick={() => document.getElementById('imageInput').click()}>
+              {imageUrl ? (
+                <img src={imageUrl} alt="Item" />
+              ) : (
+                <div>
+                  {uploading ? <LoadingOutlined /> : <PlusOutlined />}
+                  <div className="ant-upload-text">Upload Image</div>
+                </div>
+              )}
+              <input
+                type="file"
+                id="imageInput"
+                hidden
+                accept="image/*"
+                onChange={handleImageUpload}
+              />
+            </ImageUpload>
           </Form.Item>
 
           <Form.Item
