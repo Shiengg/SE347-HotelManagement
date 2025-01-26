@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Table, Tag, Pagination } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CoffeeOutlined, BarChartOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Table, Tag, Pagination, Switch } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CoffeeOutlined, BarChartOutlined, LoadingOutlined, DollarOutlined, CheckCircleOutlined, TagOutlined, FileTextOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -266,42 +266,77 @@ const DetailHeader = styled.div`
 `;
 
 const ItemDetailSection = styled.div`
-  padding: 16px;
+  padding: 20px;
   background: #fff;
-  border: 1px solid #f0f0f0;
-  border-radius: 8px;
-  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 
   .section-title {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     color: #1a3353;
-    margin-bottom: 16px;
-    padding-bottom: 8px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
     border-bottom: 2px solid #ffd700;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 
     .anticon {
       color: #ffd700;
+      font-size: 18px;
     }
   }
 
   .detail-row {
     display: flex;
     justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px dashed #e2e8f0;
+    align-items: center;
+    padding: 12px 16px;
+    margin: 8px 0;
+    border-radius: 8px;
+    background: #f8fafc;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: #f1f5f9;
+    }
 
     .label {
-      color: #6b7280;
+      color: #64748b;
       font-weight: 500;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .icon {
+        color: #94a3b8;
+        font-size: 16px;
+      }
     }
 
     .value {
       color: #1a3353;
       font-weight: 600;
+      font-size: 14px;
+    }
+
+    &.status-row {
+      background: ${props => props.isAvailable ? '#f0fdf4' : '#fef2f2'};
+      border: 1px solid ${props => props.isAvailable ? '#86efac' : '#fecaca'};
+
+      .status-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .ant-switch {
+          background-color: ${props => props.isAvailable ? '#10b981' : '#ef4444'};
+        }
+      }
     }
 
     &.price-row {
@@ -483,6 +518,62 @@ const EmptyState = styled.div`
   }
 `;
 
+// Thêm styled component cho phần actions
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+
+  .action-button {
+    flex: 1;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &.edit-button {
+      background: #1a3353;
+      color: white;
+      border: none;
+
+      &:hover {
+        background: #264773;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(26, 51, 83, 0.2);
+      }
+
+      .anticon {
+        font-size: 16px;
+      }
+    }
+
+    &.delete-button {
+      background: #fff;
+      color: #ef4444;
+      border: 1px solid #fecaca;
+
+      &:hover {
+        background: #fef2f2;
+        color: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
+      }
+
+      .anticon {
+        font-size: 16px;
+      }
+    }
+  }
+`;
+
 const RestaurantManagementPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -622,6 +713,46 @@ const RestaurantManagementPage = () => {
       message.error('Failed to upload image');
     } finally {
       setUploading(false);
+    }
+  };
+
+  // Cập nhật hàm handleStatusChange
+  const handleStatusChange = async (checked) => {
+    try {
+      // Chỉ gửi các trường cần thiết
+      const updateData = {
+        name: selectedItem.name,
+        description: selectedItem.description,
+        price: selectedItem.price,
+        category: selectedItem.category,
+        image: selectedItem.image,
+        isAvailable: checked // Trạng thái mới
+      };
+
+      const response = await fetch(`http://localhost:5000/api/restaurant/${selectedItem._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(updateData)
+      });
+
+      if (response.ok) {
+        message.success('Status updated successfully');
+        // Cập nhật state local
+        setSelectedItem(prev => ({
+          ...prev,
+          isAvailable: checked
+        }));
+        // Fetch lại danh sách để cập nhật UI
+        fetchItems();
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to update status');
+      }
+    } catch (error) {
+      message.error(error.message || 'Failed to update status');
     }
   };
 
@@ -866,26 +997,54 @@ const RestaurantManagementPage = () => {
                   </div>
                 </DetailHeader>
 
-                <ItemDetailSection>
+                <ItemDetailSection isAvailable={selectedItem.isAvailable}>
                   <div className="section-title">
                     <CoffeeOutlined />
                     Item Details
                   </div>
                   <div className="detail-row price-row">
-                    <span className="label">Price</span>
+                    <span className="label">
+                      <DollarOutlined className="icon" />
+                      Price
+                    </span>
                     <span className="value">
                       {selectedItem.price.toLocaleString('vi-VN')}
                       <span className="currency">₫</span>
                     </span>
                   </div>
+                  <div className="detail-row status-row">
+                    <span className="label">
+                      <CheckCircleOutlined className="icon" />
+                      Status
+                    </span>
+                    <div className="status-toggle">
+                      <Switch
+                        checked={selectedItem.isAvailable}
+                        onChange={handleStatusChange}
+                      />
+                      <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                        {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                      </Tag>
+                    </div>
+                  </div>
                   <div className="detail-row">
-                    <span className="label">Status</span>
-                    <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
-                      {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                    <span className="label">
+                      <TagOutlined className="icon" />
+                      Category
+                    </span>
+                    <Tag color={
+                      selectedItem.category === 'Food' ? 'green' :
+                      selectedItem.category === 'Beverage' ? 'blue' :
+                      'purple'
+                    }>
+                      {selectedItem.category}
                     </Tag>
                   </div>
                   <div className="detail-row">
-                    <span className="label">Description</span>
+                    <span className="label">
+                      <FileTextOutlined className="icon" />
+                      Description
+                    </span>
                     <span className="value">{selectedItem.description || 'No description'}</span>
                   </div>
                 </ItemDetailSection>
@@ -909,9 +1068,9 @@ const RestaurantManagementPage = () => {
                   </div>
                 </ItemDetailSection>
 
-                <Space style={{ justifyContent: 'flex-end' }}>
+                <ActionButtons>
                   <Button 
-                    type="primary"
+                    className="action-button edit-button"
                     icon={<EditOutlined />}
                     onClick={() => {
                       setEditingItem(selectedItem);
@@ -922,22 +1081,34 @@ const RestaurantManagementPage = () => {
                     Edit Item
                   </Button>
                   <Button 
-                    danger 
+                    className="action-button delete-button"
                     icon={<DeleteOutlined />}
                     onClick={() => {
                       Modal.confirm({
-                        title: 'Are you sure you want to delete this item?',
-                        content: 'This action cannot be undone.',
-                        okText: 'Yes',
+                        title: 'Delete Item',
+                        icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
+                        content: (
+                          <div>
+                            <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
+                            <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
+                          </div>
+                        ),
+                        okText: 'Yes, Delete',
+                        okButtonProps: {
+                          danger: true,
+                          icon: <DeleteOutlined />
+                        },
+                        cancelText: 'Cancel',
+                        onOk: () => handleDelete(selectedItem._id),
                         okType: 'danger',
-                        cancelText: 'No',
-                        onOk: () => handleDelete(selectedItem._id)
+                        centered: true,
+                        maskClosable: true
                       });
                     }}
                   >
-                    Delete
+                    Delete Item
                   </Button>
-                </Space>
+                </ActionButtons>
               </>
             )
           )}
