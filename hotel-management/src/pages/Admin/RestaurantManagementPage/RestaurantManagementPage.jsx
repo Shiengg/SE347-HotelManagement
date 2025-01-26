@@ -504,21 +504,34 @@ const EmptyState = styled.div`
   }
 
   .add-button {
-    padding: 12px 24px;
-    background: linear-gradient(45deg, #ffd700, #ffed4a);
-    border: none;
+    margin-top: 24px;
+    height: 44px;
+    padding: 0 32px;
     border-radius: 8px;
-    color: #1a3353;
-    font-weight: 600;
+    background: linear-gradient(135deg, #ffcc00, #ffd700);
+    border: none;
+    box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 6px 16px rgba(255, 204, 0, 0.4);
+      background: linear-gradient(135deg, #ffd700, #ffed4a);
+    }
+
+    .anticon {
+      font-size: 18px;
+      color: #1a3353;
+    }
+
+    span {
+      font-weight: 600;
+      font-size: 15px;
+      color: #1a3353;
     }
   }
 `;
@@ -579,6 +592,84 @@ const ActionButtons = styled.div`
   }
 `;
 
+// Thêm styled component cho nút Add New Item
+const AddItemButton = styled(Button)`
+  height: 44px;
+  padding: 0 24px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffcc00, #ffd700);
+  border: none;
+  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 204, 0, 0.4);
+    background: linear-gradient(135deg, #ffd700, #ffed4a);
+  }
+
+  .anticon {
+    font-size: 18px;
+    color: #1a3353;
+  }
+
+  span {
+    font-weight: 600;
+    font-size: 15px;
+    color: #1a3353;
+  }
+`;
+
+// Thêm styled component cho CategoryFilter
+const CategoryFilter = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 0 4px;
+
+  .filter-button {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+    background: white;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    cursor: pointer;
+
+    &:hover {
+      border-color: #ffd700;
+      color: #1a3353;
+    }
+
+    &.active {
+      background: #ffd700;
+      color: #1a3353;
+      border-color: #ffd700;
+      box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+    }
+
+    .count {
+      background: ${props => props.active ? 'rgba(255, 255, 255, 0.3)' : '#f1f5f9'};
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .anticon {
+      font-size: 16px;
+    }
+  }
+`;
+
 const RestaurantManagementPage = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -591,6 +682,7 @@ const RestaurantManagementPage = () => {
   const pageSize = 6;
   const [imageUrl, setImageUrl] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
   // Fetch all items
   const fetchItems = async () => {
@@ -684,10 +776,10 @@ const RestaurantManagementPage = () => {
     }
   };
 
-  // Tính toán items cho trang hiện tại
-  const getCurrentPageItems = () => {
+  // Cập nhật hàm getCurrentPageItems để nhận filteredItems làm tham số
+  const getCurrentPageItems = (filteredItems) => {
     const startIndex = (currentPage - 1) * pageSize;
-    return items.slice(startIndex, startIndex + pageSize);
+    return filteredItems.slice(startIndex, startIndex + pageSize);
   };
 
   // Thêm hàm xử lý upload ảnh
@@ -761,6 +853,23 @@ const RestaurantManagementPage = () => {
     }
   };
 
+  // Thêm hàm để lọc items theo category
+  const getFilteredItems = () => {
+    if (selectedCategory === 'All') return items;
+    return items.filter(item => item.category === selectedCategory);
+  };
+
+  // Thêm hàm để đếm số lượng item trong mỗi category
+  const getCategoryCount = (category) => {
+    if (category === 'All') return items.length;
+    return items.filter(item => item.category === category).length;
+  };
+
+  // Thêm useEffect để reset currentPage khi đổi category
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory]);
+
   return (
     <PageContainer>
       <GridContainer>
@@ -771,13 +880,11 @@ const RestaurantManagementPage = () => {
                 <CoffeeOutlined />
               </div>
               <div className="text-content">
-                <h1>Restaurant Management</h1>
-                <div className="subtitle">Manage your restaurant menu items</div>
+                <h1>Menu Management</h1>
+                <div className="subtitle">Manage your restaurant's menu items</div>
               </div>
             </TitleSection>
-            
-            <Button 
-              type="primary" 
+            <AddItemButton
               icon={<PlusOutlined />}
               onClick={() => {
                 setEditingItem(null);
@@ -787,13 +894,48 @@ const RestaurantManagementPage = () => {
               }}
             >
               Add New Item
-            </Button>
+            </AddItemButton>
           </HeaderSection>
 
-          {items.length > 0 ? (
+          <CategoryFilter>
+            <button 
+              className={`filter-button ${selectedCategory === 'All' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('All')}
+            >
+              <CoffeeOutlined />
+              All Items
+              <span className="count">{getCategoryCount('All')}</span>
+            </button>
+            <button 
+              className={`filter-button ${selectedCategory === 'Food' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('Food')}
+            >
+              <span role="img" aria-label="food">🍽️</span>
+              Food
+              <span className="count">{getCategoryCount('Food')}</span>
+            </button>
+            <button 
+              className={`filter-button ${selectedCategory === 'Beverage' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('Beverage')}
+            >
+              <span role="img" aria-label="beverage">🥤</span>
+              Beverage
+              <span className="count">{getCategoryCount('Beverage')}</span>
+            </button>
+            <button 
+              className={`filter-button ${selectedCategory === 'Dessert' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('Dessert')}
+            >
+              <span role="img" aria-label="dessert">🍰</span>
+              Dessert
+              <span className="count">{getCategoryCount('Dessert')}</span>
+            </button>
+          </CategoryFilter>
+
+          {getFilteredItems().length > 0 ? (
             <>
               <MenuContainer>
-                {getCurrentPageItems().map(item => (
+                {getCurrentPageItems(getFilteredItems()).map(item => (
                   <ItemCard 
                     key={item._id} 
                     isAvailable={item.isAvailable}
@@ -832,7 +974,7 @@ const RestaurantManagementPage = () => {
                       <div className="stats">
                         <div className="stat-item">
                           <span className="label">Orders:</span>
-                          <span className="value">120</span>
+                          <span className="value">123</span>
                         </div>
                         <div className="stat-item">
                           <span className="label">Rate:</span>
@@ -847,7 +989,7 @@ const RestaurantManagementPage = () => {
               <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
                 <Pagination
                   current={currentPage}
-                  total={items.length}
+                  total={getFilteredItems().length}
                   pageSize={pageSize}
                   onChange={(page) => setCurrentPage(page)}
                   showSizeChanger={false}
