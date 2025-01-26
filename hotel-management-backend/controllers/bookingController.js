@@ -209,13 +209,34 @@ exports.updateBooking = async (req, res) => {
 
   try {
     const { status } = req.body;
-    const booking = await Booking.findById(req.params.id);
+    const booking = await Booking.findById(req.params.id)
+      .populate('customerID')
+      .populate('roomID')
+      .populate('services.serviceID');
 
     if (!booking) {
       throw new Error('Booking not found');
     }
 
-    // Cập nhật trạng thái phòng dựa trên trạng thái booking mới
+    // Nếu đang chuyển sang trạng thái Confirmed
+    if (status === 'Confirmed' && booking.status !== 'Confirmed') {
+      // Kiểm tra xem booking đã có invoice chưa
+      const existingInvoice = await Invoice.findOne({ bookingID: booking._id });
+      
+      // Chỉ tạo invoice mới nếu chưa có
+      if (!existingInvoice) {
+        const invoice = new Invoice({
+          bookingID: booking._id,
+          totalAmount: booking.totalPrice,
+          paymentMethod: 'Cash',
+          paymentStatus: false
+        });
+
+        await invoice.save({ session });
+      }
+    }
+
+    // Cập nhật trạng thái phòng
     const roomStatus = status === 'Confirmed' ? 'Occupied' : 'Reserved';
     await Room.findByIdAndUpdate(
       booking.roomID,
@@ -228,10 +249,33 @@ exports.updateBooking = async (req, res) => {
       req.params.id,
       req.body,
       { new: true, session }
-    );
+    ).populate('customerID')
+     .populate('roomID')
+     .populate('services.serviceID');
 
     await session.commitTransaction();
-    res.json(updatedBooking);
+
+    // Trả về cả booking và invoice (nếu có)
+    const response = {
+      booking: updatedBooking
+    };
+
+    // Lấy invoice hiện tại (nếu có)
+    const invoice = await Invoice.findOne({ bookingID: booking._id })
+      .populate({
+        path: 'bookingID',
+        populate: [
+          { path: 'customerID' },
+          { path: 'roomID' },
+          { path: 'services.serviceID' }
+        ]
+      });
+
+    if (invoice) {
+      response.invoice = invoice;
+    }
+
+    res.json(response);
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ message: error.message });
@@ -248,6 +292,19 @@ exports.deleteBooking = async (req, res) => {
     const booking = await Booking.findById(req.params.id);
     if (!booking) {
       throw new Error('Booking not found');
+    }
+
+    // Kiểm tra xem booking có invoice không
+    const invoice = await Invoice.findOne({ bookingID: booking._id });
+    if (invoice) {
+      return res.status(400).json({ 
+        message: 'Cannot delete booking with existing invoice',
+        invoice: {
+          id: invoice._id,
+          totalAmount: invoice.totalAmount,
+          paymentStatus: invoice.paymentStatus
+        }
+      });
     }
 
     // Lấy roomId trước khi xóa booking
