@@ -296,7 +296,7 @@ const ImageUpload = styled.div`
   cursor: pointer;
   transition: all 0.3s;
   width: 100%;
-  height: 150px;
+  height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
