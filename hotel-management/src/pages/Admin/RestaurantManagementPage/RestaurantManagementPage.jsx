@@ -98,40 +98,60 @@ const TitleSection = styled.div`
 `;
 
 const StyledModal = styled(Modal)`
-  @media (max-width: 576px) {
-    .ant-modal-content {
-      padding: 16px;
-    }
-
-    .ant-modal-body {
-      padding: 12px;
-    }
-  }
-
   @media (max-width: 992px) {
     .ant-modal {
-      max-width: 100% !important;
       margin: 0;
-      top: 0;
+      padding: 0;
+      max-width: 100% !important;
+      top: 0 !important;
+      position: fixed;
+      height: 100vh;
     }
 
     .ant-modal-content {
       min-height: 100vh;
       border-radius: 0;
+      margin: 0;
       padding: 0;
+      box-shadow: none;
+      display: flex;
+      flex-direction: column;
     }
 
     .ant-modal-header {
       padding: 16px;
       border-bottom: 1px solid #f0f0f0;
+      margin: 0;
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 1000;
     }
 
     .ant-modal-body {
       padding: 0;
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .ant-modal-close {
       top: 8px;
+      right: 8px;
+      z-index: 1001;
+    }
+
+    .ant-modal-wrap {
+      position: fixed !important;
+      overflow: hidden !important;
+    }
+
+    // Thêm style cho container
+    .ant-modal-wrap, .ant-modal-mask {
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
     }
   }
 `;
@@ -866,8 +886,9 @@ const RestaurantManagementPage = () => {
   // Cập nhật hàm resetForm
   const resetForm = () => {
     setIsModalVisible(false);
+    setIsAddModalVisible(false);
     setEditingItem(null);
-    setImageUrl(''); // Reset image URL
+    setImageUrl('');
     form.resetFields();
   };
 
@@ -1431,7 +1452,7 @@ const RestaurantManagementPage = () => {
       <StyledModal
         title={editingItem ? 'Edit Item' : 'Add New Item'}
         open={isModalVisible}
-        onCancel={resetForm} // Sử dụng hàm resetForm
+        onCancel={resetForm}
         footer={null}
       >
         <StyledForm
@@ -1684,7 +1705,10 @@ const RestaurantManagementPage = () => {
       <StyledModal
         title="Add New Item"
         open={isMobile && isAddModalVisible}
-        onCancel={() => setIsAddModalVisible(false)}
+        onCancel={() => {
+          resetForm();
+          setIsAddModalVisible(false);
+        }}
         footer={null}
         width="100%"
         styles={{
@@ -1790,7 +1814,10 @@ const RestaurantManagementPage = () => {
 
               <Form.Item>
                 <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
-                  <Button onClick={resetForm}>Cancel</Button>
+                  <Button onClick={() => {
+                    resetForm();
+                    setIsAddModalVisible(false);
+                  }}>Cancel</Button>
                   <Button type="primary" htmlType="submit">
                     {editingItem ? 'Update' : 'Create'}
                   </Button>
