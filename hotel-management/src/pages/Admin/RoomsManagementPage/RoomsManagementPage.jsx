@@ -1039,7 +1039,9 @@ const RoomsManagementPage = () => {
                 icon={<PlusOutlined />}
                 onClick={() => {
                   setSelectedRoom(null);
+                  setIsEditing(false);
                   form.resetFields();
+                  setIsAddDrawerVisible(true);
                 }}
               >
                 Add New Room
@@ -1496,180 +1498,6 @@ const RoomsManagementPage = () => {
                 )}
               </RoomDetailContainer>
             </StyledDrawer>
-
-            <StyledDrawer
-              title="Add New Room"
-              placement="right"
-              width="100%"
-              onClose={() => setIsAddDrawerVisible(false)}
-              open={isAddDrawerVisible}
-            >
-              <RoomDetailContainer>
-                <FormWrapper>
-                  <FormTitle>
-                    <PlusOutlined className="icon" />
-                    Add New Room
-                  </FormTitle>
-                  <StyledForm
-                    form={form}
-                    layout="vertical"
-                    onFinish={handleSubmit}
-                  >
-                    <FormSection>
-                      <div className="section-title">Basic Information</div>
-                      <Form.Item
-                        name="roomNumber"
-                        label="Room Number"
-                        rules={[{ required: true, message: 'Please input room number!' }]}
-                      >
-                        <StyledInput placeholder="Enter room number (e.g. 101)" />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="roomType"
-                        label="Room Type"
-                        rules={[{ required: true, message: 'Please select room type!' }]}
-                      >
-                        <StyledSelect placeholder="Select room type">
-                          <Option value="Single">Single Room</Option>
-                          <Option value="Double">Double Room</Option>
-                          <Option value="Suite">Luxury Suite</Option>
-                          <Option value="Deluxe">Deluxe Room</Option>
-                          <Option value="Family">Family Room</Option>
-                        </StyledSelect>
-                      </Form.Item>
-                    </FormSection>
-
-                    <FormSection>
-                      <div className="section-title">Capacity & Pricing</div>
-                      <Form.Item
-                        name="hourlyPrice"
-                        label="Hourly Price"
-                        rules={[
-                          { required: true, message: 'Please input hourly price' },
-                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
-                        ]}
-                        tooltip="Daily price should be 20 times the hourly price"
-                      >
-                        <InputNumber
-                          style={{ width: '100%' }}
-                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                          addonAfter="VND/hour"
-                        />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="dailyPrice"
-                        label="Daily Price"
-                        rules={[
-                          { required: true, message: 'Please input daily price' },
-                          { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                          ({ getFieldValue }) => ({
-                            validator(_, value) {
-                              const hourlyPrice = getFieldValue('hourlyPrice');
-                              if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
-                                return Promise.resolve();
-                              }
-                              return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
-                            },
-                          }),
-                        ]}
-                        tooltip="Daily price should be at least 20 times the hourly price"
-                      >
-                        <InputNumber
-                          style={{ width: '100%' }}
-                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                          addonAfter="VND/day"
-                        />
-                      </Form.Item>
-
-                      <Form.Item
-                        name="maxOccupancy"
-                        label="Maximum Occupancy"
-                        rules={[{ required: true, message: 'Please input max occupancy!' }]}
-                      >
-                        <InputNumber
-                          min={1}
-                          style={{ width: '100%' }}
-                          placeholder="Enter maximum number of guests"
-                        />
-                      </Form.Item>
-                    </FormSection>
-
-                    <FormSection>
-                      <div className="section-title">Room Status & Details</div>
-                      <Form.Item
-                        name="status"
-                        label="Current Status"
-                        rules={[{ required: true, message: 'Please select status!' }]}
-                      >
-                        <StyledSelect placeholder="Select room status">
-                          <Option value="Available">
-                            <Space>
-                              <span style={{ color: '#10b981' }}>●</span>
-                              Available
-                            </Space>
-                          </Option>
-                          <Option value="Occupied">
-                            <Space>
-                              <span style={{ color: '#ef4444' }}>●</span>
-                              Occupied
-                            </Space>
-                          </Option>
-                          <Option value="Maintenance">
-                            <Space>
-                              <span style={{ color: '#f59e0b' }}>●</span>
-                              Maintenance
-                            </Space>
-                          </Option>
-                          <Option value="Reserved">
-                            <Space>
-                              <span style={{ color: '#6366f1' }}>●</span>
-                              Reserved
-                            </Space>
-                          </Option>
-                        </StyledSelect>
-                      </Form.Item>
-
-                      <Form.Item
-                        name="description"
-                        label="Room Description"
-                      >
-                        <StyledTextArea
-                          rows={4}
-                          placeholder="Enter detailed description of the room..."
-                        />
-                      </Form.Item>
-                    </FormSection>
-
-                    <FormSection>
-                      <div className="section-title">Room Images</div>
-                      <Form.Item
-                        name="images"
-                        label="Room Images"
-                        valuePropName="fileList"
-                        getValueFromEvent={(e) => {
-                          if (Array.isArray(e)) {
-                            return e;
-                          }
-                          return e?.fileList;
-                        }}
-                      >
-                        <ImageUpload />
-                      </Form.Item>
-                    </FormSection>
-
-                    <Form.Item>
-                      <SubmitButton type="primary" htmlType="submit" block>
-                        Create Room
-                      </SubmitButton>
-                    </Form.Item>
-                  </StyledForm>
-                </FormWrapper>
-              </RoomDetailContainer>
-            </StyledDrawer>
           </>
         ) : (
           // Desktop view content
@@ -1691,6 +1519,7 @@ const RoomsManagementPage = () => {
                   icon={<PlusOutlined />}
                   onClick={() => {
                     setSelectedRoom(null);
+                    setIsEditing(true);
                     form.resetFields();
                   }}
                 >
@@ -2150,12 +1979,160 @@ const RoomsManagementPage = () => {
                     </ActionButtons>
                   </>
                 )
+              ) : isEditing ? (
+                <FormWrapper>
+                  <FormTitle>
+                    <PlusOutlined className="icon" />
+                    Add New Room
+                  </FormTitle>
+                  <StyledForm
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                  >
+                    <FormSection>
+                      <div className="section-title">Basic Information</div>
+                      <Form.Item
+                        name="roomNumber"
+                        label="Room Number"
+                        rules={[{ required: true, message: 'Please input room number!' }]}
+                      >
+                        <StyledInput placeholder="Enter room number (e.g. 101)" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="roomType"
+                        label="Room Type"
+                        rules={[{ required: true, message: 'Please select room type!' }]}
+                      >
+                        <StyledSelect placeholder="Select room type">
+                          <Option value="Single">Single Room</Option>
+                          <Option value="Double">Double Room</Option>
+                          <Option value="Suite">Luxury Suite</Option>
+                          <Option value="Deluxe">Deluxe Room</Option>
+                          <Option value="Family">Family Room</Option>
+                        </StyledSelect>
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Capacity & Pricing</div>
+                      <Form.Item
+                        name="hourlyPrice"
+                        label="Hourly Price"
+                        rules={[
+                          { required: true, message: 'Please input hourly price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                        ]}
+                        tooltip="Daily price should be 20 times the hourly price"
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                          addonAfter="VND/hour"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="dailyPrice"
+                        label="Daily Price"
+                        rules={[
+                          { required: true, message: 'Please input daily price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const hourlyPrice = getFieldValue('hourlyPrice');
+                              if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                            },
+                          }),
+                        ]}
+                        tooltip="Daily price should be at least 20 times the hourly price"
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                          addonAfter="VND/day"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="maxOccupancy"
+                        label="Maximum Occupancy"
+                        rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                      >
+                        <InputNumber
+                          min={1}
+                          style={{ width: '100%' }}
+                          placeholder="Enter maximum number of guests"
+                        />
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Room Status & Details</div>
+                      <Form.Item
+                        name="status"
+                        label="Current Status"
+                        rules={[{ required: true, message: 'Please select status!' }]}
+                      >
+                        <StyledSelect placeholder="Select room status">
+                          <Option value="Available">
+                            <Space>
+                              <span style={{ color: '#10b981' }}>●</span>
+                              Available
+                            </Space>
+                          </Option>
+                          <Option value="Maintenance">
+                            <Space>
+                              <span style={{ color: '#f59e0b' }}>●</span>
+                              Maintenance
+                            </Space>
+                          </Option>
+                        </StyledSelect>
+                      </Form.Item>
+
+                      <Form.Item
+                        name="description"
+                        label="Room Description"
+                      >
+                        <StyledTextArea
+                          rows={4}
+                          placeholder="Enter detailed description of the room..."
+                        />
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Room Images</div>
+                      <Form.Item
+                        name="images"
+                        label="Room Images"
+                        valuePropName="fileList"
+                        getValueFromEvent={(e) => {
+                          if (Array.isArray(e)) {
+                            return e;
+                          }
+                          return e?.fileList;
+                        }}
+                      >
+                        <ImageUpload />
+                      </Form.Item>
+                    </FormSection>
+
+                    <Form.Item>
+                      <SubmitButton type="primary" htmlType="submit" block>
+                        Create Room
+                      </SubmitButton>
+                    </Form.Item>
+                  </StyledForm>
+                </FormWrapper>
               ) : (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '20px',
-                  color: '#666'
-                }}>
+                <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
                   Select a room to view details
                 </div>
               )}
