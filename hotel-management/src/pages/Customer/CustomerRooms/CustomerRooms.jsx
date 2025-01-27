@@ -135,21 +135,44 @@ const RoomGrid = styled.div`
 `;
 
 const RoomInfo = styled.div`
-  padding: 16px;
+  padding: 20px;
   background: white;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 1px;
+    background: linear-gradient(to right, transparent, #ffd700, transparent);
+  }
 `;
 
 const RoomImage = styled.div`
   height: 180px;
-  background: linear-gradient(45deg, #1a3353, #264773);
+  background: linear-gradient(120deg, #1a3353, #264773);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 2em;
   position: relative;
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('https://your-image-url.jpg') center/cover;
+    opacity: 0.3;
+    transition: all 0.4s ease;
+  }
 
   &::after {
     content: '';
@@ -158,41 +181,104 @@ const RoomImage = styled.div`
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.8), rgba(255, 237, 74, 0.8));
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: all 0.4s ease;
   }
 
   .anticon {
-    font-size: 2.5em;
+    font-size: 2.8em;
     z-index: 1;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+    transition: all 0.4s ease;
+  }
+`;
+
+const BookButton = styled.button`
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(45deg, #1a3353, #264773);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(26, 51, 83, 0.2);
+    letter-spacing: 0.5px;
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  i, span {
+    z-index: 1;
+    position: relative;
   }
 `;
 
 const RoomCard = styled.div`
   background: white;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-  border: 1px solid #eee;
-  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
   position: relative;
+  backdrop-filter: blur(10px);
 
   &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
     border-color: #ffd700;
 
     ${RoomImage} {
       &::after {
-        opacity: 0.7;
+        opacity: 0.85;
+      }
+      
+      .anticon {
+        transform: scale(1.1) rotate(5deg);
       }
     }
 
     ${RoomInfo} {
-      background: #fafafa;
+      background: linear-gradient(to bottom right, #ffffff, #fafafa);
+    }
+
+    ${BookButton} {
+      background: linear-gradient(45deg, #ffd700, #ffed4a);
+      color: #1a3353;
+      padding: 12px;
+      font-weight: 600;
     }
   }
 `;
@@ -201,16 +287,24 @@ const RoomBadge = styled.div`
   position: absolute;
   top: 16px;
   right: 16px;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 30px;
   font-weight: 600;
   color: #1a3353;
   font-size: 0.9em;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   z-index: 2;
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  &::before {
+    content: '●';
+    color: #ffd700;
+  }
 `;
 
 const RoomNumber = styled.h2`
@@ -253,57 +347,32 @@ const RoomDetails = styled.div`
 const DetailItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: #444;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
+  padding: 8px 12px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  background: ${props => props.className === 'price' ? 'rgba(0, 168, 84, 0.08)' : 'transparent'};
 
   &:hover {
-    background: ${props => props.className === 'price' ? 'rgba(0, 168, 84, 0.1)' : '#f5f5f5'};
+    background: ${props => props.className === 'price' ? 'rgba(0, 168, 84, 0.15)' : 'rgba(26, 51, 83, 0.05)'};
+    transform: translateX(4px);
   }
 
   .anticon {
-    font-size: 1.1em;
-    color: ${props => props.className === 'price' ? '#00a854' : '#666'};
+    font-size: 1.2em;
+    color: ${props => props.className === 'price' ? '#00a854' : '#1a3353'};
+    transition: transform 0.3s ease;
   }
 
   &.price {
     color: #00a854;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 1.1em;
   }
-`;
 
-const BookButton = styled.button`
-  width: 100%;
-  padding: 10px;
-  background: linear-gradient(45deg, #1a3353, #264773);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1em;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  &:hover {
-    background: linear-gradient(45deg, #264773, #1a3353);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(26, 51, 83, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-
-  .anticon {
-    font-size: 1.1em;
+  &:hover .anticon {
+    transform: scale(1.1);
   }
 `;
 
@@ -426,26 +495,30 @@ const CustomerRooms = () => {
                 <RoomDetails>
                   <DetailItem className="price">
                     <DollarOutlined />
-                    {formatVND(room.dailyPrice)}/day
+                    <span>
+                      <strong>{formatVND(room.dailyPrice)}</strong>/day
+                    </span>
                   </DetailItem>
                   <DetailItem className="price">
                     <DollarOutlined />
-                    {formatVND(room.hourlyPrice)}/hour
+                    <span>
+                      <strong>{formatVND(room.hourlyPrice)}</strong>/hour
+                    </span>
                   </DetailItem>
                   <DetailItem>
                     <TeamOutlined />
-                    Maximum {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
+                    <span>Up to <strong>{room.maxOccupancy}</strong> {room.maxOccupancy > 1 ? 'guests' : 'guest'}</span>
                   </DetailItem>
                   {room.description && (
                     <DetailItem>
                       <i className="fas fa-info-circle" />
-                      {room.description}
+                      <span>{room.description}</span>
                     </DetailItem>
                   )}
                 </RoomDetails>
                 <BookButton>
                   <i className="fas fa-calendar-plus" />
-                  Book Now
+                  <span>Book Now</span>
                 </BookButton>
               </RoomInfo>
             </RoomCard>
