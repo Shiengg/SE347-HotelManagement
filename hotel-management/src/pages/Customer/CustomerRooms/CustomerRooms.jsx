@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Select, Space, Input } from 'antd';
+import { Select, Space, Input, Modal, Form, DatePicker, Radio, Button, message } from 'antd';
 import { HomeOutlined, SearchOutlined, DollarOutlined, TeamOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 const { Option } = Select;
 
@@ -375,15 +377,106 @@ const DetailItem = styled.div`
   }
 `;
 
+const BookingModal = styled(Modal)`
+  .ant-modal-content {
+    border-radius: 15px;
+    overflow: hidden;
+  }
+
+  .ant-modal-header {
+    background: linear-gradient(45deg, #1a3353, #264773);
+    padding: 20px;
+    border-bottom: none;
+    
+    .ant-modal-title {
+      color: white;
+      font-size: 1.3em;
+      font-weight: 600;
+    }
+  }
+`;
+
+const BookingForm = styled(Form)`
+  .ant-picker {
+    width: 100%;
+    height: 45px;
+    border-radius: 8px;
+  }
+
+  .ant-radio-group {
+    width: 100%;
+    display: flex;
+    gap: 16px;
+  }
+
+  .ant-radio-button-wrapper {
+    flex: 1;
+    text-align: center;
+    height: 45px;
+    line-height: 43px;
+    border-radius: 8px;
+    
+    &.ant-radio-button-wrapper-checked {
+      background: #1a3353;
+      border-color: #1a3353;
+    }
+  }
+`;
+
+const PricePreview = styled.div`
+  margin-top: 16px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+
+  .price-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    
+    &.total {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed #ddd;
+      font-weight: 600;
+      font-size: 1.1em;
+      color: #00a854;
+    }
+  }
+`;
+
+const SubmitButton = styled(Button)`
+  width: 100%;
+  height: 45px;
+  font-size: 1.1em;
+  font-weight: 500;
+  margin-top: 24px;
+`;
+
 const CustomerRooms = () => {
   const [rooms, setRooms] = useState([]);
   const [filterType, setFilterType] = useState('All');
   const [sortPrice, setSortPrice] = useState('asc');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isBookingModalVisible, setIsBookingModalVisible] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
+  const [bookingForm] = Form.useForm();
+  const [bookingType, setBookingType] = useState('Daily');
+  const [calculatedPrice, setCalculatedPrice] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchRooms();
   }, []);
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (!user) {
+      message.error('Please login to book rooms');
+      navigate('/login');
+    }
+  }, [navigate]);
 
   const fetchRooms = async () => {
     try {
@@ -401,6 +494,7 @@ const CustomerRooms = () => {
   };
 
   const formatVND = (price) => {
+    if (price === undefined || price === null) return '0đ';
     return `${price.toLocaleString('vi-VN')}đ`;
   };
 
@@ -414,6 +508,157 @@ const CustomerRooms = () => {
     .sort((a, b) => {
       return sortPrice === 'asc' ? a.dailyPrice - b.dailyPrice : b.dailyPrice - a.dailyPrice;
     });
+
+  const calculatePrice = (values) => {
+    if (!values?.checkInDate || !values?.checkOutDate || !selectedRoom) return 0;
+
+    const start = values.checkInDate.toDate();
+    const end = values.checkOutDate.toDate();
+    
+    if (bookingType === 'Daily') {
+      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+      return selectedRoom.dailyPrice * days;
+    } else {
+      const hours = Math.ceil((end - start) / (1000 * 60 * 60));
+      return selectedRoom.hourlyPrice * hours;
+    }
+  };
+
+  const handleFormValuesChange = (changedValues, allValues) => {
+    const price = calculatePrice(allValues);
+    setCalculatedPrice(price);
+  };
+
+  const validateBookingData = (bookingData) => {
+    if (!bookingData.customerID) throw new Error('User not authenticated');
+    if (!bookingData.roomID) throw new Error('No room selected');
+    if (!bookingData.checkInDate || !bookingData.checkOutDate) {
+      throw new Error('Invalid booking dates');
+    }
+    if (bookingData.totalPrice <= 0) throw new Error('Invalid price calculation');
+    return true;
+  };
+
+  const handleBookingSubmit = async (values) => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) {
+        message.error('Please login to book rooms');
+        navigate('/login');
+        return;
+      }
+
+      let currentUser;
+      try {
+        currentUser = JSON.parse(userStr);
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        message.error('Invalid user data. Please login again');
+        navigate('/login');
+        return;
+      }
+
+      // Kiểm tra chi tiết thông tin user
+      if (!currentUser || typeof currentUser !== 'object') {
+        message.error('Invalid user data format. Please login again');
+        navigate('/login');
+        return;
+      }
+
+      // Lấy ID từ _id hoặc id
+      const userId = currentUser._id || currentUser.id;
+      if (!userId) {
+        console.error('User data missing ID:', currentUser);
+        message.error('User information incomplete. Please login again');
+        navigate('/login');
+        return;
+      }
+
+      const checkInDate = dayjs(values.checkInDate);
+      const checkOutDate = dayjs(values.checkOutDate);
+      
+      // Tính toán số ngày hoặc số giờ
+      let totalDays = 0;
+      let totalHours = 0;
+      
+      if (bookingType === 'Daily') {
+        totalDays = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'day', true)));
+      } else {
+        totalHours = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'hour', true)));
+      }
+
+      // Tính tổng tiền
+      const totalPrice = bookingType === 'Daily' 
+        ? selectedRoom.dailyPrice * totalDays
+        : selectedRoom.hourlyPrice * totalHours;
+
+      const bookingData = {
+        customerID: userId,
+        receptionistID: userId,
+        roomID: selectedRoom._id,
+        bookingType,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        totalDays: bookingType === 'Daily' ? totalDays : null,
+        totalHours: bookingType === 'Hourly' ? totalHours : null,
+        services: [],
+        status: 'Pending',
+        totalPrice
+      };
+
+      // Log để debug
+      console.log('Booking data to be sent:', bookingData);
+
+      // Validate trước khi gửi
+      validateBookingData(bookingData);
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token not found');
+      }
+
+      const response = await fetch('http://localhost:5000/api/bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(bookingData)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create booking');
+      }
+
+      message.success('Booking created successfully!');
+      setIsBookingModalVisible(false);
+      bookingForm.resetFields();
+      navigate('/customer/bookings');
+    } catch (error) {
+      console.error('Booking error:', error);
+      if (error.message.includes('authentication') || error.message.includes('login')) {
+        navigate('/login');
+      }
+      message.error(error.message || 'Failed to create booking');
+    }
+  };
+
+  const handleBookNowClick = (e, room) => {
+    e.stopPropagation();
+    const user = localStorage.getItem('user');
+    if (!user) {
+      message.error('Please login to book rooms');
+      navigate('/login');
+      return;
+    }
+    setSelectedRoom(room);
+    setIsBookingModalVisible(true);
+    bookingForm.resetFields();
+    setBookingType('Daily');
+    setCalculatedPrice(0);
+  };
 
   return (
     <PageContainer>
@@ -495,27 +740,27 @@ const CustomerRooms = () => {
                   <DetailItem className="price">
                     <DollarOutlined />
                     <span>
-                      <strong>{formatVND(room.dailyPrice)}</strong>/day
+                      <strong>{formatVND(room?.dailyPrice)}</strong>/day
                     </span>
                   </DetailItem>
                   <DetailItem className="price">
                     <DollarOutlined />
                     <span>
-                      <strong>{formatVND(room.hourlyPrice)}</strong>/hour
+                      <strong>{formatVND(room?.hourlyPrice)}</strong>/hour
                     </span>
                   </DetailItem>
                   <DetailItem>
                     <TeamOutlined />
-                    <span>Up to <strong>{room.maxOccupancy}</strong> {room.maxOccupancy > 1 ? 'guests' : 'guest'}</span>
+                    <span>Up to <strong>{room?.maxOccupancy || 0}</strong> {(room?.maxOccupancy || 0) > 1 ? 'guests' : 'guest'}</span>
                   </DetailItem>
-                  {room.description && (
+                  {room?.description && (
                     <DetailItem>
                       <i className="fas fa-info-circle" />
                       <span>{room.description}</span>
                     </DetailItem>
                   )}
                 </RoomDetails>
-                <BookButton>
+                <BookButton onClick={(e) => handleBookNowClick(e, room)}>
                   <i className="fas fa-calendar-plus" />
                   <span>Book Now</span>
                 </BookButton>
@@ -524,6 +769,94 @@ const CustomerRooms = () => {
           ))}
         </RoomGrid>
       </ContentWrapper>
+
+      <BookingModal
+        title={`Book Room ${selectedRoom?.roomNumber}`}
+        open={isBookingModalVisible}
+        onCancel={() => setIsBookingModalVisible(false)}
+        footer={null}
+        destroyOnClose
+      >
+        <BookingForm
+          form={bookingForm}
+          layout="vertical"
+          onFinish={handleBookingSubmit}
+          onValuesChange={handleFormValuesChange}
+        >
+          <Form.Item
+            name="bookingType"
+            label="Booking Type"
+            initialValue="Daily"
+          >
+            <Radio.Group 
+              buttonStyle="solid"
+              onChange={(e) => setBookingType(e.target.value)}
+            >
+              <Radio.Button value="Daily">Daily</Radio.Button>
+              <Radio.Button value="Hourly">Hourly</Radio.Button>
+            </Radio.Group>
+          </Form.Item>
+
+          <Form.Item
+            name="checkInDate"
+            label="Check-in Date & Time"
+            rules={[{ required: true, message: 'Please select check-in date!' }]}
+          >
+            <DatePicker
+              showTime={bookingType === 'Hourly'}
+              format={bookingType === 'Hourly' ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD"}
+              disabledDate={(current) => current && current < dayjs().startOf('day')}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="checkOutDate"
+            label="Check-out Date & Time"
+            rules={[
+              { required: true, message: 'Please select check-out date!' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || !getFieldValue('checkInDate')) {
+                    return Promise.resolve();
+                  }
+                  if (value.isBefore(getFieldValue('checkInDate'))) {
+                    return Promise.reject(new Error('Check-out must be after check-in!'));
+                  }
+                  return Promise.resolve();
+                },
+              }),
+            ]}
+          >
+            <DatePicker
+              showTime={bookingType === 'Hourly'}
+              format={bookingType === 'Hourly' ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD"}
+              disabledDate={(current) => current && current < dayjs().startOf('day')}
+            />
+          </Form.Item>
+
+          <PricePreview>
+            <div className="price-row">
+              <span>Room Type:</span>
+              <span>{selectedRoom?.roomType || 'N/A'}</span>
+            </div>
+            <div className="price-row">
+              <span>Rate:</span>
+              <span>{bookingType === 'Daily' ? 
+                `${formatVND(selectedRoom?.dailyPrice)}/day` : 
+                `${formatVND(selectedRoom?.hourlyPrice)}/hour`}
+              </span>
+            </div>
+            <div className="price-row total">
+              <span>Total Price:</span>
+              <span>{formatVND(calculatedPrice)}</span>
+            </div>
+          </PricePreview>
+
+          <SubmitButton type="primary" htmlType="submit">
+            Confirm Booking
+          </SubmitButton>
+        </BookingForm>
+      </BookingModal>
     </PageContainer>
   );
 };
