@@ -29,8 +29,7 @@ const bookingSchema = new mongoose.Schema({
   },
   receptionistID: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'User'
   },
   roomID: {
     type: mongoose.Schema.Types.ObjectId,
@@ -39,7 +38,7 @@ const bookingSchema = new mongoose.Schema({
   },
   bookingType: {
     type: String,
-    enum: ['Daily', 'Hourly'],
+    enum: ['Hourly', 'Daily'],
     required: true
   },
   checkInDate: {
@@ -52,22 +51,36 @@ const bookingSchema = new mongoose.Schema({
   },
   totalDays: {
     type: Number,
-    min: 0
+    default: 0
   },
   totalHours: {
     type: Number,
-    min: 0
+    default: 0
   },
   totalPrice: {
     type: Number,
     required: true,
     min: 0
   },
-  services: [serviceSchema],
+  services: [{
+    serviceID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Service'
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1
+    }
+  }],
   status: {
     type: String,
-    enum: ['Pending', 'Confirmed', 'Completed'],
+    enum: ['Pending', 'Confirmed', 'Completed', 'Cancelled'],
     default: 'Pending'
+  },
+  invoice: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Invoice'
   }
 }, {
   timestamps: true

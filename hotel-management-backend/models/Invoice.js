@@ -1,6 +1,18 @@
 const mongoose = require("mongoose");
 const Booking = require("./Booking");
 
+const orderItemSchema = new mongoose.Schema({
+  itemId: String,
+  name: String,
+  quantity: Number,
+  price: Number,
+  total: Number,
+  orderedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
+
 const invoiceSchema = new mongoose.Schema(
   {
     bookingID: {
@@ -32,6 +44,7 @@ const invoiceSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    orderedItems: [orderItemSchema],
   },
   {
     timestamps: true,
