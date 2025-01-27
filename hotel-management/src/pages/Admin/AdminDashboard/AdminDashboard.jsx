@@ -17,7 +17,7 @@ const Title = styled.h1`
   font-weight: 600;
   color: #1a1a1a;
   margin-bottom: 32px;
-  text-align: center;
+  text-align: left;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 `;
 
@@ -199,7 +199,7 @@ const AdminDashboard = () => {
 
   return (
     <PageContainer>
-      <Title>Dashboard Overview</Title>
+      <Title>Overview</Title>
       
       <StatsGrid>
         <StatCard iconcolor="#4F46E5" iconbg="#ede9fe">
