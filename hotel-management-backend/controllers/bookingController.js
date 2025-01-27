@@ -208,8 +208,11 @@ exports.updateBooking = async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    const booking = await Booking.findById(id).session(session);
+    const updateData = req.body;
+    const booking = await Booking.findById(id)
+      .populate('roomID')
+      .populate('services.serviceID')
+      .session(session);
 
     if (!booking) {
       throw new Error('Booking not found');
@@ -220,13 +223,24 @@ exports.updateBooking = async (req, res) => {
       throw new Error('Cannot update completed booking');
     }
 
+    // Tính toán lại giá dịch vụ nếu có cập nhật services
+    if (updateData.services) {
+      updateData.services = updateData.services.map(service => ({
+        serviceID: service.serviceID,
+        quantity: service.quantity,
+        totalPrice: service.quantity * (service.serviceID.servicePrice || booking.services.find(s => 
+          s.serviceID._id.toString() === service.serviceID.toString()
+        )?.serviceID.servicePrice || 0)
+      }));
+    }
+
     // Nếu đang chuyển sang trạng thái Confirmed
-    if (status === 'Confirmed' && booking.status === 'Pending') {
+    if (updateData.status === 'Confirmed' && booking.status === 'Pending') {
       // Tạo invoice mới
       const invoice = new Invoice({
         bookingID: booking._id,
         customerID: booking.customerID,
-        totalAmount: booking.totalPrice,
+        totalAmount: updateData.totalPrice || booking.totalPrice,
         paymentStatus: 'Unpaid',
         paymentMethod: null,
         paymentDate: null
@@ -235,18 +249,26 @@ exports.updateBooking = async (req, res) => {
 
       // Cập nhật trạng thái phòng thành Occupied
       await Room.findByIdAndUpdate(
-        booking.roomID,
+        booking.roomID._id,
         { status: 'Occupied' },
         { session }
       );
     }
 
     // Cập nhật booking
-    booking.status = status;
+    Object.assign(booking, updateData);
     await booking.save({ session });
 
     await session.commitTransaction();
-    res.json(booking);
+
+    // Trả về booking đã được cập nhật với thông tin đầy đủ
+    const updatedBooking = await Booking.findById(id)
+      .populate('customerID', 'fullname email phone')
+      .populate('receptionistID', 'fullname')
+      .populate('roomID', 'roomNumber roomType price')
+      .populate('services.serviceID', 'serviceName servicePrice');
+
+    res.json(updatedBooking);
 
   } catch (error) {
     await session.abortTransaction();
