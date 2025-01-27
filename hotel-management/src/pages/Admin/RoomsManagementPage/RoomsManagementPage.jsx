@@ -1235,7 +1235,7 @@ const RoomsManagementPage = () => {
               open={isDetailDrawerVisible}
             >
               <RoomDetailContainer>
-                {selectedRoom && (
+                {selectedRoom ? (
                   isEditing ? (
                     <FormWrapper>
                       <FormTitle>
@@ -1485,6 +1485,14 @@ const RoomsManagementPage = () => {
                       </ActionButtons>
                     </>
                   )
+                ) : (
+                  <div style={{ 
+                    textAlign: 'center', 
+                    padding: '20px',
+                    color: '#666'
+                  }}>
+                    Select a room to view details
+                  </div>
                 )}
               </RoomDetailContainer>
             </StyledDrawer>
@@ -1892,7 +1900,7 @@ const RoomsManagementPage = () => {
             </ContentWrapper>
 
             <RoomDetailContainer>
-              {selectedRoom} ? (
+              {selectedRoom ? (
                 isEditing ? (
                   <FormWrapper>
                     <FormTitle>
@@ -2142,7 +2150,15 @@ const RoomsManagementPage = () => {
                     </ActionButtons>
                   </>
                 )
-              )
+              ) : (
+                <div style={{ 
+                  textAlign: 'center', 
+                  padding: '20px',
+                  color: '#666'
+                }}>
+                  Select a room to view details
+                </div>
+              )}
             </RoomDetailContainer>
           </GridContainer>
         )}
