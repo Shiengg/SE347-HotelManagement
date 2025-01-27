@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const Booking = require("../models/Booking");
 const Invoice = require("../models/Invoice");
 const User = require("../models/User");
+const bookingController = require('./bookingController');
 
 exports.getInvoices = async (req, res) => {
   try {
@@ -225,5 +226,53 @@ exports.deleteInvoice = async (req, res) => {
   } catch (error) {
     // Handle unexpected errors, return 500 error
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateInvoice = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const invoice = await Invoice.findById(id).session(session);
+    if (!invoice) {
+      throw new Error('Invoice not found');
+    }
+
+    // Nếu đang cập nhật trạng thái thành Paid
+    if (updateData.paymentStatus === 'Paid' && invoice.paymentStatus !== 'Paid') {
+      updateData.paymentDate = new Date();
+      
+      // Cập nhật booking sang trạng thái Completed
+      await bookingController.handleInvoicePaid(invoice.bookingID, session);
+    }
+
+    // Cập nhật invoice
+    Object.assign(invoice, updateData);
+    await invoice.save({ session });
+
+    await session.commitTransaction();
+
+    // Trả về invoice đã được cập nhật
+    const updatedInvoice = await Invoice.findById(id)
+      .populate({
+        path: 'bookingID',
+        populate: [
+          { path: 'customerID' },
+          { path: 'roomID' },
+          { path: 'services.serviceID' }
+        ]
+      });
+
+    res.json(updatedInvoice);
+
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };

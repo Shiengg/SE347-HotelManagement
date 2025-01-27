@@ -175,7 +175,7 @@ const StyledButton = styled(Button)`
   }
 `;
 
-const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
+const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, ref) => {
   const { currentUser } = useAuth();
   const [form] = Form.useForm();
   const [rooms, setRooms] = useState([]);
@@ -184,7 +184,6 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   const [selectedServices, setSelectedServices] = useState([]);
   const [bookingType, setBookingType] = useState(booking?.bookingType || 'Daily');
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [isFormVisible, setIsFormVisible] = useState(true);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
   const [previousStatus, setPreviousStatus] = useState(booking?.status || 'Pending');
 
@@ -197,19 +196,19 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
   useEffect(() => {
     if (booking) {
       form.setFieldsValue({
-        ...booking,
+        customerID: booking.customerID._id,
+        receptionistID: booking.receptionistID._id,
+        roomID: booking.roomID._id,
+        bookingType: booking.bookingType,
         checkInDate: dayjs(booking.checkInDate),
         checkOutDate: dayjs(booking.checkOutDate),
-        customerID: booking.customerID._id,
-        roomID: booking.roomID._id,
-        services: booking.services.map(s => ({
-          serviceID: s.serviceID._id,
-          quantity: s.quantity
-        }))
+        services: booking.services,
+        status: booking.status
       });
-      setSelectedServices(booking.services);
-    } else {
-      form.resetFields();
+      setBookingType(booking.bookingType);
+      setPreviousStatus(booking.status);
+      setSelectedRoom(booking.roomID);
+      setEstimatedPrice(booking.totalPrice);
     }
   }, [booking, form]);
 
@@ -330,111 +329,106 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
 
   const handleSubmit = async (values) => {
     try {
-      let userID = currentUser?.id;
+      const checkInDate = dayjs(values.checkInDate);
+      const checkOutDate = dayjs(values.checkOutDate);
       
-      if (!userID) {
-        const localUser = localStorage.getItem('user');
-        if (localUser) {
-          const userData = JSON.parse(localUser);
-          userID = userData.id || userData._id;
-        }
-      }
-
-      if (!userID) {
-        throw new Error('User not authenticated');
-      }
-
-      const checkIn = dayjs(values.checkInDate);
-      const checkOut = dayjs(values.checkOutDate);
-      let totalDays = null;
-      let totalHours = null;
-
-      if (bookingType === 'Daily') {
-        totalDays = Math.ceil(checkOut.diff(checkIn, 'day', true));
+      let totalDays = 0;
+      let totalHours = 0;
+      let totalPrice = 0;
+      
+      if (values.bookingType === 'Daily') {
+        totalDays = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'day', true)));
+        totalPrice = selectedRoom.dailyPrice * totalDays;
       } else {
-        totalHours = calculateHours(checkIn, checkOut);
+        totalHours = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'hour', true)));
+        totalPrice = selectedRoom.hourlyPrice * totalHours;
       }
 
-      const roomPrice = calculatePrice();
-      const servicesPrice = values.services ? values.services.reduce((total, service) => {
-        const serviceData = services.find(s => s._id === service.serviceID);
-        return total + (serviceData?.servicePrice || 0) * service.quantity;
-      }, 0) : 0;
+      // Xử lý services
+      const formattedServices = values.services?.map(service => {
+        const servicePrice = service.serviceID.servicePrice || 
+          (typeof service.serviceID === 'string' ? 
+            services.find(s => s._id === service.serviceID)?.servicePrice : 
+            service.serviceID.servicePrice);
 
-      const formattedValues = {
+        const serviceTotalPrice = service.quantity * servicePrice;
+        totalPrice += serviceTotalPrice;
+
+        return {
+          serviceID: typeof service.serviceID === 'string' ? service.serviceID : service.serviceID._id,
+          quantity: service.quantity,
+          totalPrice: serviceTotalPrice // Đảm bảo có totalPrice cho mỗi service
+        };
+      }) || [];
+
+      const bookingData = {
         customerID: values.customerID,
+        receptionistID: values.receptionistID || currentUser._id,
         roomID: values.roomID,
-        bookingType: bookingType,
-        checkInDate: values.checkInDate.toISOString(),
-        checkOutDate: values.checkOutDate.toISOString(),
-        totalDays: totalDays,
-        totalHours: totalHours,
-        receptionistID: userID,
-        status: values.status || 'Pending',
-        services: values.services ? values.services.map(service => ({
-          serviceID: service.serviceID,
-          quantity: parseInt(service.quantity)
-        })) : [],
-        totalPrice: roomPrice + servicesPrice
+        bookingType: values.bookingType,
+        checkInDate: checkInDate.toISOString(),
+        checkOutDate: checkOutDate.toISOString(),
+        totalDays: values.bookingType === 'Daily' ? totalDays : null,
+        totalHours: values.bookingType === 'Hourly' ? totalHours : null,
+        services: formattedServices,
+        totalPrice,
+        status: values.status || 'Pending'
       };
 
-      if (booking && previousStatus === 'Pending' && values.status === 'Confirmed') {
-        try {
-          await new Promise((resolve, reject) => {
-            Modal.confirm({
-              title: 'Confirm Booking',
-              content: 'This will create an invoice for the booking. Continue?',
-              okText: 'Yes',
-              cancelText: 'No',
-              onOk: async () => {
-                try {
-                  const result = await onSubmit(formattedValues);
-                  if (result.invoice) {
-                    message.success('Booking confirmed and invoice created successfully');
-                  }
-                  resolve();
-                  fetchRooms();
-                } catch (error) {
-                  message.error('Failed to confirm booking');
-                  reject(error);
-                }
-              },
-              onCancel: () => {
-                form.setFieldsValue({ status: 'Pending' });
-                setPreviousStatus('Pending');
-                resolve();
-              }
-            });
-          });
-        } catch (error) {
-          console.error('Confirmation error:', error);
-        }
+      let response;
+      if (booking?._id) {
+        // Update existing booking
+        response = await fetch(`http://localhost:5000/api/bookings/${booking._id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(bookingData)
+        });
       } else {
-        await onSubmit(formattedValues);
-        fetchRooms();
+        // Create new booking
+        response = await fetch('http://localhost:5000/api/bookings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify(bookingData)
+        });
       }
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save booking');
+      }
+
+      message.success(`Booking ${booking ? 'updated' : 'created'} successfully`);
+      onSubmit?.(data);
+      onCancel?.();
     } catch (error) {
       console.error('Form submission error:', error);
-      if (error.message !== 'User cancelled confirmation') {
-        message.error(error.message || 'Failed to submit booking');
-      }
+      message.error(error.message || 'Failed to save booking');
     }
   };
 
   const calculatePrice = () => {
-    if (!selectedRoom || !form.getFieldValue('checkInDate') || !form.getFieldValue('checkOutDate')) {
+    if (!form.getFieldValue('checkInDate') || !form.getFieldValue('checkOutDate')) {
       return 0;
     }
 
     const checkIn = dayjs(form.getFieldValue('checkInDate'));
     const checkOut = dayjs(form.getFieldValue('checkOutDate'));
     
+    const room = selectedRoom || (booking?.roomID);
+    if (!room) return 0;
+
     if (bookingType === 'Daily') {
-      const days = Math.ceil(checkOut.diff(checkIn, 'day', true));
-      return selectedRoom.dailyPrice * days;
+      const days = Math.max(1, Math.ceil(checkOut.diff(checkIn, 'day', true)));
+      return room.dailyPrice * days;
     } else {
-      const hours = calculateHours(checkIn, checkOut);
-      return selectedRoom.hourlyPrice * hours;
+      const hours = Math.max(1, Math.ceil(checkOut.diff(checkIn, 'hour', true)));
+      return room.hourlyPrice * hours;
     }
   };
 
@@ -449,11 +443,15 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
     const checkOutDate = form.getFieldValue('checkOutDate');
     const formServices = form.getFieldValue('services') || [];
 
-    if (selectedRoom && checkInDate && checkOutDate) {
+    const room = selectedRoom || (booking?.roomID);
+    if (room && checkInDate && checkOutDate) {
       const roomPrice = calculatePrice();
       const servicesPrice = formServices.reduce((total, service) => {
         if (service?.serviceID) {
-          const serviceData = services.find(s => s._id === service.serviceID);
+          const serviceData = services.find(s => 
+            s._id === (typeof service.serviceID === 'string' ? 
+              service.serviceID : service.serviceID._id)
+          );
           if (serviceData) {
             return total + (serviceData.servicePrice * (service.quantity || 0));
           }
@@ -464,7 +462,8 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
       setEstimatedPrice(roomPrice + servicesPrice);
     }
   }, [
-    selectedRoom, 
+    selectedRoom,
+    booking?.roomID,
     form.getFieldValue('checkInDate'),
     form.getFieldValue('checkOutDate'),
     form.getFieldValue('services'),
@@ -500,9 +499,9 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
         onFinish={handleSubmit}
         onValuesChange={handleFormChange}
         initialValues={{
+          bookingType: 'Daily',
           status: 'Pending',
-          services: [],
-          bookingType: 'Daily'
+          services: []
         }}
       >
         <FormSection>
@@ -544,7 +543,11 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel }, ref) => {
               }}
             >
               {rooms.map(room => (
-                <Option key={room._id} value={room._id}>
+                <Option 
+                  key={room._id} 
+                  value={room._id}
+                  disabled={room.status === 'Occupied' && room._id !== booking?.roomID._id}
+                >
                   <Space>
                     <span>Room {room.roomNumber}</span>
                     <span style={{ color: '#8c8c8c' }}>({room.roomType})</span>

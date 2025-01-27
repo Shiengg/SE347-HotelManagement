@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin, Table } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin, Table, Tabs } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined, HistoryOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import BookingForm from './BookingForm';
 
@@ -400,6 +400,16 @@ const StyledModal = styled(Modal)`
   }
 `;
 
+const TabsContainer = styled.div`
+  margin-bottom: 24px;
+  .ant-tabs-nav {
+    margin-bottom: 0;
+    &::before {
+      border: none;
+    }
+  }
+`;
+
 const BookingsManagementPage = () => {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -408,6 +418,7 @@ const BookingsManagementPage = () => {
   const [editingBooking, setEditingBooking] = useState(null);
   const [formMode, setFormMode] = useState('create');
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
   const formRef = useRef(null);
 
   const fetchBookings = async () => {
@@ -610,6 +621,67 @@ const BookingsManagementPage = () => {
     },
   ];
 
+  const historyColumns = [
+    {
+      title: 'Booking ID',
+      key: 'bookingId',
+      render: (record) => `#${record._id.slice(-6)}`,
+    },
+    {
+      title: 'Room',
+      key: 'room',
+      render: (record) => `Room ${record.roomID.roomNumber}`,
+    },
+    {
+      title: 'Customer',
+      key: 'customer',
+      render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
+    },
+    {
+      title: 'Check In',
+      key: 'checkIn',
+      render: (record) => formatDateTime(record.checkInDate, record.bookingType),
+    },
+    {
+      title: 'Check Out',
+      key: 'checkOut',
+      render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
+    },
+    {
+      title: 'Duration',
+      key: 'duration',
+      render: (record) => (
+        record.bookingType === 'Daily' 
+          ? `${record.totalDays} days`
+          : `${record.totalHours} hours`
+      ),
+    },
+    {
+      title: 'Total Price',
+      key: 'totalPrice',
+      render: (record) => formatVND(record.totalPrice),
+    },
+    {
+      title: 'Completed Date',
+      key: 'completedDate',
+      render: (record) => dayjs(record.updatedAt).format('DD/MM/YYYY HH:mm'),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button 
+          type="text" 
+          icon={<InfoCircleOutlined />}
+          onClick={() => {
+            setSelectedBooking(record);
+            setIsDetailModalVisible(true);
+          }}
+        />
+      ),
+    },
+  ];
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -633,41 +705,75 @@ const BookingsManagementPage = () => {
           </Button>
         </HeaderSection>
 
-        <TableContainer>
-          {loading ? (
-            <LoadingState>
-              <Spin size="large" />
-              <div className="text">Loading bookings...</div>
-            </LoadingState>
-          ) : bookings.length > 0 ? (
-            <StyledTable
-              columns={columns}
-              dataSource={bookings}
-              rowKey="_id"
-              pagination={{
-                defaultPageSize: 10,
-                showSizeChanger: true,
-                showTotal: (total) => `Total ${total} bookings`,
-                pageSizeOptions: ['10', '20', '50', '100']
-              }}
-            />
-          ) : (
-            <EmptyState>
-              <CalendarOutlined className="icon" />
-              <div className="title">No Bookings Found</div>
-              <div className="subtitle">
-                Start by creating your first booking
-              </div>
-              <Button
-                className="add-button"
-                icon={<PlusOutlined />}
-                onClick={resetForm}
-              >
-                Create New Booking
-              </Button>
-            </EmptyState>
-          )}
-        </TableContainer>
+        <TabsContainer>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            type="card"
+            items={[
+              {
+                key: 'active',
+                label: (
+                  <span>
+                    <CalendarOutlined /> Active Bookings
+                  </span>
+                ),
+                children: (
+                  <TableContainer>
+                    {loading ? (
+                      <LoadingState>
+                        <Spin size="large" />
+                        <div className="text">Loading bookings...</div>
+                      </LoadingState>
+                    ) : (
+                      <StyledTable
+                        columns={columns}
+                        dataSource={bookings.filter(b => b.status !== 'Completed')}
+                        rowKey="_id"
+                        pagination={{
+                          defaultPageSize: 10,
+                          showSizeChanger: true,
+                          showTotal: (total) => `Total ${total} active bookings`,
+                          pageSizeOptions: ['10', '20', '50', '100']
+                        }}
+                      />
+                    )}
+                  </TableContainer>
+                ),
+              },
+              {
+                key: 'history',
+                label: (
+                  <span>
+                    <HistoryOutlined /> Booking History
+                  </span>
+                ),
+                children: (
+                  <TableContainer>
+                    {loading ? (
+                      <LoadingState>
+                        <Spin size="large" />
+                        <div className="text">Loading booking history...</div>
+                      </LoadingState>
+                    ) : (
+                      <StyledTable
+                        columns={historyColumns}
+                        dataSource={bookings.filter(b => b.status === 'Completed')}
+                        rowKey="_id"
+                        pagination={{
+                          defaultPageSize: 10,
+                          showSizeChanger: true,
+                          showTotal: (total) => `Total ${total} completed bookings`,
+                          pageSizeOptions: ['10', '20', '50', '100']
+                        }}
+                      />
+                    )}
+                  </TableContainer>
+                ),
+              },
+            ]}
+          />
+        </TabsContainer>
       </ContentWrapper>
 
       <StyledModal

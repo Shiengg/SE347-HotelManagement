@@ -4,30 +4,33 @@ const Booking = require("./Booking");
 const invoiceSchema = new mongoose.Schema(
   {
     bookingID: {
-      type: mongoose.Types.ObjectId, // Use ObjectId to reference another document
-      ref: Booking, // Reference the Booking collection
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
       required: true,
-      unique: true,
-      trim: true,
+    },
+    customerID: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     totalAmount: {
       type: Number,
-      min: 0,
       required: true,
+      min: 0,
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["Unpaid", "Paid"],
+      default: "Unpaid",
     },
     paymentMethod: {
       type: String,
-      required: true,
-      enum: ["Cash", "CreditCard", "DebitCard"],
-      default: "Cash",
-    },
-    paymentStatus: {
-      type: Boolean,
-      default: false,
+      enum: ["Cash", "Card"],
+      default: null,
     },
     paymentDate: {
       type: Date,
-      default: () => new Date(),
+      default: null,
     },
   },
   {

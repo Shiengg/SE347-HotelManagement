@@ -8,11 +8,15 @@ const bookingRoutes = require('./routes/bookingRoutes');
 const invoiceRoutes = require('./routes/invoiceRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const restaurantRoutes = require('./routes/restaurantRoutes');
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true
+}));
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -25,6 +29,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
