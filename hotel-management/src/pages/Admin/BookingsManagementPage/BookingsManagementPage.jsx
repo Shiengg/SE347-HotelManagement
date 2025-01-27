@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin } from 'antd';
+import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin, Table } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import BookingForm from './BookingForm';
@@ -80,43 +80,20 @@ const TableContainer = styled.div`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 `;
 
-const BookingTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-
-  th, td {
-    padding: 16px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
+const StyledTable = styled(Table)`
+  .ant-table {
+    background: white;
+    border-radius: 8px;
   }
 
-  th {
-    background: #f8f9fa;
+  .ant-table-thead > tr > th {
+    background: #f8fafc;
     color: #1a3353;
-    font-weight: 500;
-    font-size: 0.95em;
+    font-weight: 600;
   }
 
-  tr {
-    cursor: pointer;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: #f8f9fa;
-    }
-
-    ${props => props.isSelected && `
-      background: linear-gradient(45deg, #ffd700, #ffed4a);
-      
-      &:hover {
-        background: linear-gradient(45deg, #ffd700, #ffed4a);
-      }
-    `}
-  }
-
-  td {
-    color: #1a3353;
-    font-size: 0.95em;
+  .ant-table-tbody > tr:hover > td {
+    background: #f8fafc;
   }
 `;
 
@@ -555,6 +532,84 @@ const BookingsManagementPage = () => {
     }
   };
 
+  const columns = [
+    {
+      title: 'Booking ID',
+      key: 'bookingId',
+      render: (record) => `#${record._id.slice(-6)}`,
+    },
+    {
+      title: 'Room',
+      key: 'room',
+      render: (record) => `Room ${record.roomID.roomNumber}`,
+    },
+    {
+      title: 'Customer',
+      key: 'customer',
+      render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
+    },
+    {
+      title: 'Check In',
+      key: 'checkIn',
+      render: (record) => formatDateTime(record.checkInDate, record.bookingType),
+    },
+    {
+      title: 'Check Out',
+      key: 'checkOut',
+      render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
+    },
+    {
+      title: 'Total Price',
+      key: 'totalPrice',
+      render: (record) => formatVND(record.totalPrice),
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      render: (record) => getStatusTag(record.status),
+    },
+    {
+      title: 'Services',
+      key: 'services',
+      render: (record) => `${record.services.length} services`,
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Space>
+          <Button 
+            type="text" 
+            icon={<InfoCircleOutlined />}
+            onClick={() => {
+              setSelectedBooking(record);
+              setIsDetailModalVisible(true);
+            }}
+          />
+          <Button 
+            type="text" 
+            icon={<EditOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingBooking(record);
+              setFormMode('edit');
+              setIsFormVisible(true);
+            }}
+          />
+          <Button 
+            type="text" 
+            danger
+            icon={<DeleteOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDelete(record._id);
+            }}
+          />
+        </Space>
+      ),
+    },
+  ];
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -585,76 +640,23 @@ const BookingsManagementPage = () => {
               <div className="text">Loading bookings...</div>
             </LoadingState>
           ) : bookings.length > 0 ? (
-            <BookingTable>
-              <thead>
-                <tr>
-                  <th>Booking ID</th>
-                  <th>Room</th>
-                  <th>Customer</th>
-                  <th>Check In</th>
-                  <th>Check Out</th>
-                  <th>Total Price</th>
-                  <th>Status</th>
-                  <th>Services</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {bookings.map(booking => (
-                  <tr key={booking._id}>
-                    <td>#{booking._id.slice(-6)}</td>
-                    <td>Room {booking.roomID.roomNumber}</td>
-                    <td>
-                      {booking.customerID?.fullname || 
-                       booking.customerID?.username || 
-                       'N/A'}
-                    </td>
-                    <td>{formatDateTime(booking.checkInDate, booking.bookingType)}</td>
-                    <td>{formatDateTime(booking.checkOutDate, booking.bookingType)}</td>
-                    <td>{formatVND(booking.totalPrice)}</td>
-                    <td>{getStatusTag(booking.status)}</td>
-                    <td>{booking.services.length} services</td>
-                    <td>
-                      <Space>
-                        <Button 
-                          type="text" 
-                          icon={<InfoCircleOutlined />}
-                          onClick={() => {
-                            setSelectedBooking(booking);
-                            setIsDetailModalVisible(true);
-                          }}
-                        />
-                        <Button 
-                          type="text" 
-                          icon={<EditOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingBooking(booking);
-                            setFormMode('edit');
-                            setIsFormVisible(true);
-                          }}
-                        />
-                        <Button 
-                          type="text" 
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(booking._id);
-                          }}
-                        />
-                      </Space>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </BookingTable>
+            <StyledTable
+              columns={columns}
+              dataSource={bookings}
+              rowKey="_id"
+              pagination={{
+                defaultPageSize: 10,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} bookings`,
+                pageSizeOptions: ['10', '20', '50', '100']
+              }}
+            />
           ) : (
             <EmptyState>
               <CalendarOutlined className="icon" />
               <div className="title">No Bookings Found</div>
               <div className="subtitle">
-                {/* ... existing subtitle content ... */}
+                Start by creating your first booking
               </div>
               <Button
                 className="add-button"

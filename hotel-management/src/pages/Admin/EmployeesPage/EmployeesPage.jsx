@@ -1,27 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Table, Button, Space, Modal, Form, Input, message, Alert } from 'antd';
+import { Table, Button, Space, Modal, Form, Input, message, Alert, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const PageContainer = styled.div`
-  padding: 24px;
-  
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
+  padding: 12px;
+  width: 100%;
+`;
+
+const ContentWrapper = styled.div`
+  background: white;
+  border-radius: 10px;
+  padding: 16px;
+  border: 2px solid gold;
+  width: 100%;
 `;
 
 const HeaderSection = styled.div`
+  background: linear-gradient(to right, #ffffff, #f8f9fa);
+  border-radius: 12px;
+  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  
-  @media (max-width: 576px) {
-    flex-direction: column;
-    gap: 16px;
-  }
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eee;
 `;
 
 const TitleSection = styled.div`
@@ -32,7 +37,7 @@ const TitleSection = styled.div`
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    background: linear-gradient(45deg, #1a3353, #2c4c7c);
+    background: linear-gradient(45deg, #ffd700, #ffed4a);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -41,7 +46,7 @@ const TitleSection = styled.div`
 
     .anticon {
       font-size: 24px;
-      color: white;
+      color: #1a3353;
     }
   }
 
@@ -60,6 +65,13 @@ const TitleSection = styled.div`
   }
 `;
 
+const TableContainer = styled.div`
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+`;
+
 const AddButton = styled(Button)`
   height: 40px;
   padding: 0 24px;
@@ -69,11 +81,6 @@ const AddButton = styled(Button)`
   background: #1a3353;
   border: none;
   
-  @media (max-width: 576px) {
-    width: 100%;
-    justify-content: center;
-  }
-
   &:hover {
     background: #2c4c7c !important;
   }
@@ -83,7 +90,6 @@ const StyledTable = styled(Table)`
   .ant-table {
     background: white;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }
 
   .ant-table-thead > tr > th {
@@ -94,12 +100,6 @@ const StyledTable = styled(Table)`
 
   .ant-table-tbody > tr:hover > td {
     background: #f8fafc;
-  }
-
-  @media (max-width: 768px) {
-    .ant-table {
-      font-size: 14px;
-    }
   }
 `;
 
@@ -123,6 +123,71 @@ const StyledModal = styled(Modal)`
   .ant-form-item-label > label {
     color: #1a3353;
     font-weight: 500;
+  }
+
+  .readonly-input {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    
+    input {
+      color: #666;
+    }
+
+    &:hover {
+      border-color: #d9d9d9;
+    }
+  }
+`;
+
+const EmptyState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #fff;
+  border: 1px dashed #e2e8f0;
+  border-radius: 8px;
+  margin: 24px 0;
+
+  .icon {
+    font-size: 48px;
+    color: #94a3b8;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    color: #64748b;
+    text-align: center;
+    max-width: 400px;
+    line-height: 1.5;
+  }
+`;
+
+const LoadingState = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: #fff;
+  border-radius: 8px;
+  margin: 24px 0;
+
+  .ant-spin {
+    margin-bottom: 16px;
+  }
+
+  .text {
+    color: #64748b;
+    font-size: 0.95em;
   }
 `;
 
@@ -283,7 +348,7 @@ const EmployeesPage = () => {
       render: (_, record) => (
         <Space>
           <Button
-            type="primary"
+            type="text"
             icon={<EditOutlined />}
             onClick={() => {
               setEditingEmployee(record);
@@ -292,6 +357,7 @@ const EmployeesPage = () => {
             }}
           />
           <Button
+            type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => {
@@ -312,55 +378,70 @@ const EmployeesPage = () => {
 
   return (
     <PageContainer>
-      <HeaderSection>
-        <TitleSection>
-          <div className="icon-wrapper">
-            <TeamOutlined />
-          </div>
-          <div className="text-content">
-            <h1>Employee Management</h1>
-            <p>Manage your hotel receptionists</p>
-          </div>
-        </TitleSection>
+      <ContentWrapper>
+        <HeaderSection>
+          <TitleSection>
+            <div className="icon-wrapper">
+              <TeamOutlined />
+            </div>
+            <div className="text-content">
+              <h1>Employee Management</h1>
+              <p>Manage your hotel receptionists</p>
+            </div>
+          </TitleSection>
 
-        <AddButton
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={() => {
-            setEditingEmployee(null);
-            form.resetFields();
-            setIsModalVisible(true);
-          }}
-        >
-          Add Employee
-        </AddButton>
-      </HeaderSection>
+          <AddButton
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => {
+              setEditingEmployee(null);
+              form.resetFields();
+              setIsModalVisible(true);
+            }}
+          >
+            Add Employee
+          </AddButton>
+        </HeaderSection>
 
-      {error && (
-        <Alert
-          message="Error"
-          description={error}
-          type="error"
-          showIcon
-          style={{ marginBottom: 16 }}
-        />
-      )}
-
-      <StyledTable
-        columns={columns}
-        dataSource={employees}
-        loading={loading}
-        rowKey="_id"
-        scroll={{ x: true }}
-        locale={{
-          emptyText: loading ? 'Loading...' : 'No employees found'
-        }}
-        pagination={{
-          defaultPageSize: 10,
-          showSizeChanger: true,
-          showTotal: (total) => `Total ${total} employees`
-        }}
-      />
+        <TableContainer>
+          {loading ? (
+            <LoadingState>
+              <Spin size="large" />
+              <div className="text">Loading employees...</div>
+            </LoadingState>
+          ) : employees.length > 0 ? (
+            <StyledTable
+              columns={columns}
+              dataSource={employees}
+              rowKey="_id"
+              pagination={{
+                defaultPageSize: 10,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} employees`
+              }}
+            />
+          ) : (
+            <EmptyState>
+              <TeamOutlined className="icon" />
+              <div className="title">No Employees Found</div>
+              <div className="subtitle">
+                Start by adding your first employee to the system
+              </div>
+              <AddButton
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setEditingEmployee(null);
+                  form.resetFields();
+                  setIsModalVisible(true);
+                }}
+              >
+                Add New Employee
+              </AddButton>
+            </EmptyState>
+          )}
+        </TableContainer>
+      </ContentWrapper>
 
       <StyledModal
         title={editingEmployee ? 'Edit Employee' : 'Add New Employee'}
@@ -389,7 +470,12 @@ const EmployeesPage = () => {
             label="Username"
             rules={[{ required: true, message: 'Please input username!' }]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Enter username" />
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="Enter username" 
+              disabled={!!editingEmployee}
+              className={editingEmployee ? 'readonly-input' : ''}
+            />
           </Form.Item>
 
           {!editingEmployee && (
