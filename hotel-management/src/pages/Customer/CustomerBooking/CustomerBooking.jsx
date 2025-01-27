@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Table, Tag, Space, message } from 'antd';
-import { CalendarOutlined, HomeOutlined, ClockCircleOutlined, DollarOutlined } from '@ant-design/icons';
+import { CalendarOutlined, HomeOutlined, ClockCircleOutlined, DollarOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
@@ -135,9 +135,21 @@ const CustomerBooking = () => {
 
   const getStatusTag = (status) => {
     const statusConfig = {
-      Pending: { color: 'orange', icon: <ClockCircleOutlined /> },
-      Confirmed: { color: 'green', icon: <CalendarOutlined /> }
+      'Pending': { color: 'orange', icon: <ClockCircleOutlined /> },
+      'Confirmed': { color: 'blue', icon: <CalendarOutlined /> },
+      'Completed': { color: 'green', icon: <CheckCircleOutlined /> }
     };
+
+    if (!statusConfig[status]) {
+      console.warn(`Unknown status: ${status}`);
+      return (
+        <Tag color="default">
+          <Space>
+            {status}
+          </Space>
+        </Tag>
+      );
+    }
 
     return (
       <StatusTag color={statusConfig[status].color}>
