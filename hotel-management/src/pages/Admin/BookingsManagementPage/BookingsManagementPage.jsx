@@ -430,11 +430,11 @@ const BookingsManagementPage = () => {
         }
       });
       const data = await response.json();
-      console.log('Fetched bookings data:', data);
-      setBookings(data);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       message.error('Failed to fetch bookings');
+      setBookings([]);
     }
     setLoading(false);
   };
@@ -728,7 +728,8 @@ const BookingsManagementPage = () => {
                     ) : (
                       <StyledTable
                         columns={columns}
-                        dataSource={bookings.filter(b => b.status !== 'Completed')}
+                        dataSource={Array.isArray(bookings) ? 
+                          bookings.filter(b => b.status !== 'Completed') : []}
                         rowKey="_id"
                         pagination={{
                           defaultPageSize: 10,
@@ -758,7 +759,8 @@ const BookingsManagementPage = () => {
                     ) : (
                       <StyledTable
                         columns={historyColumns}
-                        dataSource={bookings.filter(b => b.status === 'Completed')}
+                        dataSource={Array.isArray(bookings) ? 
+                          bookings.filter(b => b.status === 'Completed') : []}
                         rowKey="_id"
                         pagination={{
                           defaultPageSize: 10,

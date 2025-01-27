@@ -27,15 +27,32 @@ exports.getAllBookings = async (req, res) => {
 
     // Tính lại tổng tiền cho mỗi booking để đảm bảo chính xác
     const calculatedBookings = bookings.map(booking => {
-      const roomPrice = booking.bookingType === 'Daily' 
-        ? booking.roomID.dailyPrice * booking.totalDays
-        : booking.roomID.hourlyPrice * booking.totalHours;
+      try {
+        // Kiểm tra nếu roomID tồn tại
+        if (!booking.roomID) {
+          return {
+            ...booking.toObject(),
+            totalPrice: booking.services.reduce((total, service) => 
+              total + (service.totalPrice || 0), 0)
+          };
+        }
 
-      const servicesPrice = booking.services.reduce((total, service) => 
-        total + (service.serviceID.servicePrice * service.quantity), 0);
+        const roomPrice = booking.bookingType === 'Daily' 
+          ? (booking.roomID.dailyPrice * (booking.totalDays || 1))
+          : (booking.roomID.hourlyPrice * (booking.totalHours || 1));
 
-      booking.totalPrice = roomPrice + servicesPrice;
-      return booking;
+        const servicesPrice = booking.services.reduce((total, service) => 
+          total + (service.totalPrice || 0), 0);
+
+        return {
+          ...booking.toObject(),
+          totalPrice: roomPrice + servicesPrice
+        };
+      } catch (error) {
+        console.error('Error calculating booking price:', error);
+        // Trả về booking gốc nếu có lỗi
+        return booking.toObject();
+      }
     });
 
     res.json(calculatedBookings);

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const restaurantController = require('../controllers/restaurantController');
 const authMiddleware = require('../middlewares/authMiddleware');
-const { upload } = require('../config/cloudinary');
+const upload = require('../config/multer');
 
 router.use(authMiddleware);
 

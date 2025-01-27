@@ -1,6 +1,7 @@
 const Room = require('../models/Rooms');
 const Booking = require('../models/Booking');
 const mongoose = require('mongoose');
+const cloudinary = require('../config/cloudinary');
 
 // Get all rooms
 exports.getAllRooms = async (req, res) => {
@@ -14,8 +15,11 @@ exports.getAllRooms = async (req, res) => {
 
 // Create new room
 exports.createRoom = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        const { dailyPrice, hourlyPrice } = req.body;
+        const { dailyPrice, hourlyPrice, images } = req.body;
 
         // Kiểm tra tỉ lệ giá
         if (dailyPrice < hourlyPrice * 20) {
@@ -24,11 +28,47 @@ exports.createRoom = async (req, res) => {
             });
         }
 
-        const room = new Room(req.body);
-        const newRoom = await room.save();
+        // Upload images to cloudinary
+        const uploadedImages = [];
+        if (images && images.length > 0) {
+            for (let image of images) {
+                try {
+                    // Kiểm tra nếu image là base64 string
+                    if (typeof image === 'string' && image.startsWith('data:')) {
+                        const result = await cloudinary.uploader.upload(image, {
+                            folder: 'hotel-rooms',
+                        });
+                        uploadedImages.push({
+                            public_id: result.public_id,
+                            url: result.secure_url
+                        });
+                    }
+                } catch (uploadError) {
+                    console.error('Error uploading to cloudinary:', uploadError);
+                    throw new Error('Failed to upload images');
+                }
+            }
+        }
+
+        const roomData = {
+            ...req.body,
+            images: uploadedImages
+        };
+        delete roomData.deletedImages; // Xóa trường không cần thiết
+
+        const room = new Room(roomData);
+        const newRoom = await room.save({ session });
+        await session.commitTransaction();
         res.status(201).json(newRoom);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        await session.abortTransaction();
+        console.error('Error creating room:', error);
+        res.status(500).json({ 
+            message: error.message || 'Failed to create room',
+            error: error.toString()
+        });
+    } finally {
+        session.endSession();
     }
 };
 
@@ -51,12 +91,13 @@ exports.updateRoom = async (req, res) => {
     session.startTransaction();
 
     try {
-        const room = await Room.findById(req.params.id);
+        const { id } = req.params;
+        const { dailyPrice, hourlyPrice, images, deletedImages } = req.body;
+
+        const room = await Room.findById(id);
         if (!room) {
             throw new Error('Room not found');
         }
-
-        const { dailyPrice, hourlyPrice } = req.body;
 
         // Kiểm tra tỉ lệ giá
         if (dailyPrice < hourlyPrice * 20) {
@@ -65,30 +106,56 @@ exports.updateRoom = async (req, res) => {
             });
         }
 
-        // Kiểm tra nếu đang thay đổi status
-        if (req.body.status && req.body.status !== room.status) {
-            const activeBookings = await Booking.find({
-                roomID: room._id,
-                status: { $in: ['Pending', 'Confirmed'] },
-                checkOutDate: { $gte: new Date() }
-            });
-
-            if (activeBookings.length > 0) {
-                return res.status(400).json({
-                    message: 'Cannot change room status. Room has active bookings.',
-                    bookings: activeBookings
-                });
+        // Xóa ảnh cũ nếu có yêu cầu
+        if (deletedImages && deletedImages.length > 0) {
+            for (let image of deletedImages) {
+                if (image.public_id) {
+                    await cloudinary.uploader.destroy(image.public_id);
+                }
             }
         }
 
-        Object.assign(room, req.body);
-        const updatedRoom = await room.save({ session });
+        // Giữ lại các ảnh cũ không bị xóa
+        const remainingImages = room.images.filter(img => 
+            !deletedImages?.some(delImg => delImg.public_id === img.public_id)
+        );
+
+        // Upload ảnh mới
+        const uploadedImages = [...remainingImages];
+        if (images && images.length > 0) {
+            for (let image of images) {
+                // Chỉ upload ảnh mới (base64)
+                if (typeof image === 'string' && image.startsWith('data:')) {
+                    const result = await cloudinary.uploader.upload(image, {
+                        folder: 'hotel-rooms',
+                    });
+                    uploadedImages.push({
+                        public_id: result.public_id,
+                        url: result.secure_url
+                    });
+                }
+            }
+        }
+
+        const updateData = {
+            ...req.body,
+            images: uploadedImages
+        };
+        delete updateData.deletedImages; // Xóa trường không cần thiết
+
+        const updatedRoom = await Room.findByIdAndUpdate(
+            id,
+            updateData,
+            { new: true, session }
+        );
+
         await session.commitTransaction();
         res.json(updatedRoom);
 
     } catch (error) {
         await session.abortTransaction();
-        res.status(400).json({ message: error.message });
+        console.error('Error updating room:', error);
+        res.status(500).json({ message: error.message });
     } finally {
         session.endSession();
     }
@@ -100,37 +167,35 @@ exports.deleteRoom = async (req, res) => {
     session.startTransaction();
 
     try {
-        // Kiểm tra xem phòng có trong booking nào không
-        const existingBookings = await Booking.find({
-            roomID: req.params.id,
-            status: { $in: ['Pending', 'Confirmed'] } // Chỉ kiểm tra các booking chưa cancelled
-        });
-
-        if (existingBookings.length > 0) {
-            return res.status(400).json({ 
-                message: 'Cannot delete room. Room is currently in use in active bookings.',
-                bookings: existingBookings.map(booking => ({
-                    bookingId: booking._id,
-                    checkInDate: booking.checkInDate,
-                    checkOutDate: booking.checkOutDate,
-                    status: booking.status
-                }))
-            });
-        }
-
-        // Nếu không có booking nào đang sử dụng, tiến hành xóa phòng
-        const room = await Room.findByIdAndDelete(req.params.id, { session });
-        
+        const room = await Room.findById(req.params.id);
         if (!room) {
             throw new Error('Room not found');
         }
 
-        // Xóa thành công
-        await session.commitTransaction();
-        res.json({ 
-            message: 'Room deleted successfully',
-            deletedRoom: room
+        // Xóa ảnh trên cloudinary
+        if (room.images && room.images.length > 0) {
+            for (let image of room.images) {
+                await cloudinary.uploader.destroy(image.public_id);
+            }
+        }
+
+        // Kiểm tra và xóa room
+        const existingBookings = await Booking.find({
+            roomID: req.params.id,
+            status: { $in: ['Pending', 'Confirmed'] }
         });
+
+        if (existingBookings.length > 0) {
+            return res.status(400).json({ 
+                message: 'Cannot delete room. Room is currently in use.',
+                bookings: existingBookings
+            });
+        }
+
+        await Room.findByIdAndDelete(req.params.id, { session });
+        
+        await session.commitTransaction();
+        res.json({ message: 'Room deleted successfully' });
 
     } catch (error) {
         await session.abortTransaction();
