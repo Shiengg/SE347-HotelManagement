@@ -135,13 +135,13 @@ const RoomGrid = styled.div`
 `;
 
 const RoomInfo = styled.div`
-  padding: 20px;
+  padding: 16px;
   background: white;
   transition: background-color 0.3s ease;
 `;
 
 const RoomImage = styled.div`
-  height: 220px;
+  height: 180px;
   background: linear-gradient(45deg, #1a3353, #264773);
   display: flex;
   align-items: center;
@@ -164,7 +164,7 @@ const RoomImage = styled.div`
   }
 
   .anticon {
-    font-size: 3em;
+    font-size: 2.5em;
     z-index: 1;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   }
@@ -214,9 +214,9 @@ const RoomBadge = styled.div`
 `;
 
 const RoomNumber = styled.h2`
-  margin: 0 0 12px 0;
+  margin: 0 0 8px 0;
   color: #1a3353;
-  font-size: 1.5em;
+  font-size: 1.3em;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -229,12 +229,12 @@ const RoomNumber = styled.h2`
 
 const RoomType = styled.div`
   color: #666;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.1em;
-  padding-bottom: 16px;
+  font-size: 1em;
+  padding-bottom: 12px;
   border-bottom: 1px dashed #eee;
 
   .type-icon {
@@ -246,17 +246,17 @@ const RoomType = styled.div`
 const RoomDetails = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin: 16px 0;
+  gap: 8px;
+  margin: 12px 0;
 `;
 
 const DetailItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: #444;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   transition: all 0.2s ease;
 
   &:hover {
@@ -264,33 +264,33 @@ const DetailItem = styled.div`
   }
 
   .anticon {
-    font-size: 1.2em;
+    font-size: 1.1em;
     color: ${props => props.className === 'price' ? '#00a854' : '#666'};
   }
 
   &.price {
     color: #00a854;
     font-weight: 500;
-    font-size: 1.15em;
+    font-size: 1.1em;
   }
 `;
 
 const BookButton = styled.button`
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   background: linear-gradient(45deg, #1a3353, #264773);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1.1em;
+  border-radius: 6px;
+  font-size: 1em;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  margin-top: 8px;
+  margin-top: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
 
   &:hover {
     background: linear-gradient(45deg, #264773, #1a3353);
@@ -303,7 +303,7 @@ const BookButton = styled.button`
   }
 
   .anticon {
-    font-size: 1.2em;
+    font-size: 1.1em;
   }
 `;
 
