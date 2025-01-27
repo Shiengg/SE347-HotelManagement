@@ -55,7 +55,6 @@ const updateRoomStatus = async (roomId, bookingStatus, session) => {
     case 'Confirmed':
       roomStatus = 'Occupied';
       break;
-    case 'Cancelled':
     default:
       roomStatus = 'Available';
       break;
