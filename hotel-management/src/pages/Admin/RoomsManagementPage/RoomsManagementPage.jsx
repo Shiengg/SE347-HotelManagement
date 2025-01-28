@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Button, Modal, Form, Input, Select, InputNumber, message, Space } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Drawer } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined, SettingOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
 const PageContainer = styled.div`
   padding: 12px;
-  display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 12px;
+  height: calc(100vh - 84px);
+  overflow-x: hidden;
 
-  @media (max-width: 1080px) {
-    grid-template-columns: 1fr;
+  @media (max-width: 768px) {
+    padding: 8px;
+    height: auto;
   }
 `;
 
@@ -21,18 +22,44 @@ const ContentWrapper = styled.div`
   border-radius: 10px;
   padding: 16px;
   border: 2px solid gold;
+  height: 100%;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ffd700;
+    border-radius: 4px;
+  }
 `;
 
 const HeaderSection = styled.div`
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 12px;
   padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eee;
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+
+    .text-content {
+      text-align: center;
+      
+      h1 {
+        font-size: 20px;
+      }
+    }
+  }
 `;
 
 const TitleSection = styled.div`
@@ -90,6 +117,13 @@ const AddButton = styled(Button)`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 
+  @media (max-width: 576px) {
+    width: 100%;
+    justify-content: center;
+    height: 40px;
+    font-size: 1em;
+  }
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
@@ -125,8 +159,23 @@ const FilterSection = styled.div`
   border: 1px solid #eee;
   flex-wrap: wrap;
 
+  @media (max-width: 992px) {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  @media (max-width: 576px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
   .ant-select {
     min-width: 200px;
+    
+    @media (max-width: 576px) {
+      min-width: 100%;
+    }
     
     .ant-select-selector {
       border-radius: 8px !important;
@@ -155,6 +204,11 @@ const FilterGroup = styled.div`
   min-width: 200px;
   max-width: 300px;
 
+  @media (max-width: 576px) {
+    max-width: 100%;
+    min-width: 100%;
+  }
+
   .filter-label {
     font-size: 0.9em;
     color: #1a3353;
@@ -181,33 +235,34 @@ const FilterGroup = styled.div`
 `;
 
 const RoomHeader = styled.div`
-  font-size: 1em;
   display: grid;
-  align-items: center;
-  grid-template-columns: 100px 1fr 140px 140px 120px;
-  padding: 16px 20px;
-  background: linear-gradient(to right, #f8f9fa, #ffffff);
-  border-radius: 12px;
-  margin-bottom: 12px;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  grid-template-columns: 1fr 1fr 1.2fr 1.2fr 1fr 0.8fr;
+  padding: 16px 24px;
+  background: #f8fafc;
+  border-radius: 8px 8px 0 0;
+  border: 1px solid #e2e8f0;
+  margin-bottom: -1px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.8fr;
+  }
+
+  @media (max-width: 992px) {
+    display: none;
+  }
 
   .header-item {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 0.95rem;
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #1a3353;
-    font-weight: 500;
-    font-size: 0.95em;
-    
-    .icon {
-      color: #666;
-      font-size: 14px;
-    }
-  }
 
-  @media (max-width: 680px) {
-    display: none;
+    .icon {
+      color: #64748b;
+      font-size: 1rem;
+    }
   }
 `;
 
@@ -229,91 +284,86 @@ const RoomFilter = styled.select`
 `;
 
 const RoomItem = styled.div`
-  border-radius: 10px;
-  background: white;
   display: grid;
-  grid-template-columns: 100px 1fr 140px 140px 120px;
-  padding: 16px;
+  grid-template-columns: 1fr 1fr 1.2fr 1.2fr 1fr 0.8fr;
+  padding: 16px 24px;
+  border: 1px solid #e2e8f0;
+  background: ${props => props.isSelected ? 'linear-gradient(45deg, #ffd700, #ffed4a)' : '#fff'};
+  border-color: ${props => props.isSelected ? '#ffd700' : '#e2e8f0'};
+  transition: all 0.2s ease;
   cursor: pointer;
-  align-items: center;
-  border: 1px solid #f0f0f0;
-  transition: all 0.3s ease;
-  
-  ${props => props.isSelected && `
-    background: linear-gradient(45deg, #ffd700, #ffed4a);
-    border-color: #ffd700;
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  `}
+  border-radius: 10px;
+  margin-bottom: 8px;
 
-  &:hover {
-    background: ${props => props.isSelected ? 
-      'linear-gradient(45deg, #ffd700, #ffed4a)' : 
-      'linear-gradient(45deg, #ffffff, #f8f9fa)'};
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 0.8fr;
   }
 
-  .room-number {
-    font-weight: 600;
-    color: #1a3353;
-    font-size: 1.1em;
-  }
-
-  .room-type {
-    color: #666;
-  }
-
-  .occupancy {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #666;
-
-    .icon {
-      color: #ffd700;
-      font-size: 14px;
-    }
-  }
-
-  .price {
-    font-weight: 600;
-    color: #00a854;
-  }
-
-  @media (max-width: 1080px) {
+  @media (max-width: 992px) {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
     padding: 12px;
 
-    .room-number {
-      grid-column: 1;
-      grid-row: 1;
-    }
+    > div {
+      &:nth-child(3),
+      &:nth-child(4) {
+        grid-column: span 1;
+      }
 
-    .room-type {
-      grid-column: 2;
-      grid-row: 1;
-      text-align: right;
-    }
+      &:nth-child(5) {
+        grid-column: 1 / -1;
+        justify-content: center;
+      }
 
-    .status {
-      grid-column: 1;
-      grid-row: 2;
-    }
-
-    .occupancy {
-      grid-column: 1;
-      grid-row: 3;
-    }
-
-    .price {
-      grid-column: 2;
-      grid-row: 2/4;
-      text-align: right;
-      font-size: 1.2em;
+      &:last-child {
+        grid-column: 1 / -1;
+        justify-content: center;
+      }
     }
   }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+    text-align: center;
+
+    > div {
+      justify-content: center;
+      
+      &:not(:last-child) {
+        padding-bottom: 8px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+    }
+  }
+
+  &:hover {
+    background: ${props => props.isSelected ? 'linear-gradient(45deg, #ffd700, #ffed4a)' : '#f8fafc'};
+    border-color: ${props => props.isSelected ? '#ffd700' : '#e2e8f0'};
+  }
+
+  > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+  }
+
+  .room-number {
+    font-weight: 600;
+    color: ${props => props.isSelected ? '#1a3353' : '#1e293b'};
+  }
+
+  .room-type {
+    color: ${props => props.isSelected ? '#1a3353' : '#475569'};
+  }
+
+  .price {
+    font-weight: 500;
+    color: ${props => props.isSelected ? '#1a3353' : '#059669'};
+  }
+
+  box-shadow: ${props => props.isSelected ? '0 4px 12px rgba(255, 215, 0, 0.15)' : 'none'};
+  transform: ${props => props.isSelected ? 'translateY(-1px)' : 'none'};
 `;
 
 const RoomDetailContainer = styled.div`
@@ -432,14 +482,40 @@ const ActionButtons = styled(Space)`
 `;
 
 const StatusTag = styled.span`
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.85rem;
   font-weight: 500;
-  
-  &.available { color: #10b981; background: #d1fae5; }
-  &.occupied { color: #ef4444; background: #fee2e2; }
-  &.maintenance { color: #f59e0b; background: #fef3c7; }
-  &.reserved { color: #6366f1; background: #e0e7ff; }
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  &.available {
+    color: #059669;
+    background: #d1fae5;
+  }
+
+  &.occupied {
+    color: #dc2626;
+    background: #fee2e2;
+  }
+
+  &.maintenance {
+    color: #d97706;
+    background: #fef3c7;
+  }
+
+  &.reserved {
+    color: #4f46e5;
+    background: #e0e7ff;
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
 `;
 
 const TotalPrice = styled.div`
@@ -627,6 +703,12 @@ const StyledForm = styled(Form)`
   }
 `;
 
+const StyledDrawer = styled(Drawer)`
+  .ant-drawer-body {
+    padding: 0;
+  }
+`;
+
 const RoomsManagementPage = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -635,6 +717,10 @@ const RoomsManagementPage = () => {
   const [filterType, setFilterType] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');
   const [sortPrice, setSortPrice] = useState('asc');
+  const [isEditing, setIsEditing] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
+  const [isDetailDrawerVisible, setIsDetailDrawerVisible] = useState(false);
+  const [isAddDrawerVisible, setIsAddDrawerVisible] = useState(false);
 
   // Fetch rooms data
   const fetchRooms = async () => {
@@ -657,6 +743,16 @@ const RoomsManagementPage = () => {
     fetchRooms();
   }, []);
 
+  // Thêm useEffect để theo dõi kích thước màn hình
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 992);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Handle form submit
   const handleSubmit = async (values) => {
     try {
@@ -665,6 +761,12 @@ const RoomsManagementPage = () => {
         : 'http://localhost:5000/api/rooms';
       
       const method = selectedRoom ? 'PUT' : 'POST';
+
+      // Kiểm tra tỉ lệ giá ngày và giờ
+      if (values.dailyPrice < values.hourlyPrice * 20) {
+        message.error('Daily price must be at least 20 times the hourly price');
+        return;
+      }
       
       const response = await fetch(url, {
         method,
@@ -675,12 +777,14 @@ const RoomsManagementPage = () => {
         body: JSON.stringify(values)
       });
 
+      const data = await response.json();
       if (response.ok) {
         message.success(`Room ${selectedRoom ? 'updated' : 'created'} successfully`);
         form.resetFields();
+        setIsEditing(false);
         fetchRooms();
       } else {
-        throw new Error('Failed to save room');
+        throw new Error(data.message || 'Failed to save room');
       }
     } catch (error) {
       message.error(error.message);
@@ -688,34 +792,79 @@ const RoomsManagementPage = () => {
   };
 
   // Handle delete room
-  const handleDelete = async (id) => {
+  const handleDelete = async (roomId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/rooms/${id}`, {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
+      const data = await response.json();
+
       if (response.ok) {
         message.success('Room deleted successfully');
-        fetchRooms();
+        fetchRooms(); // Refresh danh sách phòng
       } else {
-        throw new Error('Failed to delete room');
+        if (data.bookings) {
+          // Hiển thị thông báo chi tiết về các booking đang sử dụng phòng
+          Modal.error({
+            title: 'Cannot Delete Room',
+            content: (
+              <div>
+                <p>{data.message}</p>
+                <p>Room is being used in the following bookings:</p>
+                <ul>
+                  {data.bookings.map(booking => (
+                    <li key={booking.bookingId}>
+                      Booking #{booking.bookingId}<br/>
+                      Check-in: {dayjs(booking.checkInDate).format('DD/MM/YYYY')}<br/>
+                      Check-out: {dayjs(booking.checkOutDate).format('DD/MM/YYYY')}<br/>
+                      Status: {booking.status}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ),
+          });
+        } else {
+          message.error(data.message || 'Failed to delete room');
+        }
       }
     } catch (error) {
-      message.error(error.message);
+      message.error('Failed to delete room');
     }
   };
 
   const getStatusTag = (status) => {
-    const classNames = {
-      'Available': 'available',
-      'Occupied': 'occupied',
-      'Maintenance': 'maintenance',
-      'Reserved': 'reserved'
+    const statusConfig = {
+      'Available': {
+        icon: <CheckCircleOutlined />,
+        className: 'available'
+      },
+      'Occupied': {
+        icon: <CloseCircleOutlined />,
+        className: 'occupied'
+      },
+      'Maintenance': {
+        icon: <ToolOutlined />,
+        className: 'maintenance'
+      },
+      'Reserved': {
+        icon: <CalendarOutlined />,
+        className: 'reserved'
+      }
     };
-    return <StatusTag className={classNames[status]}>{status}</StatusTag>;
+
+    const config = statusConfig[status];
+    return (
+      <StatusTag className={config.className}>
+        <span className="status-dot"></span>
+        {config.icon}
+        {status}
+      </StatusTag>
+    );
   };
 
   const filteredRooms = rooms.filter(room => {
@@ -726,390 +875,1410 @@ const RoomsManagementPage = () => {
     return sortPrice === 'asc' ? a.price - b.price : b.price - a.price;
   });
 
+  // Thêm hàm format tiền VND
+  const formatVND = (price) => {
+    return `${price.toLocaleString('vi-VN')}đ`;
+  };
+
+  // Thêm kiểm tra phòng có đang được booking không
+  const checkRoomHasBookings = async (roomId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/rooms/${roomId}/bookings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.hasActiveBookings;
+    } catch (error) {
+      console.error('Error checking room bookings:', error);
+      return false;
+    }
+  };
+
   return (
     <PageContainer>
-      <ContentWrapper>
-        <HeaderSection>
-          <TitleSection>
-            <div className="icon-wrapper">
-              <HomeOutlined />
-            </div>
-            <div className="text-content">
-              <Title>Room Management</Title>
-              <Subtitle>Manage your hotel rooms efficiently</Subtitle>
-            </div>
-          </TitleSection>
-          
-          <AddButton 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setSelectedRoom(null);
-              form.resetFields();
-            }}
-          >
-            Add New Room
-          </AddButton>
-        </HeaderSection>
+      {isMobile ? (
+        // Mobile view
+        <ContentWrapper>
+          <HeaderSection>
+            <TitleSection>
+              <div className="icon-wrapper">
+                <HomeOutlined />
+              </div>
+              <div className="text-content">
+                <Title>Room Management</Title>
+                <Subtitle>Manage your hotel rooms efficiently</Subtitle>
+              </div>
+            </TitleSection>
+            
+            <AddButton 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={() => {
+                setSelectedRoom(null);
+                form.resetFields();
+              }}
+            >
+              Add New Room
+            </AddButton>
+          </HeaderSection>
 
-        <FilterSection>
-          <FilterGroup>
-            <div className="filter-label">
+          <FilterSection>
+            <FilterGroup>
+              <div className="filter-label">
+                <HomeOutlined className="icon" />
+                Room Type
+              </div>
+              <Select
+                value={filterType}
+                onChange={setFilterType}
+                style={{ width: '100%' }}
+                dropdownStyle={{ padding: '8px' }}
+              >
+                <Option value="All">
+                  <Space>
+                    <HomeOutlined style={{ color: '#666' }} />
+                    All Room Types
+                  </Space>
+                </Option>
+                <Option value="Single">
+                  <Space>
+                    <HomeOutlined style={{ color: '#40a9ff' }} />
+                    Single Room
+                  </Space>
+                </Option>
+                <Option value="Double">
+                  <Space>
+                    <HomeOutlined style={{ color: '#52c41a' }} />
+                    Double Room
+                  </Space>
+                </Option>
+                <Option value="Suite">
+                  <Space>
+                    <HomeOutlined style={{ color: '#ffd700' }} />
+                    Luxury Suite
+                  </Space>
+                </Option>
+                <Option value="Deluxe">
+                  <Space>
+                    <HomeOutlined style={{ color: '#722ed1' }} />
+                    Deluxe Room
+                  </Space>
+                </Option>
+                <Option value="Family">
+                  <Space>
+                    <HomeOutlined style={{ color: '#eb2f96' }} />
+                    Family Room
+                  </Space>
+                </Option>
+              </Select>
+            </FilterGroup>
+
+            <FilterGroup>
+              <div className="filter-label">
+                <CheckCircleOutlined className="icon" />
+                Status
+              </div>
+              <Select
+                value={filterStatus}
+                onChange={setFilterStatus}
+                style={{ width: '100%' }}
+                dropdownStyle={{ padding: '8px' }}
+              >
+                <Option value="All">
+                  <Space>
+                    <CheckCircleOutlined style={{ color: '#666' }} />
+                    All Status
+                  </Space>
+                </Option>
+                <Option value="Available">
+                  <Space>
+                    <CheckCircleOutlined style={{ color: '#10b981' }} />
+                    Available
+                  </Space>
+                </Option>
+                <Option value="Occupied">
+                  <Space>
+                    <CloseCircleOutlined style={{ color: '#ef4444' }} />
+                    Occupied
+                  </Space>
+                </Option>
+                <Option value="Maintenance">
+                  <Space>
+                    <ToolOutlined style={{ color: '#f59e0b' }} />
+                    Under Maintenance
+                  </Space>
+                </Option>
+                <Option value="Reserved">
+                  <Space>
+                    <CalendarOutlined style={{ color: '#6366f1' }} />
+                    Reserved
+                  </Space>
+                </Option>
+              </Select>
+            </FilterGroup>
+
+            <FilterGroup>
+              <div className="filter-label">
+                <SortAscendingOutlined className="icon" />
+                Sort by Price
+              </div>
+              <Select
+                value={sortPrice}
+                onChange={setSortPrice}
+                style={{ width: '100%' }}
+                dropdownStyle={{ padding: '8px' }}
+              >
+                <Option value="asc">
+                  <Space>
+                    <SortAscendingOutlined />
+                    Price: Low to High
+                  </Space>
+                </Option>
+                <Option value="desc">
+                  <Space>
+                    <SortDescendingOutlined />
+                    Price: High to Low
+                  </Space>
+                </Option>
+              </Select>
+            </FilterGroup>
+          </FilterSection>
+
+          <RoomHeader>
+            <div className="header-item">
               <HomeOutlined className="icon" />
+              Room Number
+            </div>
+            <div className="header-item">
+              <i className="fas fa-bed icon"></i>
               Room Type
             </div>
-            <Select
-              value={filterType}
-              onChange={setFilterType}
-              style={{ width: '100%' }}
-              dropdownStyle={{ padding: '8px' }}
-            >
-              <Option value="All">
-                <Space>
-                  <HomeOutlined style={{ color: '#666' }} />
-                  All Room Types
-                </Space>
-              </Option>
-              <Option value="Single">
-                <Space>
-                  <HomeOutlined style={{ color: '#40a9ff' }} />
-                  Single Room
-                </Space>
-              </Option>
-              <Option value="Double">
-                <Space>
-                  <HomeOutlined style={{ color: '#52c41a' }} />
-                  Double Room
-                </Space>
-              </Option>
-              <Option value="Suite">
-                <Space>
-                  <HomeOutlined style={{ color: '#ffd700' }} />
-                  Luxury Suite
-                </Space>
-              </Option>
-              <Option value="Deluxe">
-                <Space>
-                  <HomeOutlined style={{ color: '#722ed1' }} />
-                  Deluxe Room
-                </Space>
-              </Option>
-              <Option value="Family">
-                <Space>
-                  <HomeOutlined style={{ color: '#eb2f96' }} />
-                  Family Room
-                </Space>
-              </Option>
-            </Select>
-          </FilterGroup>
-
-          <FilterGroup>
-            <div className="filter-label">
+            <div className="header-item">
+              <DollarOutlined className="icon" />
+              Daily Price
+            </div>
+            <div className="header-item">
+              <ClockCircleOutlined className="icon" />
+              Hourly Price
+            </div>
+            <div className="header-item">
               <CheckCircleOutlined className="icon" />
               Status
             </div>
-            <Select
-              value={filterStatus}
-              onChange={setFilterStatus}
-              style={{ width: '100%' }}
-              dropdownStyle={{ padding: '8px' }}
-            >
-              <Option value="All">
-                <Space>
-                  <CheckCircleOutlined style={{ color: '#666' }} />
-                  All Status
-                </Space>
-              </Option>
-              <Option value="Available">
-                <Space>
-                  <CheckCircleOutlined style={{ color: '#10b981' }} />
-                  Available
-                </Space>
-              </Option>
-              <Option value="Occupied">
-                <Space>
-                  <CloseCircleOutlined style={{ color: '#ef4444' }} />
-                  Occupied
-                </Space>
-              </Option>
-              <Option value="Maintenance">
-                <Space>
-                  <ToolOutlined style={{ color: '#f59e0b' }} />
-                  Under Maintenance
-                </Space>
-              </Option>
-              <Option value="Reserved">
-                <Space>
-                  <CalendarOutlined style={{ color: '#6366f1' }} />
-                  Reserved
-                </Space>
-              </Option>
-            </Select>
-          </FilterGroup>
-
-          <FilterGroup>
-            <div className="filter-label">
-              <SortAscendingOutlined className="icon" />
-              Sort by Price
+            <div className="header-item">
+              <SettingOutlined className="icon" />
+              Actions
             </div>
-            <Select
-              value={sortPrice}
-              onChange={setSortPrice}
-              style={{ width: '100%' }}
-              dropdownStyle={{ padding: '8px' }}
-            >
-              <Option value="asc">
-                <Space>
-                  <SortAscendingOutlined />
-                  Price: Low to High
-                </Space>
-              </Option>
-              <Option value="desc">
-                <Space>
-                  <SortDescendingOutlined />
-                  Price: High to Low
-                </Space>
-              </Option>
-            </Select>
-          </FilterGroup>
-        </FilterSection>
+          </RoomHeader>
 
-        <RoomHeader>
-          <div className="header-item">
-            <HomeOutlined className="icon" />
-            Room No.
-          </div>
-          <div className="header-item">
-            <i className="fas fa-bed icon"></i>
-            Type
-          </div>
-          <div className="header-item">
-            <CheckCircleOutlined className="icon" />
-            Status
-          </div>
-          <div className="header-item">
-            <i className="fas fa-user icon"></i>
-            Occupancy
-          </div>
-          <div className="header-item">
-            <i className="fas fa-tag icon"></i>
-            Price
-          </div>
-        </RoomHeader>
-
-        <RoomListContainer>
-          {filteredRooms.map(room => (
-            <RoomItem 
-              key={room._id}
-              isSelected={selectedRoom?._id === room._id}
-              onClick={() => setSelectedRoom(room)}
-            >
-              <div className="room-number">Room {room.roomNumber}</div>
-              <div className="room-type">{room.roomType}</div>
-              <div className="status">{getStatusTag(room.status)}</div>
-              <div className="occupancy">
-                <i className="fas fa-user icon" />
-                {room.maxOccupancy} {room.maxOccupancy > 1 ? 'persons' : 'person'}
-              </div>
-              <div className="price">${room.price.toLocaleString()}</div>
-            </RoomItem>
-          ))}
-        </RoomListContainer>
-      </ContentWrapper>
-
-      <RoomDetailContainer>
-        {selectedRoom ? (
-          <>
-            <RoomDetailHeader>
-              <RoomNumberBadge>
-                Room {selectedRoom.roomNumber}
-              </RoomNumberBadge>
-              <RoomTypeTag>
-                <i className="icon fas fa-bed" />
-                {selectedRoom.roomType}
-              </RoomTypeTag>
-            </RoomDetailHeader>
-
-            <DetailSection>
-              <DetailItem>
-                <div className="label">Status</div>
-                <div className="value">
-                  {getStatusTag(selectedRoom.status)}
-                </div>
-              </DetailItem>
-
-              <DetailItem>
-                <div className="label">Maximum Occupancy</div>
-                <div className="value">
-                  {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
-                </div>
-              </DetailItem>
-
-              <DetailItem>
-                <div className="label">Price</div>
-                <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-                  ${selectedRoom.price.toLocaleString()}
-                </div>
-              </DetailItem>
-
-              {selectedRoom.description && (
-                <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                  <div className="label">Description</div>
-                  <div className="value" style={{ 
-                    padding: '12px',
-                    background: '#f0f2f5',
-                    borderRadius: '6px',
-                    width: '100%',
-                    lineHeight: '1.5'
-                  }}>
-                    {selectedRoom.description}
-                  </div>
-                </DetailItem>
-              )}
-            </DetailSection>
-
-            <ActionButtons>
-              <Button 
-                className="edit-button"
-                type="primary"
-                icon={<EditOutlined />}
+          <RoomListContainer>
+            {filteredRooms.map(room => (
+              <RoomItem 
+                key={room._id} 
                 onClick={() => {
-                  form.setFieldsValue(selectedRoom);
+                  setSelectedRoom(room);
+                  if (isMobile) {
+                    setIsDetailDrawerVisible(true);
+                  }
+                }}
+                isSelected={selectedRoom?._id === room._id}
+              >
+                <div className="room-number">
+                  <HomeOutlined style={{ color: '#64748b' }} />
+                  Room {room.roomNumber}
+                </div>
+                <div className="room-type">
+                  {room.roomType}
+                </div>
+                <div className="price">
+                  {formatVND(room.dailyPrice)}
+                </div>
+                <div className="price">
+                  {formatVND(room.hourlyPrice)}
+                </div>
+                <div>
+                  {getStatusTag(room.status)}
+                </div>
+                <div>
+                  <Space>
+                    <Button
+                      type="text"
+                      icon={<EditOutlined />}
+                      style={{ color: '#0ea5e9' }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedRoom(room);
+                        setIsEditing(true);
+                        form.setFieldsValue(room);
+                      }}
+                    />
+                    <Button
+                      type="text"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(room._id);
+                      }}
+                    />
+                  </Space>
+                </div>
+              </RoomItem>
+            ))}
+          </RoomListContainer>
+
+          {/* Thêm Drawer cho chi tiết phòng */}
+          <StyledDrawer
+            title={selectedRoom ? `Room ${selectedRoom.roomNumber}` : 'Room Details'}
+            placement="right"
+            width="100%"
+            onClose={() => {
+              setIsDetailDrawerVisible(false);
+              setSelectedRoom(null);
+            }}
+            open={isDetailDrawerVisible}
+          >
+            <RoomDetailContainer>
+              {selectedRoom ? (
+                isEditing ? (
+                  <FormWrapper>
+                    <FormTitle>
+                      <EditOutlined className="icon" />
+                      Edit Room
+                    </FormTitle>
+                    <StyledForm
+                      form={form}
+                      layout="vertical"
+                      onFinish={handleSubmit}
+                      initialValues={selectedRoom}
+                    >
+                      <FormSection>
+                        <div className="section-title">Basic Information</div>
+                        <Form.Item
+                          name="roomNumber"
+                          label="Room Number"
+                          rules={[{ required: true, message: 'Please input room number!' }]}
+                        >
+                          <StyledInput placeholder="Enter room number (e.g. 101)" />
+                        </Form.Item>
+
+                        <Form.Item
+                          name="roomType"
+                          label="Room Type"
+                          rules={[{ required: true, message: 'Please select room type!' }]}
+                        >
+                          <StyledSelect placeholder="Select room type">
+                            <Option value="Single">Single Room</Option>
+                            <Option value="Double">Double Room</Option>
+                            <Option value="Suite">Luxury Suite</Option>
+                            <Option value="Deluxe">Deluxe Room</Option>
+                            <Option value="Family">Family Room</Option>
+                          </StyledSelect>
+                        </Form.Item>
+                      </FormSection>
+
+                      <FormSection>
+                        <div className="section-title">Capacity & Pricing</div>
+                        <Form.Item
+                          name="hourlyPrice"
+                          label="Hourly Price"
+                          rules={[
+                            { required: true, message: 'Please input hourly price' },
+                            { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                          ]}
+                          tooltip="Daily price should be 20 times the hourly price"
+                        >
+                          <InputNumber
+                            style={{ width: '100%' }}
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                            addonAfter="VND/hour"
+                          />
+                        </Form.Item>
+
+                        <Form.Item
+                          name="dailyPrice"
+                          label="Daily Price"
+                          rules={[
+                            { required: true, message: 'Please input daily price' },
+                            { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                            ({ getFieldValue }) => ({
+                              validator(_, value) {
+                                const hourlyPrice = getFieldValue('hourlyPrice');
+                                if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                                  return Promise.resolve();
+                                }
+                                return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                              },
+                            }),
+                          ]}
+                          tooltip="Daily price should be at least 20 times the hourly price"
+                        >
+                          <InputNumber
+                            style={{ width: '100%' }}
+                            formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                            addonAfter="VND/day"
+                          />
+                        </Form.Item>
+
+                        <Form.Item
+                          name="maxOccupancy"
+                          label="Maximum Occupancy"
+                          rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                        >
+                          <InputNumber 
+                            min={1} 
+                            style={{ width: '100%' }} 
+                            placeholder="Enter maximum number of guests"
+                          />
+                        </Form.Item>
+                      </FormSection>
+
+                      <FormSection>
+                        <div className="section-title">Room Status & Details</div>
+                        <Form.Item
+                          name="status"
+                          label="Status"
+                          rules={[{ required: true, message: 'Please select status!' }]}
+                        >
+                          <StyledSelect 
+                            placeholder="Select status"
+                            disabled={selectedRoom?.status === 'Reserved' || selectedRoom?.status === 'Occupied'}
+                          >
+                            <Option value="Available">Available</Option>
+                            <Option value="Maintenance">Maintenance</Option>
+                            {!selectedRoom && <Option value="Reserved">Reserved</Option>}
+                            {!selectedRoom && <Option value="Occupied">Occupied</Option>}
+                          </StyledSelect>
+                        </Form.Item>
+
+                        <Form.Item
+                          name="description"
+                          label="Room Description"
+                        >
+                          <StyledTextArea 
+                            rows={4} 
+                            placeholder="Enter detailed description of the room..."
+                          />
+                        </Form.Item>
+                      </FormSection>
+
+                      <Form.Item>
+                        <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                          <Button onClick={() => setIsEditing(false)}>
+                            Cancel
+                          </Button>
+                          <SubmitButton type="primary" htmlType="submit">
+                            Update Room
+                          </SubmitButton>
+                        </Space>
+                      </Form.Item>
+                    </StyledForm>
+                  </FormWrapper>
+                ) : (
+                  <>
+                    <RoomDetailHeader>
+                      <RoomNumberBadge>
+                        Room {selectedRoom.roomNumber}
+                      </RoomNumberBadge>
+                      <RoomTypeTag>
+                        <i className="icon fas fa-bed" />
+                        {selectedRoom.roomType}
+                      </RoomTypeTag>
+                    </RoomDetailHeader>
+
+                    <DetailSection>
+                      <DetailItem>
+                        <div className="label">Status</div>
+                        <div className="value">
+                          {getStatusTag(selectedRoom.status)}
+                        </div>
+                      </DetailItem>
+
+                      <DetailItem>
+                        <div className="label">Daily Price</div>
+                        <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                          {formatVND(selectedRoom?.dailyPrice || 0)}
+                        </div>
+                      </DetailItem>
+
+                      <DetailItem>
+                        <div className="label">Hourly Price</div>
+                        <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                          {formatVND(selectedRoom?.hourlyPrice || 0)}
+                        </div>
+                      </DetailItem>
+
+                      <DetailItem>
+                        <div className="label">Maximum Occupancy</div>
+                        <div className="value">
+                          {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
+                        </div>
+                      </DetailItem>
+
+                      {selectedRoom.description && (
+                        <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                          <div className="label">Description</div>
+                          <div className="value" style={{ 
+                            padding: '12px',
+                            background: '#f0f2f5',
+                            borderRadius: '6px',
+                            width: '100%',
+                            lineHeight: '1.5'
+                          }}>
+                            {selectedRoom.description}
+                          </div>
+                        </DetailItem>
+                      )}
+                    </DetailSection>
+
+                    <ActionButtons>
+                      <Button 
+                        className="edit-button"
+                        type="primary"
+                        icon={<EditOutlined />}
+                        onClick={() => {
+                          setIsEditing(true);
+                          form.setFieldsValue(selectedRoom);
+                        }}
+                      >
+                        Edit Room
+                      </Button>
+                      <Button
+                        className="delete-button"
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDelete(selectedRoom._id)}
+                      >
+                        Delete Room
+                      </Button>
+                    </ActionButtons>
+                  </>
+                )
+              ) : (
+                <FormWrapper>
+                  <FormTitle>
+                    <PlusOutlined className="icon" />
+                    Add New Room
+                  </FormTitle>
+                  <StyledForm
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                  >
+                    <FormSection>
+                      <div className="section-title">Basic Information</div>
+                      <Form.Item
+                        name="roomNumber"
+                        label="Room Number"
+                        rules={[{ required: true, message: 'Please input room number!' }]}
+                      >
+                        <StyledInput placeholder="Enter room number (e.g. 101)" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="roomType"
+                        label="Room Type"
+                        rules={[{ required: true, message: 'Please select room type!' }]}
+                      >
+                        <StyledSelect placeholder="Select room type">
+                          <Option value="Single">Single Room</Option>
+                          <Option value="Double">Double Room</Option>
+                          <Option value="Suite">Luxury Suite</Option>
+                          <Option value="Deluxe">Deluxe Room</Option>
+                          <Option value="Family">Family Room</Option>
+                        </StyledSelect>
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Capacity & Pricing</div>
+                      <Form.Item
+                        name="hourlyPrice"
+                        label="Hourly Price"
+                        rules={[
+                          { required: true, message: 'Please input hourly price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                        ]}
+                        tooltip="Daily price should be 20 times the hourly price"
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                          addonAfter="VND/hour"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="dailyPrice"
+                        label="Daily Price"
+                        rules={[
+                          { required: true, message: 'Please input daily price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const hourlyPrice = getFieldValue('hourlyPrice');
+                              if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                            },
+                          }),
+                        ]}
+                        tooltip="Daily price should be at least 20 times the hourly price"
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                          addonAfter="VND/day"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="maxOccupancy"
+                        label="Maximum Occupancy"
+                        rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                      >
+                        <InputNumber 
+                          min={1} 
+                          style={{ width: '100%' }} 
+                          placeholder="Enter maximum number of guests"
+                        />
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Room Status & Details</div>
+                      <Form.Item
+                        name="status"
+                        label="Current Status"
+                        rules={[{ required: true, message: 'Please select status!' }]}
+                      >
+                        <StyledSelect placeholder="Select room status">
+                          <Option value="Available">
+                            <Space>
+                              <span style={{ color: '#10b981' }}>●</span>
+                              Available
+                            </Space>
+                          </Option>
+                          <Option value="Occupied">
+                            <Space>
+                              <span style={{ color: '#ef4444' }}>●</span>
+                              Occupied
+                            </Space>
+                          </Option>
+                          <Option value="Maintenance">
+                            <Space>
+                              <span style={{ color: '#f59e0b' }}>●</span>
+                              Maintenance
+                            </Space>
+                          </Option>
+                          <Option value="Reserved">
+                            <Space>
+                              <span style={{ color: '#6366f1' }}>●</span>
+                              Reserved
+                            </Space>
+                          </Option>
+                        </StyledSelect>
+                      </Form.Item>
+
+                      <Form.Item
+                        name="description"
+                        label="Room Description"
+                      >
+                        <StyledTextArea 
+                          rows={4} 
+                          placeholder="Enter detailed description of the room..."
+                        />
+                      </Form.Item>
+                    </FormSection>
+
+                    <Form.Item>
+                      <SubmitButton type="primary" htmlType="submit" block>
+                        Create Room
+                      </SubmitButton>
+                    </Form.Item>
+                  </StyledForm>
+                </FormWrapper>
+              )}
+            </RoomDetailContainer>
+          </StyledDrawer>
+
+          {/* Thêm Drawer cho thêm phòng mới */}
+          <StyledDrawer
+            title="Add New Room"
+            placement="right"
+            width="100%"
+            onClose={() => setIsAddDrawerVisible(false)}
+            open={isAddDrawerVisible}
+          >
+            <RoomDetailContainer>
+              <FormWrapper>
+                <FormTitle>
+                  <PlusOutlined className="icon" />
+                  Add New Room
+                </FormTitle>
+                <StyledForm
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmit}
+                >
+                  <FormSection>
+                    <div className="section-title">Basic Information</div>
+                    <Form.Item
+                      name="roomNumber"
+                      label="Room Number"
+                      rules={[{ required: true, message: 'Please input room number!' }]}
+                    >
+                      <StyledInput placeholder="Enter room number (e.g. 101)" />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="roomType"
+                      label="Room Type"
+                      rules={[{ required: true, message: 'Please select room type!' }]}
+                    >
+                      <StyledSelect placeholder="Select room type">
+                        <Option value="Single">Single Room</Option>
+                        <Option value="Double">Double Room</Option>
+                        <Option value="Suite">Luxury Suite</Option>
+                        <Option value="Deluxe">Deluxe Room</Option>
+                        <Option value="Family">Family Room</Option>
+                      </StyledSelect>
+                    </Form.Item>
+                  </FormSection>
+
+                  <FormSection>
+                    <div className="section-title">Capacity & Pricing</div>
+                    <Form.Item
+                      name="hourlyPrice"
+                      label="Hourly Price"
+                      rules={[
+                        { required: true, message: 'Please input hourly price' },
+                        { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                      ]}
+                      tooltip="Daily price should be 20 times the hourly price"
+                    >
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        addonAfter="VND/hour"
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="dailyPrice"
+                      label="Daily Price"
+                      rules={[
+                        { required: true, message: 'Please input daily price' },
+                        { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            const hourlyPrice = getFieldValue('hourlyPrice');
+                            if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                              return Promise.resolve();
+                            }
+                            return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                          },
+                        }),
+                      ]}
+                      tooltip="Daily price should be at least 20 times the hourly price"
+                    >
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        addonAfter="VND/day"
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="maxOccupancy"
+                      label="Maximum Occupancy"
+                      rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                    >
+                      <InputNumber 
+                        min={1} 
+                        style={{ width: '100%' }} 
+                        placeholder="Enter maximum number of guests"
+                      />
+                    </Form.Item>
+                  </FormSection>
+
+                  <FormSection>
+                    <div className="section-title">Room Status & Details</div>
+                    <Form.Item
+                      name="status"
+                      label="Current Status"
+                      rules={[{ required: true, message: 'Please select status!' }]}
+                    >
+                      <StyledSelect placeholder="Select room status">
+                        <Option value="Available">
+                          <Space>
+                            <span style={{ color: '#10b981' }}>●</span>
+                            Available
+                          </Space>
+                        </Option>
+                        <Option value="Occupied">
+                          <Space>
+                            <span style={{ color: '#ef4444' }}>●</span>
+                            Occupied
+                          </Space>
+                        </Option>
+                        <Option value="Maintenance">
+                          <Space>
+                            <span style={{ color: '#f59e0b' }}>●</span>
+                            Maintenance
+                          </Space>
+                        </Option>
+                        <Option value="Reserved">
+                          <Space>
+                            <span style={{ color: '#6366f1' }}>●</span>
+                            Reserved
+                          </Space>
+                        </Option>
+                      </StyledSelect>
+                    </Form.Item>
+
+                    <Form.Item
+                      name="description"
+                      label="Room Description"
+                    >
+                      <StyledTextArea 
+                        rows={4} 
+                        placeholder="Enter detailed description of the room..."
+                      />
+                    </Form.Item>
+                  </FormSection>
+
+                  <Form.Item>
+                    <SubmitButton type="primary" htmlType="submit" block>
+                      Create Room
+                    </SubmitButton>
+                  </Form.Item>
+                </StyledForm>
+              </FormWrapper>
+            </RoomDetailContainer>
+          </StyledDrawer>
+        </ContentWrapper>
+      ) : (
+        // Desktop view - giữ nguyên layout hiện tại
+        <GridContainer>
+          <ContentWrapper>
+            <HeaderSection>
+              <TitleSection>
+                <div className="icon-wrapper">
+                  <HomeOutlined />
+                </div>
+                <div className="text-content">
+                  <Title>Room Management</Title>
+                  <Subtitle>Manage your hotel rooms efficiently</Subtitle>
+                </div>
+              </TitleSection>
+              
+              <AddButton 
+                type="primary" 
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setSelectedRoom(null);
+                  form.resetFields();
                 }}
               >
-                Edit Room
-              </Button>
-              <Button
-                className="delete-button"
-                icon={<DeleteOutlined />}
-                onClick={() => handleDelete(selectedRoom._id)}
-              >
-                Delete Room
-              </Button>
-            </ActionButtons>
-          </>
-        ) : (
-          <FormWrapper>
-            <FormTitle>
-              <PlusOutlined className="icon" />
-              Add New Room
-            </FormTitle>
-            <StyledForm
-              form={form}
-              layout="vertical"
-              onFinish={handleSubmit}
-            >
-              <FormSection>
-                <div className="section-title">Basic Information</div>
-                <Form.Item
-                  name="roomNumber"
-                  label="Room Number"
-                  rules={[{ required: true, message: 'Please input room number!' }]}
-                >
-                  <StyledInput placeholder="Enter room number (e.g. 101)" />
-                </Form.Item>
+                Add New Room
+              </AddButton>
+            </HeaderSection>
 
-                <Form.Item
-                  name="roomType"
-                  label="Room Type"
-                  rules={[{ required: true, message: 'Please select room type!' }]}
+            <FilterSection>
+              <FilterGroup>
+                <div className="filter-label">
+                  <HomeOutlined className="icon" />
+                  Room Type
+                </div>
+                <Select
+                  value={filterType}
+                  onChange={setFilterType}
+                  style={{ width: '100%' }}
+                  dropdownStyle={{ padding: '8px' }}
                 >
-                  <StyledSelect placeholder="Select room type">
-                    <Option value="Single">Single Room</Option>
-                    <Option value="Double">Double Room</Option>
-                    <Option value="Suite">Luxury Suite</Option>
-                    <Option value="Deluxe">Deluxe Room</Option>
-                    <Option value="Family">Family Room</Option>
-                  </StyledSelect>
-                </Form.Item>
-              </FormSection>
+                  <Option value="All">
+                    <Space>
+                      <HomeOutlined style={{ color: '#666' }} />
+                      All Room Types
+                    </Space>
+                  </Option>
+                  <Option value="Single">
+                    <Space>
+                      <HomeOutlined style={{ color: '#40a9ff' }} />
+                      Single Room
+                    </Space>
+                  </Option>
+                  <Option value="Double">
+                    <Space>
+                      <HomeOutlined style={{ color: '#52c41a' }} />
+                      Double Room
+                    </Space>
+                  </Option>
+                  <Option value="Suite">
+                    <Space>
+                      <HomeOutlined style={{ color: '#ffd700' }} />
+                      Luxury Suite
+                    </Space>
+                  </Option>
+                  <Option value="Deluxe">
+                    <Space>
+                      <HomeOutlined style={{ color: '#722ed1' }} />
+                      Deluxe Room
+                    </Space>
+                  </Option>
+                  <Option value="Family">
+                    <Space>
+                      <HomeOutlined style={{ color: '#eb2f96' }} />
+                      Family Room
+                    </Space>
+                  </Option>
+                </Select>
+              </FilterGroup>
 
-              <FormSection>
-                <div className="section-title">Capacity & Pricing</div>
-                <Form.Item
-                  name="price"
-                  label="Price"
-                  rules={[{ required: true, message: 'Please input price!' }]}
+              <FilterGroup>
+                <div className="filter-label">
+                  <CheckCircleOutlined className="icon" />
+                  Status
+                </div>
+                <Select
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  style={{ width: '100%' }}
+                  dropdownStyle={{ padding: '8px' }}
                 >
-                  <PriceInput
-                    formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                    parser={value => value.replace(/\$\s?|(,*)/g, '')}
-                    min={0}
-                    style={{ width: '100%' }}
-                    placeholder="Enter price"
-                  />
-                </Form.Item>
+                  <Option value="All">
+                    <Space>
+                      <CheckCircleOutlined style={{ color: '#666' }} />
+                      All Status
+                    </Space>
+                  </Option>
+                  <Option value="Available">
+                    <Space>
+                      <CheckCircleOutlined style={{ color: '#10b981' }} />
+                      Available
+                    </Space>
+                  </Option>
+                  <Option value="Occupied">
+                    <Space>
+                      <CloseCircleOutlined style={{ color: '#ef4444' }} />
+                      Occupied
+                    </Space>
+                  </Option>
+                  <Option value="Maintenance">
+                    <Space>
+                      <ToolOutlined style={{ color: '#f59e0b' }} />
+                      Under Maintenance
+                    </Space>
+                  </Option>
+                  <Option value="Reserved">
+                    <Space>
+                      <CalendarOutlined style={{ color: '#6366f1' }} />
+                      Reserved
+                    </Space>
+                  </Option>
+                </Select>
+              </FilterGroup>
 
-                <Form.Item
-                  name="maxOccupancy"
-                  label="Maximum Occupancy"
-                  rules={[{ required: true, message: 'Please input max occupancy!' }]}
+              <FilterGroup>
+                <div className="filter-label">
+                  <SortAscendingOutlined className="icon" />
+                  Sort by Price
+                </div>
+                <Select
+                  value={sortPrice}
+                  onChange={setSortPrice}
+                  style={{ width: '100%' }}
+                  dropdownStyle={{ padding: '8px' }}
                 >
-                  <InputNumber 
-                    min={1} 
-                    style={{ width: '100%' }} 
-                    placeholder="Enter maximum number of guests"
-                  />
-                </Form.Item>
-              </FormSection>
+                  <Option value="asc">
+                    <Space>
+                      <SortAscendingOutlined />
+                      Price: Low to High
+                    </Space>
+                  </Option>
+                  <Option value="desc">
+                    <Space>
+                      <SortDescendingOutlined />
+                      Price: High to Low
+                    </Space>
+                  </Option>
+                </Select>
+              </FilterGroup>
+            </FilterSection>
 
-              <FormSection>
-                <div className="section-title">Room Status & Details</div>
-                <Form.Item
-                  name="status"
-                  label="Current Status"
-                  rules={[{ required: true, message: 'Please select status!' }]}
+            <RoomHeader>
+              <div className="header-item">
+                <HomeOutlined className="icon" />
+                Room Number
+              </div>
+              <div className="header-item">
+                <i className="fas fa-bed icon"></i>
+                Room Type
+              </div>
+              <div className="header-item">
+                <DollarOutlined className="icon" />
+                Daily Price
+              </div>
+              <div className="header-item">
+                <ClockCircleOutlined className="icon" />
+                Hourly Price
+              </div>
+              <div className="header-item">
+                <CheckCircleOutlined className="icon" />
+                Status
+              </div>
+              <div className="header-item">
+                <SettingOutlined className="icon" />
+                Actions
+              </div>
+            </RoomHeader>
+
+            <RoomListContainer>
+              {filteredRooms.map(room => (
+                <RoomItem 
+                  key={room._id} 
+                  onClick={() => setSelectedRoom(room)}
+                  isSelected={selectedRoom?._id === room._id}
                 >
-                  <StyledSelect placeholder="Select room status">
-                    <Option value="Available">
-                      <Space>
-                        <span style={{ color: '#10b981' }}>●</span>
-                        Available
+                  <div className="room-number">
+                    <HomeOutlined style={{ color: '#64748b' }} />
+                    Room {room.roomNumber}
+                  </div>
+                  <div className="room-type">
+                    {room.roomType}
+                  </div>
+                  <div className="price">
+                    {formatVND(room.dailyPrice)}
+                  </div>
+                  <div className="price">
+                    {formatVND(room.hourlyPrice)}
+                  </div>
+                  <div>
+                    {getStatusTag(room.status)}
+                  </div>
+                  <div>
+                    <Space>
+                      <Button
+                        type="text"
+                        icon={<EditOutlined />}
+                        style={{ color: '#0ea5e9' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedRoom(room);
+                          setIsEditing(true);
+                          form.setFieldsValue(room);
+                        }}
+                      />
+                      <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(room._id);
+                        }}
+                      />
+                    </Space>
+                  </div>
+                </RoomItem>
+              ))}
+            </RoomListContainer>
+          </ContentWrapper>
+          <RoomDetailContainer>
+            {selectedRoom ? (
+              isEditing ? (
+                <FormWrapper>
+                  <FormTitle>
+                    <EditOutlined className="icon" />
+                    Edit Room
+                  </FormTitle>
+                  <StyledForm
+                    form={form}
+                    layout="vertical"
+                    onFinish={handleSubmit}
+                    initialValues={selectedRoom}
+                  >
+                    <FormSection>
+                      <div className="section-title">Basic Information</div>
+                      <Form.Item
+                        name="roomNumber"
+                        label="Room Number"
+                        rules={[{ required: true, message: 'Please input room number!' }]}
+                      >
+                        <StyledInput placeholder="Enter room number (e.g. 101)" />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="roomType"
+                        label="Room Type"
+                        rules={[{ required: true, message: 'Please select room type!' }]}
+                      >
+                        <StyledSelect placeholder="Select room type">
+                          <Option value="Single">Single Room</Option>
+                          <Option value="Double">Double Room</Option>
+                          <Option value="Suite">Luxury Suite</Option>
+                          <Option value="Deluxe">Deluxe Room</Option>
+                          <Option value="Family">Family Room</Option>
+                        </StyledSelect>
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Capacity & Pricing</div>
+                      <Form.Item
+                        name="hourlyPrice"
+                        label="Hourly Price"
+                        rules={[
+                          { required: true, message: 'Please input hourly price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                        ]}
+                        tooltip="Daily price should be 20 times the hourly price"
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                          addonAfter="VND/hour"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="dailyPrice"
+                        label="Daily Price"
+                        rules={[
+                          { required: true, message: 'Please input daily price' },
+                          { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                          ({ getFieldValue }) => ({
+                            validator(_, value) {
+                              const hourlyPrice = getFieldValue('hourlyPrice');
+                              if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                                return Promise.resolve();
+                              }
+                              return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                            },
+                          }),
+                        ]}
+                        tooltip="Daily price should be at least 20 times the hourly price"
+                      >
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                          parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                          addonAfter="VND/day"
+                        />
+                      </Form.Item>
+
+                      <Form.Item
+                        name="maxOccupancy"
+                        label="Maximum Occupancy"
+                        rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                      >
+                        <InputNumber 
+                          min={1} 
+                          style={{ width: '100%' }} 
+                          placeholder="Enter maximum number of guests"
+                        />
+                      </Form.Item>
+                    </FormSection>
+
+                    <FormSection>
+                      <div className="section-title">Room Status & Details</div>
+                      <Form.Item
+                        name="status"
+                        label="Status"
+                        rules={[{ required: true, message: 'Please select status!' }]}
+                      >
+                        <StyledSelect 
+                          placeholder="Select status"
+                          disabled={selectedRoom?.status === 'Reserved' || selectedRoom?.status === 'Occupied'}
+                        >
+                          <Option value="Available">Available</Option>
+                          <Option value="Maintenance">Maintenance</Option>
+                          {!selectedRoom && <Option value="Reserved">Reserved</Option>}
+                          {!selectedRoom && <Option value="Occupied">Occupied</Option>}
+                        </StyledSelect>
+                      </Form.Item>
+
+                      <Form.Item
+                        name="description"
+                        label="Room Description"
+                      >
+                        <StyledTextArea 
+                          rows={4} 
+                          placeholder="Enter detailed description of the room..."
+                        />
+                      </Form.Item>
+                    </FormSection>
+
+                    <Form.Item>
+                      <Space style={{ width: '100%', justifyContent: 'flex-end' }}>
+                        <Button onClick={() => setIsEditing(false)}>
+                          Cancel
+                        </Button>
+                        <SubmitButton type="primary" htmlType="submit">
+                          Update Room
+                        </SubmitButton>
                       </Space>
-                    </Option>
-                    <Option value="Occupied">
-                      <Space>
-                        <span style={{ color: '#ef4444' }}>●</span>
-                        Occupied
-                      </Space>
-                    </Option>
-                    <Option value="Maintenance">
-                      <Space>
-                        <span style={{ color: '#f59e0b' }}>●</span>
-                        Maintenance
-                      </Space>
-                    </Option>
-                    <Option value="Reserved">
-                      <Space>
-                        <span style={{ color: '#6366f1' }}>●</span>
-                        Reserved
-                      </Space>
-                    </Option>
-                  </StyledSelect>
-                </Form.Item>
+                    </Form.Item>
+                  </StyledForm>
+                </FormWrapper>
+              ) : (
+                <>
+                  <RoomDetailHeader>
+                    <RoomNumberBadge>
+                      Room {selectedRoom.roomNumber}
+                    </RoomNumberBadge>
+                    <RoomTypeTag>
+                      <i className="icon fas fa-bed" />
+                      {selectedRoom.roomType}
+                    </RoomTypeTag>
+                  </RoomDetailHeader>
 
-                <Form.Item
-                  name="description"
-                  label="Room Description"
+                  <DetailSection>
+                    <DetailItem>
+                      <div className="label">Status</div>
+                      <div className="value">
+                        {getStatusTag(selectedRoom.status)}
+                      </div>
+                    </DetailItem>
+
+                    <DetailItem>
+                      <div className="label">Daily Price</div>
+                      <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                        {formatVND(selectedRoom?.dailyPrice || 0)}
+                      </div>
+                    </DetailItem>
+
+                    <DetailItem>
+                      <div className="label">Hourly Price</div>
+                      <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+                        {formatVND(selectedRoom?.hourlyPrice || 0)}
+                      </div>
+                    </DetailItem>
+
+                    <DetailItem>
+                      <div className="label">Maximum Occupancy</div>
+                      <div className="value">
+                        {selectedRoom.maxOccupancy} {selectedRoom.maxOccupancy > 1 ? 'persons' : 'person'}
+                      </div>
+                    </DetailItem>
+
+                    {selectedRoom.description && (
+                      <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                        <div className="label">Description</div>
+                        <div className="value" style={{ 
+                          padding: '12px',
+                          background: '#f0f2f5',
+                          borderRadius: '6px',
+                          width: '100%',
+                          lineHeight: '1.5'
+                        }}>
+                          {selectedRoom.description}
+                        </div>
+                      </DetailItem>
+                    )}
+                  </DetailSection>
+
+                  <ActionButtons>
+                    <Button 
+                      className="edit-button"
+                      type="primary"
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        setIsEditing(true);
+                        form.setFieldsValue(selectedRoom);
+                      }}
+                    >
+                      Edit Room
+                    </Button>
+                    <Button
+                      className="delete-button"
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDelete(selectedRoom._id)}
+                    >
+                      Delete Room
+                    </Button>
+                  </ActionButtons>
+                </>
+              )
+            ) : (
+              <FormWrapper>
+                <FormTitle>
+                  <PlusOutlined className="icon" />
+                  Add New Room
+                </FormTitle>
+                <StyledForm
+                  form={form}
+                  layout="vertical"
+                  onFinish={handleSubmit}
                 >
-                  <StyledTextArea 
-                    rows={4} 
-                    placeholder="Enter detailed description of the room..."
-                  />
-                </Form.Item>
-              </FormSection>
+                  <FormSection>
+                    <div className="section-title">Basic Information</div>
+                    <Form.Item
+                      name="roomNumber"
+                      label="Room Number"
+                      rules={[{ required: true, message: 'Please input room number!' }]}
+                    >
+                      <StyledInput placeholder="Enter room number (e.g. 101)" />
+                    </Form.Item>
 
-              <Form.Item>
-                <SubmitButton type="primary" htmlType="submit" block>
-                  Create Room
-                </SubmitButton>
-              </Form.Item>
-            </StyledForm>
-          </FormWrapper>
-        )}
-      </RoomDetailContainer>
+                    <Form.Item
+                      name="roomType"
+                      label="Room Type"
+                      rules={[{ required: true, message: 'Please select room type!' }]}
+                    >
+                      <StyledSelect placeholder="Select room type">
+                        <Option value="Single">Single Room</Option>
+                        <Option value="Double">Double Room</Option>
+                        <Option value="Suite">Luxury Suite</Option>
+                        <Option value="Deluxe">Deluxe Room</Option>
+                        <Option value="Family">Family Room</Option>
+                      </StyledSelect>
+                    </Form.Item>
+                  </FormSection>
+
+                  <FormSection>
+                    <div className="section-title">Capacity & Pricing</div>
+                    <Form.Item
+                      name="hourlyPrice"
+                      label="Hourly Price"
+                      rules={[
+                        { required: true, message: 'Please input hourly price' },
+                        { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                      ]}
+                      tooltip="Daily price should be 20 times the hourly price"
+                    >
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        addonAfter="VND/hour"
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="dailyPrice"
+                      label="Daily Price"
+                      rules={[
+                        { required: true, message: 'Please input daily price' },
+                        { type: 'number', min: 0, message: 'Price must be greater than 0' },
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            const hourlyPrice = getFieldValue('hourlyPrice');
+                            if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
+                              return Promise.resolve();
+                            }
+                            return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
+                          },
+                        }),
+                      ]}
+                      tooltip="Daily price should be at least 20 times the hourly price"
+                    >
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                        addonAfter="VND/day"
+                      />
+                    </Form.Item>
+
+                    <Form.Item
+                      name="maxOccupancy"
+                      label="Maximum Occupancy"
+                      rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                    >
+                      <InputNumber 
+                        min={1} 
+                        style={{ width: '100%' }} 
+                        placeholder="Enter maximum number of guests"
+                      />
+                    </Form.Item>
+                  </FormSection>
+
+                  <FormSection>
+                    <div className="section-title">Room Status & Details</div>
+                    <Form.Item
+                      name="status"
+                      label="Current Status"
+                      rules={[{ required: true, message: 'Please select status!' }]}
+                    >
+                      <StyledSelect placeholder="Select room status">
+                        <Option value="Available">
+                          <Space>
+                            <span style={{ color: '#10b981' }}>●</span>
+                            Available
+                          </Space>
+                        </Option>
+                        <Option value="Occupied">
+                          <Space>
+                            <span style={{ color: '#ef4444' }}>●</span>
+                            Occupied
+                          </Space>
+                        </Option>
+                        <Option value="Maintenance">
+                          <Space>
+                            <span style={{ color: '#f59e0b' }}>●</span>
+                            Maintenance
+                          </Space>
+                        </Option>
+                        <Option value="Reserved">
+                          <Space>
+                            <span style={{ color: '#6366f1' }}>●</span>
+                            Reserved
+                          </Space>
+                        </Option>
+                      </StyledSelect>
+                    </Form.Item>
+
+                    <Form.Item
+                      name="description"
+                      label="Room Description"
+                    >
+                      <StyledTextArea 
+                        rows={4} 
+                        placeholder="Enter detailed description of the room..."
+                      />
+                    </Form.Item>
+                  </FormSection>
+
+                  <Form.Item>
+                    <SubmitButton type="primary" htmlType="submit" block>
+                      Create Room
+                    </SubmitButton>
+                  </Form.Item>
+                </StyledForm>
+              </FormWrapper>
+            )}
+          </RoomDetailContainer>
+        </GridContainer>
+      )}
     </PageContainer>
   );
 };
+
+const GridContainer = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 12px;
+  height: 100%;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 350px;
+  }
+
+  @media (max-width: 992px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
 
 export default RoomsManagementPage; 
