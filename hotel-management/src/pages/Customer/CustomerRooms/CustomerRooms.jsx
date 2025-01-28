@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Select, Space, Input, Modal, Form, DatePicker, Radio, Button, message } from 'antd';
+import { Select, Space, Input, Modal, Form, DatePicker, Radio, Button, message, Empty } from 'antd';
 import { HomeOutlined, SearchOutlined, DollarOutlined, TeamOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -454,6 +454,34 @@ const SubmitButton = styled(Button)`
   margin-top: 24px;
 `;
 
+const EmptyRoomsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  margin: 20px;
+
+  .ant-empty {
+    margin-bottom: 24px;
+  }
+
+  .empty-text {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 16px;
+  }
+
+  .suggestion-text {
+    color: #999;
+    font-size: 0.9em;
+  }
+`;
+
 const CustomerRooms = () => {
   const [rooms, setRooms] = useState([]);
   const [filterType, setFilterType] = useState('All');
@@ -635,7 +663,7 @@ const CustomerRooms = () => {
       message.success('Booking created successfully!');
       setIsBookingModalVisible(false);
       bookingForm.resetFields();
-      navigate('/customer/bookings');
+      navigate('/customer/booking');
     } catch (error) {
       console.error('Booking error:', error);
       if (error.message.includes('authentication') || error.message.includes('login')) {
@@ -720,54 +748,71 @@ const CustomerRooms = () => {
           </FilterGroup>
         </FilterSection>
 
-        <RoomGrid>
-          {filteredRooms.map(room => (
-            <RoomCard key={room._id}>
-              <RoomImage>
-                <HomeOutlined />
-              </RoomImage>
-              <RoomBadge>{room.roomType}</RoomBadge>
-              <RoomInfo>
-                <RoomNumber>
-                  <HomeOutlined className="icon" />
-                  Room {room.roomNumber}
-                </RoomNumber>
-                <RoomType>
-                  <i className="fas fa-bed type-icon" />
-                  {room.roomType} Room
-                </RoomType>
-                <RoomDetails>
-                  <DetailItem className="price">
-                    <DollarOutlined />
-                    <span>
-                      <strong>{formatVND(room?.dailyPrice)}</strong>/day
-                    </span>
-                  </DetailItem>
-                  <DetailItem className="price">
-                    <DollarOutlined />
-                    <span>
-                      <strong>{formatVND(room?.hourlyPrice)}</strong>/hour
-                    </span>
-                  </DetailItem>
-                  <DetailItem>
-                    <TeamOutlined />
-                    <span>Up to <strong>{room?.maxOccupancy || 0}</strong> {(room?.maxOccupancy || 0) > 1 ? 'guests' : 'guest'}</span>
-                  </DetailItem>
-                  {room?.description && (
-                    <DetailItem>
-                      <i className="fas fa-info-circle" />
-                      <span>{room.description}</span>
+        {filteredRooms.length > 0 ? (
+          <RoomGrid>
+            {filteredRooms.map(room => (
+              <RoomCard key={room._id}>
+                <RoomImage>
+                  <HomeOutlined />
+                </RoomImage>
+                <RoomBadge>{room.roomType}</RoomBadge>
+                <RoomInfo>
+                  <RoomNumber>
+                    <HomeOutlined className="icon" />
+                    Room {room.roomNumber}
+                  </RoomNumber>
+                  <RoomType>
+                    <i className="fas fa-bed type-icon" />
+                    {room.roomType} Room
+                  </RoomType>
+                  <RoomDetails>
+                    <DetailItem className="price">
+                      <DollarOutlined />
+                      <span>
+                        <strong>{formatVND(room?.dailyPrice)}</strong>/day
+                      </span>
                     </DetailItem>
-                  )}
-                </RoomDetails>
-                <BookButton onClick={(e) => handleBookNowClick(e, room)}>
-                  <i className="fas fa-calendar-plus" />
-                  <span>Book Now</span>
-                </BookButton>
-              </RoomInfo>
-            </RoomCard>
-          ))}
-        </RoomGrid>
+                    <DetailItem className="price">
+                      <DollarOutlined />
+                      <span>
+                        <strong>{formatVND(room?.hourlyPrice)}</strong>/hour
+                      </span>
+                    </DetailItem>
+                    <DetailItem>
+                      <TeamOutlined />
+                      <span>Up to <strong>{room?.maxOccupancy || 0}</strong> {(room?.maxOccupancy || 0) > 1 ? 'guests' : 'guest'}</span>
+                    </DetailItem>
+                    {room?.description && (
+                      <DetailItem>
+                        <i className="fas fa-info-circle" />
+                        <span>{room.description}</span>
+                      </DetailItem>
+                    )}
+                  </RoomDetails>
+                  <BookButton onClick={(e) => handleBookNowClick(e, room)}>
+                    <i className="fas fa-calendar-plus" />
+                    <span>Book Now</span>
+                  </BookButton>
+                </RoomInfo>
+              </RoomCard>
+            ))}
+          </RoomGrid>
+        ) : (
+          <EmptyRoomsContainer>
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={false}
+            />
+            <div className="empty-text">
+              No Rooms Available
+            </div>
+            <div className="suggestion-text">
+              {searchTerm || filterType !== 'All' ? 
+                'Try adjusting your filters or search criteria' : 
+                'All rooms are currently occupied. Please check back later.'}
+            </div>
+          </EmptyRoomsContainer>
+        )}
       </ContentWrapper>
 
       <BookingModal
