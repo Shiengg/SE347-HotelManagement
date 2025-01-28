@@ -336,8 +336,8 @@ const CustomerRestaurant = () => {
     setCart(prevCart => {
       const existingItem = prevCart.find(i => i._id === item._id);
       if (existingItem) {
-        return prevCart.map(i => 
-          i._id === item._id 
+        return prevCart.map(i =>
+          i._id === item._id
             ? { ...i, quantity: i.quantity + 1 }
             : i
         );
@@ -350,8 +350,8 @@ const CustomerRestaurant = () => {
     if (quantity === 0) {
       setCart(prevCart => prevCart.filter(item => item._id !== itemId));
     } else {
-      setCart(prevCart => 
-        prevCart.map(item => 
+      setCart(prevCart =>
+        prevCart.map(item =>
           item._id === itemId ? { ...item, quantity } : item
         )
       );
@@ -377,7 +377,7 @@ const CustomerRestaurant = () => {
 
     try {
       const orderTotal = calculateTotal();
-      
+
       // Validate total before sending
       if (typeof orderTotal !== 'number' || isNaN(orderTotal)) {
         throw new Error('Invalid order total');
@@ -433,8 +433,8 @@ const CustomerRestaurant = () => {
             {menuItems.map(item => (
               <ItemCard key={item._id}>
                 <div className="image-container">
-                  <img 
-                    src={item.image || 'https://via.placeholder.com/300x200?text=No+Image'} 
+                  <img
+                    src={item.image || 'https://via.placeholder.com/300x200?text=No+Image'}
                     alt={item.name}
                     onError={(e) => {
                       e.target.onerror = null;
@@ -454,8 +454,8 @@ const CustomerRestaurant = () => {
                     <div className="name">{item.name}</div>
                     <Tag color={
                       item.category === 'Food' ? 'green' :
-                      item.category === 'Beverage' ? 'blue' :
-                      'purple'
+                        item.category === 'Beverage' ? 'blue' :
+                          'purple'
                     }>
                       {item.category}
                     </Tag>
@@ -464,7 +464,7 @@ const CustomerRestaurant = () => {
                     {item.description || 'No description available'}
                   </div>
                   <div className="footer">
-                    <Button 
+                    <Button
                       type="primary"
                       icon={<ShoppingCartOutlined />}
                       onClick={(e) => {
@@ -485,7 +485,7 @@ const CustomerRestaurant = () => {
 
       <CartSection>
         <h2>Your Order</h2>
-        
+
         <BookingSelect>
           <div className="select-header">
             <span>Select Your Booking</span>
@@ -551,9 +551,9 @@ const CustomerRestaurant = () => {
                   value={item.quantity}
                   onChange={(value) => updateQuantity(item._id, value)}
                 />
-                <Button 
-                  type="text" 
-                  danger 
+                <Button
+                  type="text"
+                  danger
                   icon={<DeleteOutlined />}
                   onClick={() => removeFromCart(item._id)}
                 />
@@ -566,7 +566,7 @@ const CustomerRestaurant = () => {
                   <div className="total-row">
                     <span>Room:</span>
                     <span>#{selectedBooking.roomID.roomNumber}</span>
-                  </div>  
+                  </div>
                   <div className="total-row final">
                     <span>Total Amount:</span>
                     <span>{calculateTotal().toLocaleString('vi-VN')}đ</span>
