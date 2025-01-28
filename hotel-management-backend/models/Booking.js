@@ -86,10 +86,24 @@ const bookingSchema = new mongoose.Schema({
   timestamps: true
 });
 
-bookingSchema.index(
-  { customerID: 1, roomID: 1, checkInDate: 1 },
-  { unique: false }
-);
+// Thêm đoạn này để xóa index khi khởi động
+mongoose.connection.once('connected', async () => {
+  try {
+    const collection = mongoose.connection.collection('bookings');
+    const indexes = await collection.indexes();
+    const indexExists = indexes.find(index => 
+      index.name === 'customerID_1_roomID_1_checkInDate_1'
+    );
+    
+    if (indexExists) {
+      console.log('Dropping existing unique index...');
+      await collection.dropIndex('customerID_1_roomID_1_checkInDate_1');
+      console.log('Index dropped successfully');
+    }
+  } catch (error) {
+    console.error('Error handling indexes:', error);
+  }
+});
 
 const Booking = mongoose.model('Booking', bookingSchema);
 module.exports = Booking;
