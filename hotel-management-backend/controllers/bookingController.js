@@ -176,6 +176,24 @@ exports.createBooking = async (req, res) => {
       { session }
     );
 
+    // Tạo invoice khi booking được confirmed
+    if (req.body.status === 'Confirmed') {
+      const invoice = new Invoice({
+        bookingID: booking._id,
+        roomCharges: roomPrice,
+        serviceCharges: totalServicePrice,
+        restaurantCharges: 0,
+        totalAmount: roomPrice + totalServicePrice,
+        status: 'Pending'
+      });
+
+      await invoice.save({ session });
+
+      // Cập nhật reference đến invoice trong booking
+      booking.invoice = invoice._id;
+      await booking.save({ session });
+    }
+
     await session.commitTransaction();
     res.status(201).json(newBooking);
   } catch (error) {
@@ -224,33 +242,76 @@ exports.updateBooking = async (req, res) => {
     }
 
     // Tính toán lại giá dịch vụ nếu có cập nhật services
+    let totalServicePrice = 0;
     if (updateData.services) {
-      updateData.services = updateData.services.map(service => ({
-        serviceID: service.serviceID,
-        quantity: service.quantity,
-        totalPrice: service.quantity * (service.serviceID.servicePrice || booking.services.find(s => 
-          s.serviceID._id.toString() === service.serviceID.toString()
-        )?.serviceID.servicePrice || 0)
+      updateData.services = await Promise.all(updateData.services.map(async (service) => {
+        const serviceData = await Service.findById(
+          typeof service.serviceID === 'string' ? service.serviceID : service.serviceID._id
+        ).session(session);
+        
+        if (!serviceData) {
+          throw new Error(`Service not found: ${service.serviceID}`);
+        }
+        
+        const serviceTotalPrice = service.quantity * serviceData.servicePrice;
+        totalServicePrice += serviceTotalPrice;
+        
+        return {
+          serviceID: service.serviceID,
+          quantity: service.quantity,
+          totalPrice: serviceTotalPrice
+        };
       }));
     }
 
-    // Nếu đang chuyển sang trạng thái Confirmed
-    if (updateData.status === 'Confirmed' && booking.status === 'Pending') {
-      // Tạo invoice mới
-      const invoice = new Invoice({
+    // Tính lại giá phòng
+    const room = await Room.findById(booking.roomID).session(session);
+    let roomPrice = 0;
+    
+    if (updateData.bookingType === 'Daily') {
+      roomPrice = room.dailyPrice * updateData.totalDays;
+    } else {
+      roomPrice = room.hourlyPrice * updateData.totalHours;
+    }
+
+    // Cập nhật tổng giá
+    updateData.totalPrice = roomPrice + totalServicePrice;
+
+    // Cập nhật invoice nếu có
+    const invoice = await Invoice.findOne({ bookingID: booking._id }).session(session);
+    if (invoice) {
+      invoice.roomCharges = roomPrice;
+      invoice.serviceCharges = totalServicePrice;
+      invoice.totalAmount = roomPrice + totalServicePrice + (invoice.restaurantCharges || 0);
+      await invoice.save({ session });
+    }
+
+    // Nếu đang chuyển sang trạng thái Confirmed và chưa có invoice
+    if (updateData.status === 'Confirmed' && booking.status === 'Pending' && !invoice) {
+      const newInvoice = new Invoice({
         bookingID: booking._id,
         customerID: booking.customerID,
-        totalAmount: updateData.totalPrice || booking.totalPrice,
+        roomCharges: roomPrice,
+        serviceCharges: totalServicePrice,
+        restaurantCharges: 0,
+        totalAmount: roomPrice + totalServicePrice,
         paymentStatus: 'Unpaid',
         paymentMethod: null,
         paymentDate: null
       });
-      await invoice.save({ session });
+      await newInvoice.save({ session });
 
-      // Cập nhật trạng thái phòng thành Occupied
+      // Cập nhật reference đến invoice trong booking
+      booking.invoice = newInvoice._id;
+    }
+
+    // Cập nhật trạng thái phòng nếu cần
+    if (updateData.status !== booking.status) {
+      const roomStatus = updateData.status === 'Confirmed' ? 'Occupied' : 
+                        updateData.status === 'Pending' ? 'Reserved' : 'Available';
       await Room.findByIdAndUpdate(
         booking.roomID._id,
-        { status: 'Occupied' },
+        { status: roomStatus },
         { session }
       );
     }
@@ -266,12 +327,14 @@ exports.updateBooking = async (req, res) => {
       .populate('customerID', 'fullname email phone')
       .populate('receptionistID', 'fullname')
       .populate('roomID', 'roomNumber roomType price')
-      .populate('services.serviceID', 'serviceName servicePrice');
+      .populate('services.serviceID', 'serviceName servicePrice')
+      .populate('invoice');
 
     res.json(updatedBooking);
 
   } catch (error) {
     await session.abortTransaction();
+    console.error('Error updating booking:', error);
     res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
@@ -341,5 +404,129 @@ exports.handleInvoicePaid = async (bookingId, session) => {
     return booking;
   } catch (error) {
     throw error;
+  }
+};
+
+exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { bookingId } = req.params;
+    const { restaurantCharges, orderedItems } = req.body;
+
+    // Validate restaurantCharges
+    if (typeof restaurantCharges !== 'number' || isNaN(restaurantCharges)) {
+      throw new Error('Invalid restaurant charges amount');
+    }
+
+    const booking = await Booking.findById(bookingId)
+      .populate('roomID', 'dailyPrice hourlyPrice')
+      .populate('services.serviceID', 'servicePrice')
+      .session(session);
+      
+    if (!booking) {
+      throw new Error('Booking not found');
+    }
+
+    const invoice = await Invoice.findOne({ bookingID: bookingId }).session(session);
+    if (!invoice) {
+      throw new Error('Invoice not found');
+    }
+
+    // Lấy giá trị hiện tại của invoice
+    const currentTotalAmount = invoice.totalAmount || 0;
+    const currentRestaurantCharges = invoice.restaurantCharges || 0;
+    const currentOrderedItems = invoice.orderedItems || [];
+
+    // Cộng thêm restaurant charges mới vào giá trị hiện tại
+    const newTotalAmount = currentTotalAmount + restaurantCharges;
+    const newRestaurantCharges = currentRestaurantCharges + restaurantCharges;
+
+    // Thêm timestamp vào mỗi order mới
+    const newOrderItems = orderedItems.map(item => ({
+      ...item,
+      orderedAt: new Date()
+    }));
+
+    // Cập nhật invoice
+    invoice.totalAmount = newTotalAmount;
+    invoice.restaurantCharges = newRestaurantCharges;
+    invoice.orderedItems = [...currentOrderedItems, ...newOrderItems];
+
+    console.log('Updating invoice with values:', {
+      previousTotalAmount: currentTotalAmount,
+      newOrderAmount: restaurantCharges,
+      newTotalAmount: newTotalAmount,
+      previousRestaurantCharges: currentRestaurantCharges,
+      newRestaurantCharges: newRestaurantCharges,
+      previousOrderCount: currentOrderedItems.length,
+      newOrderCount: newOrderItems.length,
+      totalOrderCount: invoice.orderedItems.length
+    });
+
+    const updatedInvoice = await invoice.save({ session });
+    await session.commitTransaction();
+
+    res.json(updatedInvoice);
+  } catch (error) {
+    await session.abortTransaction();
+    console.error('Error updating invoice:', error);
+    res.status(400).json({ 
+      message: error.message,
+      details: 'Failed to update invoice with restaurant charges'
+    });
+  } finally {
+    session.endSession();
+  }
+};
+
+exports.getCustomerBookings = async (req, res) => {
+  try {
+    console.log('User from request:', req.user); // Log user info
+
+    const bookings = await Booking.find({ 
+      customerID: req.user._id,
+      status: 'Confirmed'
+    })
+    .populate({
+      path: 'roomID',
+      select: 'roomNumber roomType dailyPrice hourlyPrice'
+    })
+    .populate({
+      path: 'customerID',
+      select: 'fullname email phone'
+    })
+    .populate({
+      path: 'services.serviceID',
+      select: 'serviceName servicePrice'
+    })
+    .populate({
+      path: 'invoice',
+      select: 'roomCharges serviceCharges restaurantCharges totalAmount orderedItems'
+    })
+    .sort({ checkInDate: -1 });
+
+    console.log('Found bookings:', bookings); // Log found bookings
+
+    const calculatedBookings = bookings.map(booking => {
+      const roomPrice = booking.bookingType === 'Daily' 
+        ? booking.roomID.dailyPrice * booking.totalDays
+        : booking.roomID.hourlyPrice * booking.totalHours;
+
+      const servicesPrice = booking.services.reduce((total, service) => 
+        total + (service.serviceID.servicePrice * service.quantity), 0);
+
+      return {
+        ...booking.toObject(),
+        totalPrice: roomPrice + servicesPrice
+      };
+    });
+    
+    console.log('Calculated bookings:', calculatedBookings); // Log final result
+    res.json(calculatedBookings);
+  } catch (error) {
+    console.error('Error fetching customer bookings:', error);
+    res.status(500).json({ message: error.message });
   }
 }; 

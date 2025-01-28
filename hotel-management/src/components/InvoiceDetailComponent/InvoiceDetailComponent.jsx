@@ -8,6 +8,7 @@ import {
   faUser,
   faUserTie,
   faUtensils,
+  faCoffee,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef } from "react";
@@ -195,6 +196,67 @@ const InvoiceCustomer = styled.div`
   opacity: 0.7;
   font-size: 1.1em;
 `;
+
+const OrderedItemsContainer = styled.div`
+  background: linear-gradient(to bottom, #f8f9fa, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 10px;
+  border-radius: 10px;
+  display: flex;
+  gap: 10px;
+  flex-direction: column;
+`;
+
+const OrderedItemTitle = styled.div`
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #333;
+  padding: 5px 0;
+`;
+
+const OrderedItem = styled.div`
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #f0f0f0;
+  align-items: center;
+  background: linear-gradient(45deg, #4b6cb7, #182848);
+  color: white;
+`;
+
+const OrderedItemIcon = styled.div`
+  width: 32px;
+  aspect-ratio: 1/1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const OrderedItemDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+`;
+
+const OrderedItemName = styled.div`
+  font-weight: bold;
+  font-size: 1.1em;
+`;
+
+const OrderedItemDate = styled.div`
+  font-size: 0.9em;
+  opacity: 0.8;
+`;
+
+const OrderedItemCostLayout = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: right;
+`;
+
 const InvoiceDetailComponent = ({ selectedInvoice }) => {
   const scrollRef = useRef(null);
 
@@ -254,6 +316,28 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
           </ServiceItem>
         ))}
       </ServiceListContainer>
+      {selectedInvoice?.orderedItems && selectedInvoice.orderedItems.length > 0 && (
+        <OrderedItemsContainer>
+          <OrderedItemTitle>Ordered Items</OrderedItemTitle>
+          {selectedInvoice.orderedItems.map((item) => (
+            <OrderedItem key={item._id}>
+              <OrderedItemIcon>
+                <FontAwesomeIcon icon={faCoffee} size="xl" />
+              </OrderedItemIcon>
+              <OrderedItemDetails>
+                <OrderedItemName>{item.name}</OrderedItemName>
+                <OrderedItemDate>
+                  {formatDate(item.orderedAt)}
+                </OrderedItemDate>
+              </OrderedItemDetails>
+              <OrderedItemCostLayout>
+                <ServiceCost>{formatCurrency(item.total)}</ServiceCost>
+                <ServiceQuantity>x{item.quantity}</ServiceQuantity>
+              </OrderedItemCostLayout>
+            </OrderedItem>
+          ))}
+        </OrderedItemsContainer>
+      )}
       <PaymentMethodLayout>
         Payment method:{" "}
         <PaymentMethodComponent method={selectedInvoice?.paymentMethod} />

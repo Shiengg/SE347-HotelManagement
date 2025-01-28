@@ -485,7 +485,7 @@ const BookingsManagementPage = () => {
     }
   };
 
-  const handleSubmit = async (values) => {
+  const handleSubmit = async (bookingData) => {
     try {
       const url = editingBooking 
         ? `http://localhost:5000/api/bookings/${editingBooking._id}`
@@ -493,13 +493,15 @@ const BookingsManagementPage = () => {
       
       const method = editingBooking ? 'PUT' : 'POST';
       
+      console.log('Submitting booking data:', bookingData); // Debug log
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(values)
+        body: JSON.stringify(bookingData)
       });
 
       const data = await response.json();
@@ -517,6 +519,7 @@ const BookingsManagementPage = () => {
         throw new Error(data.message || `Failed to ${editingBooking ? 'update' : 'create'} booking`);
       }
     } catch (error) {
+      console.error('API error:', error); // Debug log
       message.error(error.message);
       throw error;
     }
@@ -783,7 +786,6 @@ const BookingsManagementPage = () => {
         footer={null}
         width={800}
         style={{ top: 5 }}
-        maskStyle={{ backgroundColor: 'rgba(0, 0, 0, 0.45)' }}
       >
         <BookingForm
           ref={formRef}

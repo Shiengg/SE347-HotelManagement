@@ -197,20 +197,20 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
     if (booking) {
       form.setFieldsValue({
         customerID: booking.customerID._id,
-        receptionistID: booking.receptionistID._id,
         roomID: booking.roomID._id,
         bookingType: booking.bookingType,
         checkInDate: dayjs(booking.checkInDate),
         checkOutDate: dayjs(booking.checkOutDate),
         services: booking.services,
-        status: booking.status
+        status: booking.status,
+        receptionistID: booking.receptionistID?._id || currentUser?.id
       });
       setBookingType(booking.bookingType);
       setPreviousStatus(booking.status);
       setSelectedRoom(booking.roomID);
       setEstimatedPrice(booking.totalPrice);
     }
-  }, [booking, form]);
+  }, [booking, form, currentUser]);
 
   useEffect(() => {
     console.log('Current user:', currentUser);
@@ -223,6 +223,67 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
       setBookingType('Daily');
       setEstimatedPrice(0);
       fetchRooms();
+    },
+    handleSubmit: async () => {
+      try {
+        // Validate form first
+        const values = await form.validateFields();
+        
+        if (!currentUser?.id) {
+          throw new Error('No receptionist ID available');
+        }
+
+        const checkInDate = dayjs(values.checkInDate);
+        const checkOutDate = dayjs(values.checkOutDate);
+        
+        let totalDays = 0;
+        let totalHours = 0;
+        let totalPrice = 0;
+        
+        if (values.bookingType === 'Daily') {
+          totalDays = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'day', true)));
+          totalPrice = selectedRoom.dailyPrice * totalDays;
+        } else {
+          totalHours = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'hour', true)));
+          totalPrice = selectedRoom.hourlyPrice * totalHours;
+        }
+
+        const formattedServices = values.services?.map(service => {
+          const servicePrice = service.serviceID.servicePrice || 
+            (typeof service.serviceID === 'string' ? 
+              services.find(s => s._id === service.serviceID)?.servicePrice : 
+              service.serviceID.servicePrice);
+
+          const serviceTotalPrice = service.quantity * servicePrice;
+          totalPrice += serviceTotalPrice;
+
+          return {
+            serviceID: typeof service.serviceID === 'string' ? service.serviceID : service.serviceID._id,
+            quantity: service.quantity,
+            totalPrice: serviceTotalPrice
+          };
+        }) || [];
+
+        const bookingData = {
+          customerID: values.customerID,
+          receptionistID: currentUser.id,
+          roomID: values.roomID,
+          bookingType: values.bookingType,
+          checkInDate: checkInDate.toISOString(),
+          checkOutDate: checkOutDate.toISOString(),
+          totalDays: values.bookingType === 'Daily' ? totalDays : null,
+          totalHours: values.bookingType === 'Hourly' ? totalHours : null,
+          services: formattedServices,
+          totalPrice,
+          status: values.status || 'Pending'
+        };
+
+        return bookingData;
+      } catch (error) {
+        console.error('Form validation error:', error);
+        message.error(error.message);
+        throw error;
+      }
     }
   }));
 
@@ -327,91 +388,6 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
     return totalHours;
   };
 
-  const handleSubmit = async (values) => {
-    try {
-      const checkInDate = dayjs(values.checkInDate);
-      const checkOutDate = dayjs(values.checkOutDate);
-      
-      let totalDays = 0;
-      let totalHours = 0;
-      let totalPrice = 0;
-      
-      if (values.bookingType === 'Daily') {
-        totalDays = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'day', true)));
-        totalPrice = selectedRoom.dailyPrice * totalDays;
-      } else {
-        totalHours = Math.max(1, Math.ceil(checkOutDate.diff(checkInDate, 'hour', true)));
-        totalPrice = selectedRoom.hourlyPrice * totalHours;
-      }
-
-      // Xử lý services
-      const formattedServices = values.services?.map(service => {
-        const servicePrice = service.serviceID.servicePrice || 
-          (typeof service.serviceID === 'string' ? 
-            services.find(s => s._id === service.serviceID)?.servicePrice : 
-            service.serviceID.servicePrice);
-
-        const serviceTotalPrice = service.quantity * servicePrice;
-        totalPrice += serviceTotalPrice;
-
-        return {
-          serviceID: typeof service.serviceID === 'string' ? service.serviceID : service.serviceID._id,
-          quantity: service.quantity,
-          totalPrice: serviceTotalPrice // Đảm bảo có totalPrice cho mỗi service
-        };
-      }) || [];
-
-      const bookingData = {
-        customerID: values.customerID,
-        receptionistID: values.receptionistID || currentUser._id,
-        roomID: values.roomID,
-        bookingType: values.bookingType,
-        checkInDate: checkInDate.toISOString(),
-        checkOutDate: checkOutDate.toISOString(),
-        totalDays: values.bookingType === 'Daily' ? totalDays : null,
-        totalHours: values.bookingType === 'Hourly' ? totalHours : null,
-        services: formattedServices,
-        totalPrice,
-        status: values.status || 'Pending'
-      };
-
-      let response;
-      if (booking?._id) {
-        // Update existing booking
-        response = await fetch(`http://localhost:5000/api/bookings/${booking._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(bookingData)
-        });
-      } else {
-        // Create new booking
-        response = await fetch('http://localhost:5000/api/bookings', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(bookingData)
-        });
-      }
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to save booking');
-      }
-
-      message.success(`Booking ${booking ? 'updated' : 'created'} successfully`);
-      onSubmit?.(data);
-      onCancel?.();
-    } catch (error) {
-      console.error('Form submission error:', error);
-      message.error(error.message || 'Failed to save booking');
-    }
-  };
-
   const calculatePrice = () => {
     if (!form.getFieldValue('checkInDate') || !form.getFieldValue('checkOutDate')) {
       return 0;
@@ -496,14 +472,29 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
       <Form
         form={form}
         layout="vertical"
-        onFinish={handleSubmit}
+        onFinish={async (values) => {
+          try {
+            const bookingData = await ref.current.handleSubmit();
+            await onSubmit(bookingData);
+          } catch (error) {
+            console.error('Form submission error:', error);
+          }
+        }}
         onValuesChange={handleFormChange}
         initialValues={{
           bookingType: 'Daily',
           status: 'Pending',
-          services: []
+          services: [],
+          receptionistID: currentUser?.id
         }}
       >
+        <Form.Item
+          name="receptionistID"
+          hidden
+        >
+          <Input />
+        </Form.Item>
+
         <FormSection>
           <div className="section-title">
             <UserOutlined />
