@@ -11,12 +11,14 @@ import {
   faCoffee,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import PaymentMethodComponent from "../PaymentMethodComponent/PaymentMethodComponent";
 import { formatCurrency, formatDate } from "../../utils/format/format";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
 import { use } from "react";
+import { Button, Select, Space, message } from "antd";
+import authService from "../../services/authService";
 
 const Header = styled.div`
   display: flex;
@@ -257,8 +259,52 @@ const OrderedItemCostLayout = styled.div`
   text-align: right;
 `;
 
+const PaymentActions = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  justify-content: flex-end;
+`;
+
+const PaymentButton = styled(Button)`
+  background: #1890ff;
+  color: white;
+  border: none;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover {
+    background: #40a9ff;
+  }
+
+  &:disabled {
+    background: #d9d9d9;
+  }
+`;
+
+const PaymentMethodSelect = styled(Select)`
+  width: 100%;
+  .ant-select-selector {
+    height: 40px !important;
+    padding: 4px 11px !important;
+    align-items: center;
+  }
+`;
+
 const InvoiceDetailComponent = ({ selectedInvoice }) => {
   const scrollRef = useRef(null);
+  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [processing, setProcessing] = useState(false);
+
+  // Thêm hàm kiểm tra role
+  const canConfirmPayment = () => {
+    const currentUser = authService.getCurrentUser();
+    return currentUser && (currentUser.role === 'admin' || currentUser.role === 'receptionist');
+  };
 
   // Thêm hàm để gộp các món giống nhau
   const consolidateOrderedItems = (items) => {
@@ -293,6 +339,37 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
   // Gộp các món giống nhau trước khi render
   const consolidatedItems = selectedInvoice.orderedItems ? 
     consolidateOrderedItems(selectedInvoice.orderedItems) : [];
+
+  const handlePayment = async () => {
+    setProcessing(true);
+    try {
+      const response = await fetch(`http://localhost:5000/api/invoices/${selectedInvoice._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          paymentStatus: 'Paid',
+          paymentMethod: paymentMethod,
+          paymentDate: new Date()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to process payment');
+      }
+
+      message.success('Payment processed successfully');
+      // Reload trang sau khi thanh toán thành công
+      window.location.reload();
+    } catch (error) {
+      console.error('Payment error:', error);
+      message.error('Failed to process payment');
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   return (
     <InvoiceDetailLayout ref={scrollRef}>
@@ -379,6 +456,45 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
       <InvoiceTotalContainer>
         <div>Total:</div> {formatCurrency(selectedInvoice?.totalAmount)}
       </InvoiceTotalContainer>
+
+      {/* Chỉ hiển thị phần Payment Actions nếu là admin/receptionist và invoice chưa thanh toán */}
+      {selectedInvoice?.paymentStatus === 'Unpaid' && canConfirmPayment() && (
+        <>
+          <PaymentMethodLayout>
+            <div>Select Payment Method:</div>
+            <PaymentMethodSelect
+              value={paymentMethod}
+              onChange={setPaymentMethod}
+              style={{ width: '100%' }}
+            >
+              <Select.Option value="Cash">
+                <Space>
+                  <FontAwesomeIcon icon={faMoneyBill} />
+                  Cash
+                </Space>
+              </Select.Option>
+              <Select.Option value="Card">
+                <Space>
+                  <FontAwesomeIcon icon={faCreditCard} />
+                  Card
+                </Space>
+              </Select.Option>
+            </PaymentMethodSelect>
+          </PaymentMethodLayout>
+
+          <PaymentActions>
+            <PaymentButton
+              type="primary"
+              icon={<FontAwesomeIcon icon={faMoneyBill} />}
+              onClick={handlePayment}
+              loading={processing}
+              disabled={processing}
+            >
+              {processing ? 'Processing...' : 'Confirm Payment'}
+            </PaymentButton>
+          </PaymentActions>
+        </>
+      )}
     </InvoiceDetailLayout>
   );
 };
