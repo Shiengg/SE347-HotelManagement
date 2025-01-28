@@ -78,7 +78,7 @@ const InvoiceDetailLayout = styled.div`
 const InvoiceId = styled.div`
   word-break: break-all;
   font-weight: bold;
-  font-size: 1.3em;
+  font-size: 1.2em;
   color: navy;
   @media (max-width: 1080px) {
     font-size: 1em;
@@ -92,10 +92,6 @@ const InvoiceDate = styled.div`
   padding: 10px;
   border-radius: 10px;
   opacity: 0.7;
-  font-size: 1.1em;
-  @media (max-width: 1080px) {
-    font-size: 1em;
-  }
 `;
 
 const ServiceName = styled.div`
@@ -139,6 +135,7 @@ const PaymentMethodLayout = styled.div`
   justify-content: space-between;
   align-items: center;
   font-size: 1.1em;
+  font-weight:bold;
 `;
 
 const PaymentStatusLayout = styled.div`
@@ -152,6 +149,7 @@ const PaymentStatusLayout = styled.div`
   justify-content: space-between;
   align-items: center;
   font-size: 1.1em;
+   font-weight:bold;
 `;
 
 const Divider = styled.div`
@@ -181,7 +179,6 @@ const InvoiceReceptionist = styled.div`
   padding: 10px;
   border-radius: 10px;
   opacity: 0.7;
-  font-size: 1.1em;
 `;
 const InvoiceCustomer = styled.div`
   text-transform: uppercase; /* Convert text to uppercase */
@@ -194,7 +191,6 @@ const InvoiceCustomer = styled.div`
   padding: 10px;
   border-radius: 10px;
   opacity: 0.7;
-  font-size: 1.1em;
 `;
 
 const OrderedItemsContainer = styled.div`

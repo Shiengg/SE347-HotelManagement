@@ -28,17 +28,17 @@ const InvoiceItemContainer = styled.div`
   transition: all 0.3s ease;
 
   ${(props) =>
-    props.isSelected &&
-    `background: linear-gradient(45deg, #ffd700, #ffed4a);
+    props.isSelected
+      ? `background: linear-gradient(45deg, #ffd700, #ffed4a);
     border-color: #ffd700;
     transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);`}
-  &:hover {
-    background: ${(props) =>
-      props.isSelected ? "linear-gradient(45deg, #ffd700, #ffed4a)" : "white"};
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    `
+      : `&:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  }
+  }`}
+
   align-items: center;
 
   @media (max-width: 1080px) {
@@ -60,7 +60,11 @@ const Placeholder = styled.div`
 `;
 
 const InvoiceId = styled.div`
-  color:navy;
+  background: #ffffff70;
+  border-radius: 5px;
+  padding: 5px;
+  width: fit-content;
+  color: navy;
   font-weight: bold;
   font-size: 0.9em;
   word-break: break-all;
@@ -69,15 +73,24 @@ const InvoiceId = styled.div`
   }
 `;
 const InvoiceDate = styled.div`
-  @media (max-width: 1080px) {
-    font-size: 0.8em;
-  }
+  background: #ffffff70;
+  color: grey;
+  border-radius: 5px;
+  padding: 5px;
+  width: fit-content;
+  font-size: 0.8em;
 `;
 
 const InvoiceTotal = styled.div`
-  font-size: 1.2em;
+  background: #ffffff70;
+  border-radius: 5px;
+  padding: 5px;
+  color: green;
+  margin-left: auto;
+  width: fit-content;
+  font-size: 1.3em;
   font-weight: bold;
-  text-align: right;
+  text-align: center;
 
   @media (max-width: 1080px) {
     grid-column: span 2;
@@ -89,8 +102,8 @@ const TotalAmountPlaceholder = styled.div`
   height: 20px;
   border-radius: 5px;
   animation: ${pulse} 1.5s infinite;
-  width:200px;
-  margin-left:auto;
+  width: 200px;
+  margin-left: auto;
   @media (max-width: 1080px) {
     grid-column: span 2;
   }
