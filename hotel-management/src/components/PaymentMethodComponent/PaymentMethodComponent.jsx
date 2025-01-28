@@ -4,7 +4,6 @@ import React from "react";
 import styled from "styled-components";
 
 const PaymentMethodContainer = styled.div`
-  font-weight: 500;
 
   padding: 4px 8px;
   border-radius: 4px;
@@ -19,11 +18,7 @@ const PaymentMethodContainer = styled.div`
     color: #10b981;
     background: #d1fae5;
   }
-  &.Debit {
-    color: #ef4444;
-    background: #fee2e2;
-  }
-  &.Credit {
+  &.Card {
     color: #6366f1;
     background: #e0e7ff;
   }
@@ -33,22 +28,10 @@ const PaymentMethodContainer = styled.div`
   }
 `;
 const PaymentMethodComponent = ({ method }) => {
-  const getPaymentMethodText = (method) => {
-    switch (method) {
-      case "Cash":
-        return "Cash";
-      case "CreditCard":
-        return "Credit";
-      case "DebitCard":
-        return "Debit";
-      default:
-        return "Unknown";
-    }
-  };
 
   return (
-    <PaymentMethodContainer className={getPaymentMethodText(method)}>
-      {getPaymentMethodText(method)}{" "}
+    <PaymentMethodContainer className={method}>
+      {method}{" "}
       <FontAwesomeIcon icon={method === "Cash" ? faMoneyBill : faCreditCard} />
     </PaymentMethodContainer>
   );

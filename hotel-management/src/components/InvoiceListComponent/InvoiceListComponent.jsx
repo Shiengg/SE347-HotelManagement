@@ -15,7 +15,7 @@ import {
   faReceipt,
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
-import { Input, Select, Space } from "antd";
+import { Empty, Input, Select, Space } from "antd";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
 import {
   CheckCircleOutlined,
@@ -219,6 +219,34 @@ export const SearchBox = styled.input`
   background: transparent;
   outline: none;
   flex: 1;
+`;
+
+const EmptyRoomsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  margin: 20px;
+
+  .ant-empty {
+    margin-bottom: 24px;
+  }
+
+  .empty-text {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 16px;
+  }
+
+  .suggestion-text {
+    color: #999;
+    font-size: 0.9em;
+  }
 `;
 const InvoiceListComponent = ({
   invoiceItems = [],
@@ -426,18 +454,25 @@ const InvoiceListComponent = ({
       </InvoiceFilterSection>
 
       <InvoiceListContainer>
-        {isLoading
-          ? Array.from({ length: itemsPerPage }).map((_, i) => (
-              <InvoiceItemComponent key={i} isLoading={true} />
-            ))
-          : invoiceItems.map((item) => (
-              <InvoiceItemComponent
-                key={item._id}
-                item={item}
-                isSelected={item._id === selectedInvoice?._id}
-                onClick={() => handleSelect(item)}
-              />
-            ))}
+        {isLoading ? (
+          Array.from({ length: itemsPerPage }).map((_, i) => (
+            <InvoiceItemComponent key={i} isLoading={true} />
+          ))
+        ) : invoiceItems.length > 0 ? (
+          invoiceItems.map((item) => (
+            <InvoiceItemComponent
+              key={item._id}
+              item={item}
+              isSelected={item._id === selectedInvoice?._id}
+              onClick={() => handleSelect(item)}
+            />
+          ))
+        ) : (
+          <EmptyRoomsContainer>
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={false} />
+            <div className="empty-text">No Invoice Found</div>
+          </EmptyRoomsContainer>
+        )}
       </InvoiceListContainer>
       <Pagination
         totalItems={totalInvoices}
