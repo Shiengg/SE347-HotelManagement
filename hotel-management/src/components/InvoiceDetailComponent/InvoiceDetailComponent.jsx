@@ -260,12 +260,40 @@ const OrderedItemCostLayout = styled.div`
 const InvoiceDetailComponent = ({ selectedInvoice }) => {
   const scrollRef = useRef(null);
 
+  // Thêm hàm để gộp các món giống nhau
+  const consolidateOrderedItems = (items) => {
+    const itemMap = new Map();
+
+    items.forEach(item => {
+      const key = item.itemId;
+      if (itemMap.has(key)) {
+        const existingItem = itemMap.get(key);
+        existingItem.quantity += item.quantity;
+        existingItem.total += item.total;
+        // Giữ lại thời gian đặt hàng gần nhất
+        if (new Date(item.orderedAt) > new Date(existingItem.orderedAt)) {
+          existingItem.orderedAt = item.orderedAt;
+        }
+      } else {
+        itemMap.set(key, { ...item });
+      }
+    });
+
+    return Array.from(itemMap.values());
+  };
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [selectedInvoice]);
+
   if (!selectedInvoice) return null;
+
+  // Gộp các món giống nhau trước khi render
+  const consolidatedItems = selectedInvoice.orderedItems ? 
+    consolidateOrderedItems(selectedInvoice.orderedItems) : [];
+
   return (
     <InvoiceDetailLayout ref={scrollRef}>
       <Header>
@@ -319,8 +347,8 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
       {selectedInvoice?.orderedItems && selectedInvoice.orderedItems.length > 0 && (
         <OrderedItemsContainer>
           <OrderedItemTitle>Ordered Items</OrderedItemTitle>
-          {selectedInvoice.orderedItems.map((item) => (
-            <OrderedItem key={item._id}>
+          {consolidatedItems.map((item) => (
+            <OrderedItem key={item.itemId}>
               <OrderedItemIcon>
                 <FontAwesomeIcon icon={faCoffee} size="xl" />
               </OrderedItemIcon>
