@@ -4,6 +4,7 @@ const Booking = require("./Booking");
 const orderItemSchema = new mongoose.Schema({
   itemId: String,
   name: String,
+  category:String,
   quantity: Number,
   price: Number,
   total: Number,
