@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+
 const PaymentStatus = styled.div`
   padding: 4px 8px;
   border-radius: 4px;
@@ -19,9 +20,10 @@ const PaymentStatus = styled.div`
     background: #fee2e2;
   }
 `;
+
 const PaymentStatusComponent = ({ status }) => {
   return (
-    <PaymentStatus className={`${status ? "Paid" : "Unpaid"}`}>{status ? "Paid" : "Unpaid"}</PaymentStatus>
+    <PaymentStatus className={status}>{status || "Unpaid"}</PaymentStatus>
   );
 };
 
