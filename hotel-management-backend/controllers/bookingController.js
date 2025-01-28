@@ -274,15 +274,22 @@ exports.updateBooking = async (req, res) => {
       roomPrice = room.hourlyPrice * updateData.totalHours;
     }
 
-    // Cập nhật tổng giá
+    // Cập nhật tổng giá booking
     updateData.totalPrice = roomPrice + totalServicePrice;
 
     // Cập nhật invoice nếu có
     const invoice = await Invoice.findOne({ bookingID: booking._id }).session(session);
     if (invoice) {
+      // Tính tổng tiền từ các món đã order
+      const restaurantTotal = invoice.orderedItems?.reduce((total, item) => {
+        return total + (item.total || 0);
+      }, 0) || 0;
+
+      // Cập nhật invoice với tổng tiền mới
       invoice.roomCharges = roomPrice;
       invoice.serviceCharges = totalServicePrice;
-      invoice.totalAmount = roomPrice + totalServicePrice + (invoice.restaurantCharges || 0);
+      invoice.restaurantCharges = restaurantTotal; // Đảm bảo giữ nguyên tổng tiền restaurant
+      invoice.totalAmount = roomPrice + totalServicePrice + restaurantTotal;
       await invoice.save({ session });
     }
 
@@ -297,7 +304,8 @@ exports.updateBooking = async (req, res) => {
         totalAmount: roomPrice + totalServicePrice,
         paymentStatus: 'Unpaid',
         paymentMethod: null,
-        paymentDate: null
+        paymentDate: null,
+        orderedItems: [] // Khởi tạo mảng orderedItems rỗng
       });
       await newInvoice.save({ session });
 
