@@ -100,7 +100,7 @@ export const getInvoiceById = async (id, userId) => {
   if (!id) return;
   try {
     const response = await fetch(
-      `${API_URL}/invoices/${id.trim()}?userId=${userId.trim()}`,
+      `${API_URL}/invoices/${id.trim()}?userId=${userId}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -114,7 +114,7 @@ export const getInvoiceById = async (id, userId) => {
 
     // Parse the JSON response
     const data = await response.json();
-    console.log(data)
+    console.log(data);
     // Return the invoices data for the customer
     return data;
   } catch (error) {
