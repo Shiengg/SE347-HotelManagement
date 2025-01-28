@@ -663,7 +663,7 @@ const CustomerRooms = () => {
       message.success('Booking created successfully!');
       setIsBookingModalVisible(false);
       bookingForm.resetFields();
-      navigate('/customer/bookings');
+      navigate('/customer/booking');
     } catch (error) {
       console.error('Booking error:', error);
       if (error.message.includes('authentication') || error.message.includes('login')) {
