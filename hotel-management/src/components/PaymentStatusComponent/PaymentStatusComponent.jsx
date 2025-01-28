@@ -2,9 +2,9 @@ import React from "react";
 import styled from "styled-components";
 
 const PaymentStatus = styled.div`
+  font-weight: 500;
   padding: 4px 8px;
   border-radius: 4px;
-  font-weight: semibold;
   width: fit-content;
   height: fit-content;
   @media (max-width: 1080px) {
@@ -22,9 +22,10 @@ const PaymentStatus = styled.div`
 `;
 
 const PaymentStatusComponent = ({ status }) => {
+
   return (
     <PaymentStatus className={status}>{status || "Unpaid"}</PaymentStatus>
-  );
+  )
 };
 
 export default PaymentStatusComponent;

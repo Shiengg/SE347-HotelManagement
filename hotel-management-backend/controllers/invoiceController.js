@@ -41,6 +41,7 @@ exports.getInvoices = async (req, res) => {
           { path: "customerID" }, // Populate customerID
           { path: "receptionistID" }, // Populate receptionistID
           { path: "services.serviceID" }, // Populate serviceID inside services array
+          { path: "roomID" },
         ],
       })
       .skip(startIndex) // Skip records for previous pages
@@ -92,6 +93,7 @@ exports.getInvoiceById = async (req, res) => {
           { path: "customerID" },
           { path: "receptionistID" },
           { path: "services.serviceID" },
+          { path: "roomID" },
         ],
       });
     } else if (user.role_id.role_name === "customer") {
@@ -114,6 +116,7 @@ exports.getInvoiceById = async (req, res) => {
           { path: "customerID" },
           { path: "receptionistID" },
           { path: "services.serviceID" },
+          { path: "roomID" },
         ],
       });
     } else {
@@ -190,6 +193,7 @@ exports.getCustomerInvoices = async (req, res) => {
           { path: "customerID" }, // Populate customerID
           { path: "receptionistID" }, // Populate receptionistID
           { path: "services.serviceID" }, // Populate serviceID inside services array
+          { path: "roomID" },
         ],
       })
       .skip(startIndex)
@@ -263,7 +267,7 @@ exports.updateInvoice = async (req, res) => {
         populate: [
           { path: 'customerID' },
           { path: 'roomID' },
-          { path: 'services.serviceID' }
+          { path: 'services.serviceID' },
         ]
       });
 

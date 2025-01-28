@@ -15,7 +15,7 @@ import {
   faReceipt,
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
-import { Input, Select, Space } from "antd";
+import { Empty, Input, Select, Space } from "antd";
 import PaymentStatusComponent from "../PaymentStatusComponent/PaymentStatusComponent";
 import {
   CheckCircleOutlined,
@@ -26,6 +26,7 @@ import {
   UnorderedListOutlined,
 } from "@ant-design/icons";
 const { Option } = Select;
+
 const ContentLayout = styled.div`
   display: flex;
   flex-direction: column;
@@ -80,7 +81,7 @@ const TitleSection = styled.div`
 const Title = styled.h2`
   margin: 0;
   color: #1a3353;
-  font-size: 1.8em;
+  font-size: 1.5em;
   font-weight: 600;
 
   @media (max-width: 680px) {
@@ -91,7 +92,6 @@ const Title = styled.h2`
 const Subtitle = styled.p`
   margin: 0;
   color: #666;
-  font-size: 0.9em;
 `;
 const InvoiceListContainer = styled.div`
   background: linear-gradient(to bottom, #f8f9fa, #ffffff);
@@ -105,7 +105,6 @@ const InvoiceListContainer = styled.div`
 `;
 
 const InvoiceFilterSection = styled.div`
-  font-size: 1.2em;
   display: grid;
   align-items: center;
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
@@ -153,10 +152,7 @@ const StyledSelect = styled(Select)`
 
     .ant-select-selection-item {
       line-height: 45px !important;
-      font-size: 1.2em;
-      @media (max-width: 680px) {
-        font-size: 1em;
-      }
+      font-size: 1em;
     }
   }
 
@@ -223,6 +219,34 @@ export const SearchBox = styled.input`
   background: transparent;
   outline: none;
   flex: 1;
+`;
+
+const EmptyRoomsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  margin: 20px;
+
+  .ant-empty {
+    margin-bottom: 24px;
+  }
+
+  .empty-text {
+    color: #666;
+    font-size: 1.1em;
+    margin-bottom: 16px;
+  }
+
+  .suggestion-text {
+    color: #999;
+    font-size: 0.9em;
+  }
 `;
 const InvoiceListComponent = ({
   invoiceItems = [],
@@ -305,11 +329,26 @@ const InvoiceListComponent = ({
           </div>
           <div className="text-content">
             <Title>Invoices Management</Title>
-            <Subtitle>Manage your invoices</Subtitle>
+            <Subtitle>Manage invoices</Subtitle>
           </div>
         </TitleSection>
       </HeaderSection>
-
+      <SearchSection>
+        <SearchWrapper>
+          <SearchBox
+            ref={searchRef}
+            placeholder="Invoice id"
+            onKeyDown={handleKeyDown}
+          />
+          <SearchButton
+            onClick={() => {
+              handleSearchInvoice(searchRef.current.value);
+            }}
+          >
+            <FontAwesomeIcon icon={faSearch} />
+          </SearchButton>
+        </SearchWrapper>
+      </SearchSection>
       <InvoiceFilterSection>
         <InvoiceHeaderId>ID</InvoiceHeaderId>
         <InvoiceFilterItemLayout>
@@ -414,35 +453,26 @@ const InvoiceListComponent = ({
         </TotalSortingLayout>
       </InvoiceFilterSection>
 
-      <SearchSection>
-        <SearchWrapper>
-          <SearchBox
-            ref={searchRef}
-            placeholder="Invoice id"
-            onKeyDown={handleKeyDown}
-          />
-          <SearchButton
-            onClick={() => {
-              handleSearchInvoice(searchRef.current.value);
-            }}
-          >
-            <FontAwesomeIcon icon={faSearch} />
-          </SearchButton>
-        </SearchWrapper>
-      </SearchSection>
       <InvoiceListContainer>
-        {isLoading
-          ? Array.from({ length: itemsPerPage }).map((_, i) => (
-              <InvoiceItemComponent key={i} isLoading={true} />
-            ))
-          : invoiceItems.map((item) => (
-              <InvoiceItemComponent
-                key={item._id}
-                item={item}
-                isSelected={item._id === selectedInvoice?._id}
-                onClick={() => handleSelect(item)}
-              />
-            ))}
+        {isLoading ? (
+          Array.from({ length: itemsPerPage }).map((_, i) => (
+            <InvoiceItemComponent key={i} isLoading={true} />
+          ))
+        ) : invoiceItems.length > 0 ? (
+          invoiceItems.map((item) => (
+            <InvoiceItemComponent
+              key={item._id}
+              item={item}
+              isSelected={item._id === selectedInvoice?._id}
+              onClick={() => handleSelect(item)}
+            />
+          ))
+        ) : (
+          <EmptyRoomsContainer>
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={false} />
+            <div className="empty-text">No Invoice Found</div>
+          </EmptyRoomsContainer>
+        )}
       </InvoiceListContainer>
       <Pagination
         totalItems={totalInvoices}

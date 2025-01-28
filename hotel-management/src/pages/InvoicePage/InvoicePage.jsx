@@ -14,7 +14,7 @@ const LayoutWrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 20px;
-  font-size: 1.2em;
+  font-size: 1em;
 
   @media (max-width: 680px) {
     font-size: 0.9em;
