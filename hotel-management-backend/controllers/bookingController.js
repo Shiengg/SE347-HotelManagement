@@ -242,33 +242,76 @@ exports.updateBooking = async (req, res) => {
     }
 
     // Tính toán lại giá dịch vụ nếu có cập nhật services
+    let totalServicePrice = 0;
     if (updateData.services) {
-      updateData.services = updateData.services.map(service => ({
-        serviceID: service.serviceID,
-        quantity: service.quantity,
-        totalPrice: service.quantity * (service.serviceID.servicePrice || booking.services.find(s => 
-          s.serviceID._id.toString() === service.serviceID.toString()
-        )?.serviceID.servicePrice || 0)
+      updateData.services = await Promise.all(updateData.services.map(async (service) => {
+        const serviceData = await Service.findById(
+          typeof service.serviceID === 'string' ? service.serviceID : service.serviceID._id
+        ).session(session);
+        
+        if (!serviceData) {
+          throw new Error(`Service not found: ${service.serviceID}`);
+        }
+        
+        const serviceTotalPrice = service.quantity * serviceData.servicePrice;
+        totalServicePrice += serviceTotalPrice;
+        
+        return {
+          serviceID: service.serviceID,
+          quantity: service.quantity,
+          totalPrice: serviceTotalPrice
+        };
       }));
     }
 
-    // Nếu đang chuyển sang trạng thái Confirmed
-    if (updateData.status === 'Confirmed' && booking.status === 'Pending') {
-      // Tạo invoice mới
-      const invoice = new Invoice({
+    // Tính lại giá phòng
+    const room = await Room.findById(booking.roomID).session(session);
+    let roomPrice = 0;
+    
+    if (updateData.bookingType === 'Daily') {
+      roomPrice = room.dailyPrice * updateData.totalDays;
+    } else {
+      roomPrice = room.hourlyPrice * updateData.totalHours;
+    }
+
+    // Cập nhật tổng giá
+    updateData.totalPrice = roomPrice + totalServicePrice;
+
+    // Cập nhật invoice nếu có
+    const invoice = await Invoice.findOne({ bookingID: booking._id }).session(session);
+    if (invoice) {
+      invoice.roomCharges = roomPrice;
+      invoice.serviceCharges = totalServicePrice;
+      invoice.totalAmount = roomPrice + totalServicePrice + (invoice.restaurantCharges || 0);
+      await invoice.save({ session });
+    }
+
+    // Nếu đang chuyển sang trạng thái Confirmed và chưa có invoice
+    if (updateData.status === 'Confirmed' && booking.status === 'Pending' && !invoice) {
+      const newInvoice = new Invoice({
         bookingID: booking._id,
         customerID: booking.customerID,
-        totalAmount: updateData.totalPrice || booking.totalPrice,
+        roomCharges: roomPrice,
+        serviceCharges: totalServicePrice,
+        restaurantCharges: 0,
+        totalAmount: roomPrice + totalServicePrice,
         paymentStatus: 'Unpaid',
         paymentMethod: null,
         paymentDate: null
       });
-      await invoice.save({ session });
+      await newInvoice.save({ session });
 
-      // Cập nhật trạng thái phòng thành Occupied
+      // Cập nhật reference đến invoice trong booking
+      booking.invoice = newInvoice._id;
+    }
+
+    // Cập nhật trạng thái phòng nếu cần
+    if (updateData.status !== booking.status) {
+      const roomStatus = updateData.status === 'Confirmed' ? 'Occupied' : 
+                        updateData.status === 'Pending' ? 'Reserved' : 'Available';
       await Room.findByIdAndUpdate(
         booking.roomID._id,
-        { status: 'Occupied' },
+        { status: roomStatus },
         { session }
       );
     }
@@ -284,12 +327,14 @@ exports.updateBooking = async (req, res) => {
       .populate('customerID', 'fullname email phone')
       .populate('receptionistID', 'fullname')
       .populate('roomID', 'roomNumber roomType price')
-      .populate('services.serviceID', 'serviceName servicePrice');
+      .populate('services.serviceID', 'serviceName servicePrice')
+      .populate('invoice');
 
     res.json(updatedBooking);
 
   } catch (error) {
     await session.abortTransaction();
+    console.error('Error updating booking:', error);
     res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
