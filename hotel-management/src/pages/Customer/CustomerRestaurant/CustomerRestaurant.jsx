@@ -567,23 +567,9 @@ const CustomerRestaurant = () => {
                     <span>Room:</span>
                     <span>#{selectedBooking.roomID.roomNumber}</span>
                   </div>  
-                  <div className="total-row">
-                    <span>Current Order:</span>
-                    <span>{calculateTotal().toLocaleString('vi-VN')}đ</span>
-                  </div>
                   <div className="total-row final">
                     <span>Total Amount:</span>
-                    <span>
-                      {(
-                        (selectedBooking.bookingType === 'Daily' 
-                          ? selectedBooking.roomID.dailyPrice * selectedBooking.totalDays
-                          : selectedBooking.roomID.hourlyPrice * selectedBooking.totalHours) +
-                        (selectedBooking.services?.reduce((total, service) => 
-                          total + (service.serviceID.servicePrice * service.quantity), 0) || 0) +
-                        (selectedBooking.invoice?.restaurantCharges || 0) +
-                        calculateTotal()
-                      ).toLocaleString('vi-VN')}đ
-                    </span>
+                    <span>{calculateTotal().toLocaleString('vi-VN')}đ</span>
                   </div>
                 </>
               )}
