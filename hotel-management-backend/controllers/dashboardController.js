@@ -6,6 +6,14 @@ const Role = require('../models/Role');
 
 exports.getDashboardStats = async (req, res) => {
   try {
+    // Lấy ngày hiện tại và đặt thời gian về 00:00:00
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Lấy ngày mai để làm mốc kết thúc
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     // Lấy role_id của customer
     const customerRole = await Role.findOne({ role_name: 'customer' });
     
@@ -29,8 +37,26 @@ exports.getDashboardStats = async (req, res) => {
       status: 'Confirmed' 
     });
 
-    // Tính tổng tiền của tất cả hóa đơn
-    const totalRevenue = await Invoice.aggregate([
+    // Đếm số check-in trong ngày
+    const todayCheckIns = await Booking.countDocuments({
+      checkInDate: {
+        $gte: today,
+        $lt: tomorrow
+      },
+      status: 'Confirmed'
+    });
+
+    // Tính doanh thu trong ngày (từ các invoice đã thanh toán)
+    const todayRevenue = await Invoice.aggregate([
+      {
+        $match: {
+          paymentStatus: 'Paid',
+          paymentDate: {
+            $gte: today,
+            $lt: tomorrow
+          }
+        }
+      },
       {
         $group: {
           _id: null,
@@ -39,18 +65,19 @@ exports.getDashboardStats = async (req, res) => {
       }
     ]);
 
-    // Lấy 5 booking gần nhất
+    // Lấy danh sách booking gần đây
     const recentBookings = await Booking.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
       .populate('customerID', 'fullname')
-      .populate('roomID', 'roomNumber');
+      .populate('roomID', 'roomNumber')
+      .sort({ createdAt: -1 })
+      .limit(10);
 
     console.log('Dashboard stats:', {
       totalGuests,
       availableRooms,
       confirmedBookings,
-      totalRevenue: totalRevenue[0]?.total || 0,
+      todayCheckIns,
+      todayRevenue: todayRevenue[0]?.total || 0,
       recentBookings: recentBookings.length
     });
 
@@ -58,7 +85,8 @@ exports.getDashboardStats = async (req, res) => {
       totalGuests,
       availableRooms,
       confirmedBookings,
-      totalRevenue: totalRevenue[0]?.total || 0,
+      todayCheckIns,
+      todayRevenue: todayRevenue[0]?.total || 0,
       recentBookings
     });
   } catch (error) {
