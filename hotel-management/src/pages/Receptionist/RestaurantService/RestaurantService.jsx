@@ -301,7 +301,7 @@ const RestaurantService = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/bookings?status=Confirmed', {
+        const response = await fetch('http://localhost:5000/api/bookings', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -315,11 +315,14 @@ const RestaurantService = () => {
         const data = await response.json();
         console.log('Fetched bookings:', data); // Log để debug
 
-        if (data.length === 0) {
+        // Lọc các booking có trạng thái "Confirmed"
+        const confirmedBookings = data.filter(booking => booking.status === 'Confirmed');
+
+        if (confirmedBookings.length === 0) {
           message.info('No confirmed bookings found');
         }
 
-        setBookings(data);
+        setBookings(confirmedBookings);
       } catch (error) {
         console.error('Error:', error);
         message.error(error.message);
