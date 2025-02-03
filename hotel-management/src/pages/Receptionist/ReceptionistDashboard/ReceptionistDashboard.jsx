@@ -403,10 +403,10 @@ const ReceptionistDashboard = ({ onToggleSidebar }) => {
             title={
               <>
                 <DollarOutlined />
-                Today's Revenue
+                Total Revenue
               </>
             }
-            value={stats?.todayRevenue}
+            value={stats?.totalRevenue}
             valueStyle={{ 
               color: '#1a1a1a',
               fontWeight: 700,

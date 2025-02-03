@@ -202,7 +202,11 @@ exports.getBookingById = async (req, res) => {
       .populate('customerID', 'fullname email phone')
       .populate('receptionistID', 'fullname')
       .populate('roomID', 'roomNumber roomType price')
-      .populate('services.serviceID', 'serviceName servicePrice');
+      .populate({
+        path: 'services.serviceID',
+        select: 'serviceName servicePrice'
+      });
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
