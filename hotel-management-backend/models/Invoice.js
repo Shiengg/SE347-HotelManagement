@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
 const Booking = require("./Booking");
 
-const orderItemSchema = new mongoose.Schema({
-  itemId: String,
+const orderedItemSchema = new mongoose.Schema({
+  itemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "RestaurantItem",
+    required: true
+  },
   name: String,
-  category:String,
+  category: String,
   quantity: Number,
   price: Number,
   total: Number,
@@ -12,7 +16,7 @@ const orderItemSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-});
+}, { _id: false });
 
 const invoiceSchema = new mongoose.Schema(
   {
@@ -26,6 +30,18 @@ const invoiceSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    roomCharges: {
+      type: Number,
+      default: 0
+    },
+    serviceCharges: {
+      type: Number,
+      default: 0
+    },
+    restaurantCharges: {
+      type: Number,
+      default: 0
+    },
     totalAmount: {
       type: Number,
       required: true,
@@ -38,14 +54,14 @@ const invoiceSchema = new mongoose.Schema(
     },
     paymentMethod: {
       type: String,
-      enum: ["Cash", "Card"],
+      enum: ["Cash", "Card", null],
       default: null,
     },
     paymentDate: {
       type: Date,
       default: null,
     },
-    orderedItems: [orderItemSchema],
+    orderedItems: [orderedItemSchema],
   },
   {
     timestamps: true,

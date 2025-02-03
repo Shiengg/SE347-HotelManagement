@@ -447,9 +447,14 @@ exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
     const newTotalAmount = currentTotalAmount + restaurantCharges;
     const newRestaurantCharges = currentRestaurantCharges + restaurantCharges;
 
-    // Thêm timestamp vào mỗi order mới
+    // Chuyển đổi itemId thành ObjectId và thêm timestamp
     const newOrderItems = orderedItems.map(item => ({
-      ...item,
+      itemId: new mongoose.Types.ObjectId(item.itemId),
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      price: item.price,
+      total: item.total,
       orderedAt: new Date()
     }));
 
@@ -458,21 +463,14 @@ exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
     invoice.restaurantCharges = newRestaurantCharges;
     invoice.orderedItems = [...currentOrderedItems, ...newOrderItems];
 
-    console.log('Updating invoice with values:', {
-      previousTotalAmount: currentTotalAmount,
-      newOrderAmount: restaurantCharges,
-      newTotalAmount: newTotalAmount,
-      previousRestaurantCharges: currentRestaurantCharges,
-      newRestaurantCharges: newRestaurantCharges,
-      previousOrderCount: currentOrderedItems.length,
-      newOrderCount: newOrderItems.length,
-      totalOrderCount: invoice.orderedItems.length
-    });
-
     const updatedInvoice = await invoice.save({ session });
     await session.commitTransaction();
 
-    res.json(updatedInvoice);
+    // Populate itemId trong orderedItems khi trả về response
+    const populatedInvoice = await Invoice.findById(updatedInvoice._id)
+      .populate('orderedItems.itemId', 'name price category');
+
+    res.json(populatedInvoice);
   } catch (error) {
     await session.abortTransaction();
     console.error('Error updating invoice:', error);
