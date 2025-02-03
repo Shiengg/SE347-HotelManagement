@@ -24,15 +24,15 @@ const PaymentMethodContainer = styled.div`
   }
   &.Unknown {
     color: black;
-    background: gray;
+    background: grey;
   }
 `;
 const PaymentMethodComponent = ({ method }) => {
 
   return (
-    <PaymentMethodContainer className={method}>
-      {method}{" "}
-      <FontAwesomeIcon icon={method === "Cash" ? faMoneyBill : faCreditCard} />
+    <PaymentMethodContainer className={method||"Unknown"}>
+      <FontAwesomeIcon icon={method === "Cash" ? faMoneyBill : faCreditCard} />{" "}
+      {method||"Unknown"}
     </PaymentMethodContainer>
   );
 };

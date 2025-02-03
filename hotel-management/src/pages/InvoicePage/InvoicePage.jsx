@@ -9,6 +9,7 @@ import {
   getInvoiceById,
   getInvoices,
 } from "../../services/InvoiceService";
+import { message } from "antd";
 
 const LayoutWrapper = styled.div`
   display: grid;
@@ -59,11 +60,11 @@ const InvoicePage = () => {
         if (data && Object.keys(data).length > 0) {
           setSelectedInvoice(data);
         } else {
-          alert("Invoice not found");
+          message.info(`Invoice not found ¯\\_(ツ)_/¯`);
         }
       });
     } catch (error) {
-      console.error("Error searching invoices:", error);
+      message.info("Error searching invoices:", error);
       return null;
     }
   };

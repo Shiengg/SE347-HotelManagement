@@ -13,6 +13,7 @@ import {
   faBowlFood,
   faMugHot,
   faCake,
+  faKey,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef, useState } from "react";
@@ -343,59 +344,56 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
   const renderServices = (services) => (
     <ServiceListContainer>
       <ServiceTitle>Services</ServiceTitle>
-      {services?.map((service) =>
-        service.serviceID.serviceName === "Room Reservation" ? (
-          <ServiceItem
-            key={service.serviceID._id}
-            className={`${service.serviceID.serviceName.replace(/\s+/g, "")}`}
-          >
-            <ServiceIcon>
-              <FontAwesomeIcon icon={faBed} size="xl" />
-            </ServiceIcon>
-            <ServiceName>{service.serviceID.serviceName}</ServiceName>
-            <ServiceCostLayout>
-              <ServiceCost>
-                {formatCurrency(
-                  selectedInvoice.bookingID.bookingType === "Hourly"
-                    ? selectedInvoice.bookingID.roomID.hourlyPrice
-                    : selectedInvoice.bookingID.roomID.dailyPrice
-                )}
-              </ServiceCost>
-              {selectedInvoice.bookingID.bookingType}
-              <ServiceQuantity>
-                x
-                {selectedInvoice.bookingID.bookingType === "Hourly"
-                  ? selectedInvoice.bookingID.totalHours
-                  : selectedInvoice.bookingID.totalDays}
-              </ServiceQuantity>
-            </ServiceCostLayout>
-          </ServiceItem>
-        ) : (
-          <ServiceItem
-            key={service.serviceID._id}
-            className={`${service.serviceID.serviceName.replace(/\s+/g, "")}`}
-          >
-            <ServiceIcon>
-              <FontAwesomeIcon icon={faSprayCan} size="xl" />
-            </ServiceIcon>
-            <ServiceName>{service.serviceID.serviceName}</ServiceName>
-            <ServiceCostLayout>
-              <ServiceCost>
-                {formatCurrency(service.serviceID.servicePrice)}
-              </ServiceCost>
-              <ServiceQuantity>x{service.quantity}</ServiceQuantity>
-            </ServiceCostLayout>
-          </ServiceItem>
-        )
-      )}
+  
+      {/* Always Render Room Reservation */}
+      <ServiceItem className="RoomReservation">
+        <ServiceIcon>
+          <FontAwesomeIcon icon={faBed} size="xl" />
+        </ServiceIcon>
+        <ServiceName>Room Reservation</ServiceName>
+        <ServiceCostLayout>
+          <ServiceCost>
+            {formatCurrency(
+              selectedInvoice.bookingID.bookingType === "Hourly"
+                ? selectedInvoice.bookingID.roomID.hourlyPrice
+                : selectedInvoice.bookingID.roomID.dailyPrice
+            )}
+          </ServiceCost>
+          <ServiceQuantity>
+            x
+            {selectedInvoice.bookingID.bookingType === "Hourly"
+              ? selectedInvoice.bookingID.totalHours
+              : selectedInvoice.bookingID.totalDays}
+          </ServiceQuantity>
+        </ServiceCostLayout>
+      </ServiceItem>
+  
+      {/* Render Other Services */}
+      {services.filter(service=>service.serviceID.serviceName!=="Room Reservation")?.map((service) => (
+        <ServiceItem
+          key={service.serviceID._id}
+          className={service.serviceID.serviceName.replace(/\s+/g, "")}
+        >
+          <ServiceIcon>
+            <FontAwesomeIcon icon={faSprayCan} size="xl" />
+          </ServiceIcon>
+          <ServiceName>{service.serviceID.serviceName}</ServiceName>
+          <ServiceCostLayout>
+            <ServiceCost>{formatCurrency(service.serviceID.servicePrice)}</ServiceCost>
+            <ServiceQuantity>x{service.quantity}</ServiceQuantity>
+          </ServiceCostLayout>
+        </ServiceItem>
+      ))}
     </ServiceListContainer>
   );
+  
+  
   // Thêm hàm để gộp các món giống nhau
   const consolidateOrderedItems = (items) => {
     const itemMap = new Map();
 
     items.forEach((item) => {
-      const key = item.itemId;
+      const key = item.itemId._id.toString();
       if (itemMap.has(key)) {
         const existingItem = itemMap.get(key);
         existingItem.quantity += item.quantity;
@@ -463,13 +461,13 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
     <OrderedItemsContainer>
       <OrderedItemTitle>Ordered Items</OrderedItemTitle>
       {consolidatedItems.map((item) => (
-        <OrderedItem key={item.itemId} className={item.category}>
+        <OrderedItem key={item.itemId} className={item.itemId.category}>
           <OrderedItemIcon>
             <FontAwesomeIcon
               icon={
-                item.category === "Food"
+                item.itemId.category === "Food"
                   ? faBowlFood
-                  : item.category === "Beverage"
+                  : item.itemId.category === "Beverage"
                   ? faMugHot
                   : faCake
               }
@@ -492,9 +490,8 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
     <InvoiceDetailLayout>
       <Header ref={scrollRef}>
         <IconWrapper>
-          <FontAwesomeIcon icon={faHouse} />{" "}
-          {selectedInvoice?.bookingID.roomID.roomNumber}
-          {" - "}
+          <FontAwesomeIcon icon={faKey} />{" "}
+          {selectedInvoice?.bookingID.roomID.roomNumber}{" "}
           {selectedInvoice?.bookingID.roomID.roomType}
         </IconWrapper>
         <InvoiceId>
