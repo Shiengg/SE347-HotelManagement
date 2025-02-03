@@ -1,41 +1,136 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Card, Row, Col, Statistic, Table, Spin, List, Tag } from 'antd';
-import { TeamOutlined, HomeOutlined, CalendarOutlined, DollarOutlined, UserOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { Line, Pie } from '@ant-design/plots';
+import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Button, Space } from 'antd';
+import { 
+  TeamOutlined, 
+  HomeOutlined, 
+  CalendarOutlined, 
+  DollarOutlined, 
+  UserOutlined, 
+  CheckCircleOutlined,
+  MenuOutlined 
+} from '@ant-design/icons';
 import axios from 'axios';
 import { format } from 'date-fns';
 
 const PageContainer = styled.div`
   padding: 24px;
-  background: #f0f2f5;
-  min-height: 100vh;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
+`;
+
+const HeaderSection = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 576px) {
+    margin-bottom: 24px;
+  }
+`;
+
+const TitleSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  .icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background: #1890ff;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .anticon {
+      font-size: 24px;
+      color: white;
+    }
+
+    @media (max-width: 576px) {
+      width: 40px;
+      height: 40px;
+      .anticon {
+        font-size: 20px;
+      }
+    }
+  }
 `;
 
 const Title = styled.h1`
-  font-size: 32px;
+  margin: 0;
+  color: #1a3353;
+  font-size: 28px;
   font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 32px;
-  text-align: left;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 576px) {
+    font-size: 22px;
+  }
+`;
+
+const MenuButton = styled(Button)`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: #1a3353;
+  color: white;
+  
+  &:hover, &:focus {
+    background: #2c5282;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  @media (max-width: 576px) {
+    width: 36px;
+    height: 36px;
+  }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
-  padding: 0 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const StatCard = styled(Card)`
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   background: white;
-  border: 2px solid #1890ff;
+  border: 1px solid #e2e8f0;
 
   .ant-statistic-title {
     color: #666;
@@ -47,35 +142,12 @@ const StatCard = styled(Card)`
   }
 
   .ant-statistic-content {
-    color: #1a1a1a;
-    text-align: right;
+    color: #1a3353;
   }
 
   .ant-statistic-content-value {
-    font-size: 32px;
-    font-weight: 700;
-    color: #1a1a1a;
-  }
-
-  .percentage {
-    font-size: 14px;
-    color: #16a34a;
-    background: #dcfce7;
-    padding: 4px 8px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    margin-left: 8px;
-  }
-
-  &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  }
-
-  .ant-card-body {
-    padding: 20px;
-    background: white;
+    font-size: 28px;
+    font-weight: 600;
   }
 
   .anticon {
@@ -86,17 +158,36 @@ const StatCard = styled(Card)`
     padding: 8px;
     border-radius: 8px;
   }
+
+  @media (max-width: 576px) {
+    .ant-card-body {
+      padding: 16px;
+    }
+
+    .ant-statistic-title {
+      font-size: 14px;
+    }
+
+    .ant-statistic-content-value {
+      font-size: 24px;
+    }
+
+    .anticon {
+      font-size: 18px;
+      padding: 6px;
+    }
+  }
 `;
 
 const ChartContainer = styled(Card)`
-  margin: 24px;
+  margin-bottom: 24px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 2px solid #1890ff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
 
   .ant-card-head {
     border-bottom: 1px solid #f0f0f0;
-    padding: 16px 24px;
+    padding: 16px;
     
     .ant-card-head-title {
       font-size: 18px;
@@ -105,7 +196,43 @@ const ChartContainer = styled(Card)`
   }
 
   .ant-card-body {
-    padding: 24px;
+    padding: 16px;
+  }
+
+  @media (max-width: 768px) {
+    margin-bottom: 16px;
+
+    .ant-card-head {
+      padding: 12px 16px;
+      
+      .ant-card-head-title {
+        font-size: 16px;
+      }
+    }
+
+    .ant-table {
+      font-size: 14px;
+    }
+  }
+`;
+
+const StyledTable = styled(Table)`
+  .ant-table-thead > tr > th {
+    background: #f8fafc !important;
+    color: #1a3353;
+    font-weight: 600;
+    padding: 12px 16px;
+  }
+
+  .ant-table-tbody > tr > td {
+    padding: 12px 16px;
+  }
+
+  @media (max-width: 768px) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 8px 12px;
+    }
   }
 `;
 
@@ -116,7 +243,7 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-const ReceptionistDashboard = () => {
+const ReceptionistDashboard = ({ onToggleSidebar }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
 
@@ -148,34 +275,76 @@ const ReceptionistDashboard = () => {
     );
   }
 
-  const recentBookingsColumns = [
-    {
-      title: 'Customer',
-      dataIndex: ['customerID', 'fullname'],
-    },
-    {
-      title: 'Room',
-      dataIndex: ['roomID', 'roomNumber'],
-    },
-    {
-      title: 'Date',
-      dataIndex: 'createdAt',
-      render: (date) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      render: (status) => (
-        <Tag color={status === 'Confirmed' ? 'green' : 'gold'}>
-          {status}
-        </Tag>
-      ),
-    },
-  ];
+  const getResponsiveColumns = () => {
+    if (window.innerWidth <= 576) {
+      return [
+        {
+          title: 'Customer & Room',
+          key: 'customerRoom',
+          render: (record) => (
+            <Space direction="vertical" size={4}>
+              <div>{record.customerID.fullname}</div>
+              <div style={{ color: '#666' }}>Room {record.roomID.roomNumber}</div>
+            </Space>
+          ),
+        },
+        {
+          title: 'Status & Date',
+          key: 'statusDate',
+          render: (record) => (
+            <Space direction="vertical" size={4}>
+              <Tag color={record.status === 'Confirmed' ? 'green' : 'gold'}>
+                {record.status}
+              </Tag>
+              <div style={{ color: '#666', fontSize: '12px' }}>
+                {format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm')}
+              </div>
+            </Space>
+          ),
+        }
+      ];
+    }
+
+    return [
+      {
+        title: 'Customer',
+        dataIndex: ['customerID', 'fullname'],
+      },
+      {
+        title: 'Room',
+        dataIndex: ['roomID', 'roomNumber'],
+        render: (number) => `Room ${number}`,
+      },
+      {
+        title: 'Date',
+        dataIndex: 'createdAt',
+        render: (date) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
+      },
+      {
+        title: 'Status',
+        dataIndex: 'status',
+        render: (status) => (
+          <Tag color={status === 'Confirmed' ? 'green' : 'gold'}>
+            {status}
+          </Tag>
+        ),
+      },
+    ];
+  };
 
   return (
     <PageContainer>
-      <Title>Overview</Title>
+      <HeaderSection>
+        <TitleSection>
+          <div className="icon-wrapper">
+            <DollarOutlined />
+          </div>
+          <Title>Dashboard Overview</Title>
+        </TitleSection>
+        <MenuButton onClick={onToggleSidebar}>
+          <MenuOutlined />
+        </MenuButton>
+      </HeaderSection>
       
       <StatsGrid>
         <StatCard iconcolor="#4F46E5" iconbg="#ede9fe">
@@ -250,11 +419,12 @@ const ReceptionistDashboard = () => {
       </StatsGrid>
 
       <ChartContainer title="Recent Bookings">
-        <Table
-          columns={recentBookingsColumns}
+        <StyledTable
+          columns={getResponsiveColumns()}
           dataSource={stats?.recentBookings}
           rowKey="_id"
           pagination={false}
+          scroll={{ x: true }}
         />
       </ChartContainer>
     </PageContainer>

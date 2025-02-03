@@ -1,31 +1,61 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Table, Tag, Space, message } from 'antd';
-import { CalendarOutlined, HomeOutlined, ClockCircleOutlined, DollarOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { Table, Tag, Space, message, Button, Grid } from 'antd';
+import { 
+  CalendarOutlined, 
+  HomeOutlined, 
+  ClockCircleOutlined, 
+  DollarOutlined, 
+  CheckCircleOutlined,
+  MenuOutlined 
+} from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 
+const { useBreakpoint } = Grid;
+
 const PageContainer = styled.div`
   padding: 24px;
-  height: calc(100vh - 84px);
+  min-height: calc(100vh - 64px);
+  background: #f8fafc;
   overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
 `;
 
 const ContentWrapper = styled.div`
   background: white;
-  border-radius: 10px;
-  padding: 20px;
-  border: 2px solid gold;
+  border-radius: 20px;
+  padding: 24px;
+  border: 2px solid #ffd700;
   height: 100%;
-  overflow-y: auto;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-width: 1px;
+    border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  }
 `;
 
 const HeaderSection = styled.div`
-  padding: 20px;
+  padding: 0 0 24px 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  @media (max-width: 576px) {
+    padding: 0 0 16px 0;
+  }
 `;
 
 const TitleSection = styled.div`
@@ -36,7 +66,7 @@ const TitleSection = styled.div`
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    background: linear-gradient(135deg, #ffd700, #ffed4a);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -47,6 +77,14 @@ const TitleSection = styled.div`
       font-size: 24px;
       color: #1a3353;
     }
+
+    @media (max-width: 576px) {
+      width: 40px;
+      height: 40px;
+      .anticon {
+        font-size: 20px;
+      }
+    }
   }
 `;
 
@@ -55,22 +93,71 @@ const Title = styled.h1`
   color: #1a3353;
   font-size: 1.8em;
   font-weight: 600;
+
+  @media (max-width: 576px) {
+    font-size: 1.4em;
+  }
+`;
+
+const MenuButton = styled(Button)`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: #1a3353;
+  color: white;
+  
+  &:hover, &:focus {
+    background: #2c5282;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
 `;
 
 const StyledTable = styled(Table)`
   .ant-table {
     background: white;
-    border-radius: 8px;
+    border-radius: 12px;
   }
 
   .ant-table-thead > tr > th {
-    background: #f8fafc;
+    background: #f8fafc !important;
     color: #1a3353;
     font-weight: 600;
+    border-bottom: 2px solid #edf2f7;
+    padding: 16px;
+
+    &::before {
+      display: none;
+    }
+  }
+
+  .ant-table-tbody > tr > td {
+    padding: 16px;
+    border-bottom: 1px solid #edf2f7;
+    background: white !important;
   }
 
   .ant-table-tbody > tr:hover > td {
-    background: #f8fafc;
+    background: #f8fafc !important;
+  }
+
+  @media (max-width: 768px) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px 8px;
+    }
+    
+    .ant-table-content {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
   }
 `;
 
@@ -79,12 +166,37 @@ const StatusTag = styled(Tag)`
   padding: 4px 12px;
   border-radius: 6px;
   border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  background: ${props => {
+    switch (props.color) {
+      case 'orange': return '#fff7e6';
+      case 'blue': return '#e6f7ff';
+      case 'green': return '#f6ffed';
+      default: return '#f5f5f5';
+    }
+  }};
+  color: ${props => {
+    switch (props.color) {
+      case 'orange': return '#fa8c16';
+      case 'blue': return '#1890ff';
+      case 'green': return '#52c41a';
+      default: return '#666666';
+    }
+  }};
+
+  .anticon {
+    font-size: 12px;
+  }
 `;
 
-const CustomerBooking = () => {
+const CustomerBooking = ({ onToggleSidebar }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const screens = useBreakpoint();
 
   useEffect(() => {
     const user = localStorage.getItem('user');
@@ -161,57 +273,90 @@ const CustomerBooking = () => {
     );
   };
 
-  const columns = [
-    {
-      title: 'Room',
-      key: 'room',
-      render: (record) => (
-        <Space>
-          <HomeOutlined />
-          Room {record.roomID.roomNumber}
-        </Space>
-      ),
-    },
-    {
-      title: 'Type',
-      dataIndex: 'bookingType',
-      key: 'type',
-    },
-    {
-      title: 'Check In',
-      key: 'checkIn',
-      render: (record) => formatDateTime(record.checkInDate, record.bookingType),
-    },
-    {
-      title: 'Check Out',
-      key: 'checkOut',
-      render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
-    },
-    {
-      title: 'Duration',
-      key: 'duration',
-      render: (record) => (
-        record.bookingType === 'Daily' 
-          ? `${record.totalDays} days`
-          : `${record.totalHours} hours`
-      ),
-    },
-    {
-      title: 'Total Price',
-      key: 'price',
-      render: (record) => (
-        <Space>
-          <DollarOutlined />
-          {formatVND(record.totalPrice)}
-        </Space>
-      ),
-    },
-    {
-      title: 'Status',
-      key: 'status',
-      render: (record) => getStatusTag(record.status),
+  const getResponsiveColumns = () => {
+    if (screens.xs) {
+      return [
+        {
+          title: 'Room & Status',
+          key: 'roomAndStatus',
+          render: (record) => (
+            <Space direction="vertical" size={4}>
+              <Space>
+                <HomeOutlined />
+                Room {record.roomID.roomNumber}
+              </Space>
+              {getStatusTag(record.status)}
+            </Space>
+          ),
+        },
+        {
+          title: 'Details',
+          key: 'details',
+          render: (record) => (
+            <Space direction="vertical" size={4}>
+              <div>{record.bookingType}</div>
+              <div>{formatDateTime(record.checkInDate, record.bookingType)}</div>
+              <div style={{ color: '#1a3353', fontWeight: 500 }}>
+                {formatVND(record.totalPrice)}
+              </div>
+            </Space>
+          ),
+        }
+      ];
     }
-  ];
+
+    return [
+      {
+        title: 'Room',
+        key: 'room',
+        render: (record) => (
+          <Space>
+            <HomeOutlined />
+            Room {record.roomID.roomNumber}
+          </Space>
+        ),
+      },
+      {
+        title: 'Type',
+        dataIndex: 'bookingType',
+        key: 'type',
+      },
+      {
+        title: 'Check In',
+        key: 'checkIn',
+        render: (record) => formatDateTime(record.checkInDate, record.bookingType),
+      },
+      {
+        title: 'Check Out',
+        key: 'checkOut',
+        render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
+      },
+      {
+        title: 'Duration',
+        key: 'duration',
+        render: (record) => (
+          record.bookingType === 'Daily' 
+            ? `${record.totalDays} days`
+            : `${record.totalHours} hours`
+        ),
+      },
+      {
+        title: 'Total Price',
+        key: 'price',
+        render: (record) => (
+          <Space>
+            <DollarOutlined />
+            {formatVND(record.totalPrice)}
+          </Space>
+        ),
+      },
+      {
+        title: 'Status',
+        key: 'status',
+        render: (record) => getStatusTag(record.status),
+      }
+    ];
+  };
 
   return (
     <PageContainer>
@@ -223,10 +368,13 @@ const CustomerBooking = () => {
             </div>
             <Title>My Bookings</Title>
           </TitleSection>
+          <MenuButton onClick={onToggleSidebar}>
+            <MenuOutlined />
+          </MenuButton>
         </HeaderSection>
 
         <StyledTable
-          columns={columns}
+          columns={getResponsiveColumns()}
           dataSource={bookings}
           rowKey="_id"
           loading={loading}
@@ -234,7 +382,9 @@ const CustomerBooking = () => {
             defaultPageSize: 10,
             showSizeChanger: true,
             showTotal: (total) => `Total ${total} bookings`,
+            responsive: true,
           }}
+          scroll={{ x: true }}
         />
       </ContentWrapper>
     </PageContainer>

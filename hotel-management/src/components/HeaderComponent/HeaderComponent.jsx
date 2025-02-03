@@ -26,20 +26,51 @@ const StyledLogoutButton = styled(Button)`
     box-shadow: 0 2px 8px rgba(255, 77, 79, 0.2);
   }
 
-  .anticon {
+  .logout-icon {
     font-size: 16px;
   }
 
-  span {
+  .logout-text {
     font-size: 14px;
     font-weight: 500;
   }
 
   @media (max-width: 680px) {
-    padding: 8px;
-    span {
+    padding: 6px;
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    justify-content: center;
+
+    .logout-icon {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .logout-text {
       display: none;
     }
+  }
+
+  @media (max-width: 480px) {
+    padding: 4px;
+    min-width: 32px;
+    width: 32px;
+    height: 32px;
+
+    .logout-icon {
+      font-size: 16px;
+    }
+  }
+`;
+
+const WrapperContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  @media (max-width: 680px) {
+    gap: 8px;
   }
 `;
 
@@ -48,15 +79,13 @@ const HeaderComponent = () => {
 
   return (
     <WrapperHeader>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <WrapperContent>
         <ProfileComponent />
-        <StyledLogoutButton 
-          onClick={logout}
-          icon={<LogoutOutlined />}
-        >
-          <span>Log Out</span>
+        <StyledLogoutButton onClick={logout}>
+          <LogoutOutlined className="logout-icon" />
+          <span className="logout-text">Log Out</span>
         </StyledLogoutButton>
-      </div>
+      </WrapperContent>
     </WrapperHeader>
   );
 };

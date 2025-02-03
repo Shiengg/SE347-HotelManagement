@@ -25,20 +25,7 @@ exports.getAllBookings = async (req, res) => {
         select: 'serviceName servicePrice'
       });
 
-    // Tính lại tổng tiền cho mỗi booking để đảm bảo chính xác
-    const calculatedBookings = bookings.map(booking => {
-      const roomPrice = booking.bookingType === 'Daily' 
-        ? booking.roomID.dailyPrice * booking.totalDays
-        : booking.roomID.hourlyPrice * booking.totalHours;
-
-      const servicesPrice = booking.services.reduce((total, service) => 
-        total + (service.serviceID.servicePrice * service.quantity), 0);
-
-      booking.totalPrice = roomPrice + servicesPrice;
-      return booking;
-    });
-
-    res.json(calculatedBookings);
+    res.json(bookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ message: error.message });

@@ -117,6 +117,7 @@ const StatusSection = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    position: relative;
   }
 
   .status-button {
@@ -155,9 +156,30 @@ const StatusSection = styled.div`
         color: #fa8c16;
       }
 
-      &:hover, &.active {
+      &:hover {
         background: #fff1b8;
         border-color: #ffa940;
+      }
+
+      &.active {
+        background: #fff1b8;
+        border-color: #ffa940;
+        
+        &::after {
+          content: '✓';
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #fa8c16;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+        }
       }
     }
 
@@ -169,26 +191,31 @@ const StatusSection = styled.div`
         color: #52c41a;
       }
 
-      &:hover, &.active {
+      &:hover {
         background: #d9f7be;
         border-color: #73d13d;
       }
-    }
 
-    &.active::after {
-      content: '✓';
-      position: absolute;
-      top: 8px;
-      right: 8px;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      background: #1a3353;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
+      &.active {
+        background: #d9f7be;
+        border-color: #73d13d;
+        
+        &::after {
+          content: '✓';
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #52c41a;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+        }
+      }
     }
   }
 `;
@@ -220,7 +247,7 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
   const [bookingType, setBookingType] = useState(booking?.bookingType || 'Daily');
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
-  const [previousStatus, setPreviousStatus] = useState(booking?.status || 'Pending');
+  const [currentStatus, setCurrentStatus] = useState(booking?.status || 'Pending');
 
   useEffect(() => {
     fetchRooms();
@@ -241,7 +268,6 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
         receptionistID: booking.receptionistID?._id || currentUser?.id
       });
       setBookingType(booking.bookingType);
-      setPreviousStatus(booking.status);
       setSelectedRoom(booking.roomID);
       setEstimatedPrice(booking.totalPrice);
     }
@@ -329,8 +355,11 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
   }, [booking]);
 
   useEffect(() => {
-    setPreviousStatus(booking?.status || 'Pending');
-  }, [booking]);
+    const status = form.getFieldValue('status');
+    if (status) {
+      setCurrentStatus(status);
+    }
+  }, [form.getFieldValue('status')]);
 
   const fetchRooms = async () => {
     try {
@@ -763,8 +792,11 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
             >
               <div className="status-buttons">
                 <div
-                  className={`status-button pending ${form.getFieldValue('status') === 'Pending' ? 'active' : ''}`}
-                  onClick={() => form.setFieldsValue({ status: 'Pending' })}
+                  className={`status-button pending ${currentStatus === 'Pending' ? 'active' : ''}`}
+                  onClick={() => {
+                    form.setFieldsValue({ status: 'Pending' });
+                    setCurrentStatus('Pending');
+                  }}
                 >
                   <ClockCircleOutlined className="status-icon" />
                   <div className="status-title">Pending</div>
@@ -775,8 +807,11 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
                 </div>
 
                 <div
-                  className={`status-button confirmed ${form.getFieldValue('status') === 'Confirmed' ? 'active' : ''}`}
-                  onClick={() => form.setFieldsValue({ status: 'Confirmed' })}
+                  className={`status-button confirmed ${currentStatus === 'Confirmed' ? 'active' : ''}`}
+                  onClick={() => {
+                    form.setFieldsValue({ status: 'Confirmed' });
+                    setCurrentStatus('Confirmed');
+                  }}
                 >
                   <CheckCircleOutlined className="status-icon" />
                   <div className="status-title">Confirmed</div>

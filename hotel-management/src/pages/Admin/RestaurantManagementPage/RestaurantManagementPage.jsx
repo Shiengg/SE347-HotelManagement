@@ -1252,13 +1252,34 @@ const RestaurantManagementPage = () => {
                   <Form.Item
                     name="price"
                     label="Price"
-                    rules={[{ required: true, message: 'Please enter price' }]}
+                    rules={[
+                      { required: true, message: 'Please input price' },
+                      { type: 'number', message: 'Price must be a number' },
+                      { 
+                        validator: (_, value) => {
+                          if (value <= 0) {
+                            return Promise.reject('Price must be greater than 0');
+                          }
+                          if (!Number.isInteger(value)) {
+                            return Promise.reject('Price must be a whole number');
+                          }
+                          if (!/^\d+$/.test(String(value))) {
+                            return Promise.reject('Price can only contain numbers');
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                    tooltip="Price must be a positive whole number"
                   >
                     <InputNumber
-                      min={0}
                       style={{ width: '100%' }}
                       formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND"
+                      min={1}
+                      precision={0}
+                      placeholder="Enter price (e.g. 50000)"
                     />
                   </Form.Item>
 
@@ -1491,13 +1512,34 @@ const RestaurantManagementPage = () => {
           <Form.Item
             name="price"
             label="Price"
-            rules={[{ required: true, message: 'Please enter price' }]}
+            rules={[
+              { required: true, message: 'Please input price' },
+              { type: 'number', message: 'Price must be a number' },
+              { 
+                validator: (_, value) => {
+                  if (value <= 0) {
+                    return Promise.reject('Price must be greater than 0');
+                  }
+                  if (!Number.isInteger(value)) {
+                    return Promise.reject('Price must be a whole number');
+                  }
+                  if (!/^\d+$/.test(String(value))) {
+                    return Promise.reject('Price can only contain numbers');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+            tooltip="Price must be a positive whole number"
           >
             <InputNumber
-              min={0}
               style={{ width: '100%' }}
               formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={value => value.replace(/\$\s?|(,*)/g, '')}
+              addonAfter="VND"
+              min={1}
+              precision={0}
+              placeholder="Enter price (e.g. 50000)"
             />
           </Form.Item>
 
@@ -1763,13 +1805,34 @@ const RestaurantManagementPage = () => {
               <Form.Item
                 name="price"
                 label="Price"
-                rules={[{ required: true, message: 'Please enter price' }]}
+                rules={[
+                  { required: true, message: 'Please input price' },
+                  { type: 'number', message: 'Price must be a number' },
+                  { 
+                    validator: (_, value) => {
+                      if (value <= 0) {
+                        return Promise.reject('Price must be greater than 0');
+                      }
+                      if (!Number.isInteger(value)) {
+                        return Promise.reject('Price must be a whole number');
+                      }
+                      if (!/^\d+$/.test(String(value))) {
+                        return Promise.reject('Price can only contain numbers');
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+                tooltip="Price must be a positive whole number"
               >
                 <InputNumber
-                  min={0}
                   style={{ width: '100%' }}
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  addonAfter="VND"
+                  min={1}
+                  precision={0}
+                  placeholder="Enter price (e.g. 50000)"
                 />
               </Form.Item>
 
