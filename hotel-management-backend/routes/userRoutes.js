@@ -8,5 +8,7 @@ router.post('/', authMiddleware, userController.createUser);
 router.get('/:id', authMiddleware, userController.getUserById);
 router.put('/:id', authMiddleware, userController.updateUser);
 router.delete('/:id', authMiddleware, userController.deleteUser);
+router.get('/check-username', authMiddleware, userController.checkUsername);
+router.get('/check-email', authMiddleware, userController.checkEmail);
 
 module.exports = router; 

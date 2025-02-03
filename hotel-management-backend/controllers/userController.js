@@ -13,6 +13,18 @@ exports.getAllUsers = async (req, res) => {
 
 exports.createUser = async (req, res) => {
   try {
+    // Kiểm tra username tồn tại
+    const existingUsername = await User.findOne({ username: req.body.username });
+    if (existingUsername) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    // Kiểm tra email tồn tại
+    const existingEmail = await User.findOne({ email: req.body.email });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
     const user = new User(req.body);
     await user.save();
     res.status(201).json(user);
@@ -86,6 +98,26 @@ exports.deleteUser = async (req, res) => {
     await User.findByIdAndDelete(id);
     res.json({ message: 'User deleted successfully' });
 
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.checkUsername = async (req, res) => {
+  try {
+    const { username } = req.query;
+    const existingUser = await User.findOne({ username });
+    res.json({ exists: !!existingUser });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.checkEmail = async (req, res) => {
+  try {
+    const { email } = req.query;
+    const existingUser = await User.findOne({ email });
+    res.json({ exists: !!existingUser });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

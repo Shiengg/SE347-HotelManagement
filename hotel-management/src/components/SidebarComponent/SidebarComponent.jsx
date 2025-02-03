@@ -92,18 +92,7 @@ const Sidebar = () => {
             color: "#9c27b0",
           },
         ],
-      },
-      {
-        section: "System",
-        items: [
-          {
-            title: "Settings",
-            to: "/admin/settings",
-            icon: faGear, // Replace with <SettingOutlined />
-            color: "#9c27b0",
-          },
-        ],
-      },
+      }
     ],
     receptionist: [
       {

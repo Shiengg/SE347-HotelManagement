@@ -241,6 +241,38 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, []);
 
+  // Thêm hàm kiểm tra username
+  const checkUsername = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/check-username?username=${username}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking username:', error);
+      return false;
+    }
+  };
+
+  // Thêm hàm kiểm tra email
+  const checkEmail = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/check-email?email=${email}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking email:', error);
+      return false;
+    }
+  };
+
   const handleAddEdit = async (values) => {
     try {
       const url = editingEmployee 
@@ -249,10 +281,9 @@ const EmployeesPage = () => {
       
       const method = editingEmployee ? 'PUT' : 'POST';
 
-      // Thêm role_id cho receptionist
       const userData = {
         ...values,
-        role_id: '6783da9402236e8ab00f4fee' // Chỉ cần gửi ID
+        role_id: '6783da9402236e8ab00f4fee'
       };
 
       const response = await fetch(url, {
@@ -264,14 +295,16 @@ const EmployeesPage = () => {
         body: JSON.stringify(userData)
       });
 
-      if (response.ok) {
-        message.success(`Employee ${editingEmployee ? 'updated' : 'added'} successfully`);
-        setIsModalVisible(false);
-        form.resetFields();
-        fetchEmployees();
-      } else {
-        throw new Error('Failed to save employee');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save employee');
       }
+
+      message.success(`Employee ${editingEmployee ? 'updated' : 'added'} successfully`);
+      setIsModalVisible(false);
+      form.resetFields();
+      fetchEmployees();
     } catch (error) {
       message.error(error.message);
     }
@@ -460,15 +493,47 @@ const EmployeesPage = () => {
           <Form.Item
             name="fullname"
             label="Full Name"
-            rules={[{ required: true, message: 'Please input full name!' }]}
+            rules={[
+              { required: true, message: 'Please input full name!' },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  
+                  // Kiểm tra chỉ cho phép chữ cái (bao gồm tiếng Việt có dấu), khoảng trắng
+                  const validNameRegex = /^[a-zA-ZÀ-ỹ\s]*$/;
+                  if (!validNameRegex.test(value)) {
+                    return Promise.reject('Full name can only contain letters and spaces!');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Enter full name" />
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="Enter full name"
+            />
           </Form.Item>
 
           <Form.Item
             name="username"
             label="Username"
-            rules={[{ required: true, message: 'Please input username!' }]}
+            rules={[
+              { required: true, message: 'Please input username!' },
+              {
+                validator: async (_, value) => {
+                  if (!value) return Promise.resolve();
+                  
+                  if (editingEmployee) return Promise.resolve();
+                  
+                  const exists = await checkUsername(value);
+                  if (exists) {
+                    return Promise.reject('This username is already taken!');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input 
               prefix={<UserOutlined />} 
@@ -493,10 +558,36 @@ const EmployeesPage = () => {
             label="Email"
             rules={[
               { required: true, message: 'Please input email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              { type: 'email', message: 'Please enter a valid email!' },
+              {
+                validator: async (_, value) => {
+                  if (!value) return Promise.resolve();
+                  
+                  // Kiểm tra định dạng email
+                  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+                  if (!emailRegex.test(value)) {
+                    return Promise.reject('Please enter a valid email address! (e.g. example@domain.com)');
+                  }
+
+                  // Kiểm tra email tồn tại
+                  if (editingEmployee && value === editingEmployee.email) {
+                    return Promise.resolve();
+                  }
+                  
+                  const exists = await checkEmail(value);
+                  if (exists) {
+                    return Promise.reject('This email is already registered!');
+                  }
+                  
+                  return Promise.resolve();
+                }
+              }
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Enter email" />
+            <Input 
+              prefix={<MailOutlined />} 
+              placeholder="Enter email (e.g. example@domain.com)" 
+            />
           </Form.Item>
 
           <Form.Item
