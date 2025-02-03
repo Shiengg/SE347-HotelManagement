@@ -167,11 +167,16 @@ exports.createBooking = async (req, res) => {
     if (req.body.status === 'Confirmed') {
       const invoice = new Invoice({
         bookingID: booking._id,
+        customerID: customerID,
         roomCharges: roomPrice,
         serviceCharges: totalServicePrice,
         restaurantCharges: 0,
         totalAmount: roomPrice + totalServicePrice,
-        status: 'Pending'
+        status: 'Pending',
+        paymentStatus: 'Unpaid',
+        paymentMethod: null,
+        paymentDate: null,
+        orderedItems: []
       });
 
       await invoice.save({ session });
