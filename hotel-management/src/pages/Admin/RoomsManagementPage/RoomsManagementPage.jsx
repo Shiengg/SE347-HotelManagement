@@ -1186,15 +1186,31 @@ const RoomsManagementPage = () => {
                           label="Hourly Price"
                           rules={[
                             { required: true, message: 'Please input hourly price' },
-                            { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                            { type: 'number', message: 'Price must be a number' },
+                            { 
+                              validator: (_, value) => {
+                                if (value <= 0) {
+                                  return Promise.reject('Price must be greater than 0');
+                                }
+                                if (!Number.isInteger(value)) {
+                                  return Promise.reject('Price must be a whole number');
+                                }
+                                if (!/^\d+$/.test(String(value))) {
+                                  return Promise.reject('Price can only contain numbers');
+                                }
+                                return Promise.resolve();
+                              }
+                            }
                           ]}
-                          tooltip="Daily price should be 20 times the hourly price"
+                          tooltip="Price must be a positive whole number"
                         >
                           <InputNumber
                             style={{ width: '100%' }}
                             formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                             parser={value => value.replace(/\$\s?|(,*)/g, '')}
                             addonAfter="VND/hour"
+                            min={1}
+                            precision={0}
                           />
                         </Form.Item>
 
@@ -1203,35 +1219,69 @@ const RoomsManagementPage = () => {
                           label="Daily Price"
                           rules={[
                             { required: true, message: 'Please input daily price' },
-                            { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                            ({ getFieldValue }) => ({
-                              validator(_, value) {
-                                const hourlyPrice = getFieldValue('hourlyPrice');
-                                if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
-                                  return Promise.resolve();
+                            { type: 'number', message: 'Price must be a number' },
+                            { 
+                              validator: (_, value) => {
+                                if (value <= 0) {
+                                  return Promise.reject('Price must be greater than 0');
                                 }
-                                return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
-                              },
-                            }),
+                                if (!Number.isInteger(value)) {
+                                  return Promise.reject('Price must be a whole number');
+                                }
+                                if (!/^\d+$/.test(String(value))) {
+                                  return Promise.reject('Price can only contain numbers');
+                                }
+                                const hourlyPrice = form.getFieldValue('hourlyPrice');
+                                if (hourlyPrice && value < hourlyPrice * 20) {
+                                  return Promise.reject('Daily price must be at least 20 times the hourly price');
+                                }
+                                return Promise.resolve();
+                              }
+                            }
                           ]}
-                          tooltip="Daily price should be at least 20 times the hourly price"
+                          tooltip="Price must be a positive whole number and at least 20 times the hourly price"
                         >
                           <InputNumber
                             style={{ width: '100%' }}
                             formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                             parser={value => value.replace(/\$\s?|(,*)/g, '')}
                             addonAfter="VND/day"
+                            min={1}
+                            precision={0}
                           />
                         </Form.Item>
 
                         <Form.Item
                           name="maxOccupancy"
                           label="Maximum Occupancy"
-                          rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                          rules={[
+                            { required: true, message: 'Please input maximum occupancy' },
+                            { type: 'number', message: 'Occupancy must be a number' },
+                            {
+                              validator: (_, value) => {
+                                if (value <= 0) {
+                                  return Promise.reject('Occupancy must be greater than 0');
+                                }
+                                if (!Number.isInteger(value)) {
+                                  return Promise.reject('Occupancy must be a whole number');
+                                }
+                                if (!/^\d+$/.test(String(value))) {
+                                  return Promise.reject('Occupancy can only contain numbers');
+                                }
+                                if (value > 10) {
+                                  return Promise.reject('Maximum occupancy cannot exceed 10 people');
+                                }
+                                return Promise.resolve();
+                              }
+                            }
+                          ]}
+                          tooltip="Occupancy must be a whole number between 1 and 10"
                         >
-                          <InputNumber 
-                            min={1} 
-                            style={{ width: '100%' }} 
+                          <InputNumber
+                            style={{ width: '100%' }}
+                            min={1}
+                            max={10}
+                            precision={0}
                             placeholder="Enter maximum number of guests"
                           />
                         </Form.Item>
@@ -1400,15 +1450,31 @@ const RoomsManagementPage = () => {
                         label="Hourly Price"
                         rules={[
                           { required: true, message: 'Please input hourly price' },
-                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                          { type: 'number', message: 'Price must be a number' },
+                          { 
+                            validator: (_, value) => {
+                              if (value <= 0) {
+                                return Promise.reject('Price must be greater than 0');
+                              }
+                              if (!Number.isInteger(value)) {
+                                return Promise.reject('Price must be a whole number');
+                              }
+                              if (!/^\d+$/.test(String(value))) {
+                                return Promise.reject('Price can only contain numbers');
+                              }
+                              return Promise.resolve();
+                            }
+                          }
                         ]}
-                        tooltip="Daily price should be 20 times the hourly price"
+                        tooltip="Price must be a positive whole number"
                       >
                         <InputNumber
                           style={{ width: '100%' }}
                           formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                           parser={value => value.replace(/\$\s?|(,*)/g, '')}
                           addonAfter="VND/hour"
+                          min={1}
+                          precision={0}
                         />
                       </Form.Item>
 
@@ -1417,35 +1483,69 @@ const RoomsManagementPage = () => {
                         label="Daily Price"
                         rules={[
                           { required: true, message: 'Please input daily price' },
-                          { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                          ({ getFieldValue }) => ({
-                            validator(_, value) {
-                              const hourlyPrice = getFieldValue('hourlyPrice');
-                              if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
-                                return Promise.resolve();
+                          { type: 'number', message: 'Price must be a number' },
+                          { 
+                            validator: (_, value) => {
+                              if (value <= 0) {
+                                return Promise.reject('Price must be greater than 0');
                               }
-                              return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
-                            },
-                          }),
+                              if (!Number.isInteger(value)) {
+                                return Promise.reject('Price must be a whole number');
+                              }
+                              if (!/^\d+$/.test(String(value))) {
+                                return Promise.reject('Price can only contain numbers');
+                              }
+                              const hourlyPrice = form.getFieldValue('hourlyPrice');
+                              if (hourlyPrice && value < hourlyPrice * 20) {
+                                return Promise.reject('Daily price must be at least 20 times the hourly price');
+                              }
+                              return Promise.resolve();
+                            }
+                          }
                         ]}
-                        tooltip="Daily price should be at least 20 times the hourly price"
+                        tooltip="Price must be a positive whole number and at least 20 times the hourly price"
                       >
                         <InputNumber
                           style={{ width: '100%' }}
                           formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                           parser={value => value.replace(/\$\s?|(,*)/g, '')}
                           addonAfter="VND/day"
+                          min={1}
+                          precision={0}
                         />
                       </Form.Item>
 
                       <Form.Item
                         name="maxOccupancy"
                         label="Maximum Occupancy"
-                        rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                        rules={[
+                          { required: true, message: 'Please input maximum occupancy' },
+                          { type: 'number', message: 'Occupancy must be a number' },
+                          {
+                            validator: (_, value) => {
+                              if (value <= 0) {
+                                return Promise.reject('Occupancy must be greater than 0');
+                              }
+                              if (!Number.isInteger(value)) {
+                                return Promise.reject('Occupancy must be a whole number');
+                              }
+                              if (!/^\d+$/.test(String(value))) {
+                                return Promise.reject('Occupancy can only contain numbers');
+                              }
+                              if (value > 10) {
+                                return Promise.reject('Maximum occupancy cannot exceed 10 people');
+                              }
+                              return Promise.resolve();
+                            }
+                          }
+                        ]}
+                        tooltip="Occupancy must be a whole number between 1 and 10"
                       >
-                        <InputNumber 
-                          min={1} 
-                          style={{ width: '100%' }} 
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          min={1}
+                          max={10}
+                          precision={0}
                           placeholder="Enter maximum number of guests"
                         />
                       </Form.Item>
@@ -1559,15 +1659,31 @@ const RoomsManagementPage = () => {
                       label="Hourly Price"
                       rules={[
                         { required: true, message: 'Please input hourly price' },
-                        { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                        { type: 'number', message: 'Price must be a number' },
+                        { 
+                          validator: (_, value) => {
+                            if (value <= 0) {
+                              return Promise.reject('Price must be greater than 0');
+                            }
+                            if (!Number.isInteger(value)) {
+                              return Promise.reject('Price must be a whole number');
+                            }
+                            if (!/^\d+$/.test(String(value))) {
+                              return Promise.reject('Price can only contain numbers');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
                       ]}
-                      tooltip="Daily price should be 20 times the hourly price"
+                      tooltip="Price must be a positive whole number"
                     >
                       <InputNumber
                         style={{ width: '100%' }}
                         formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={value => value.replace(/\$\s?|(,*)/g, '')}
                         addonAfter="VND/hour"
+                        min={1}
+                        precision={0}
                       />
                     </Form.Item>
 
@@ -1576,35 +1692,69 @@ const RoomsManagementPage = () => {
                       label="Daily Price"
                       rules={[
                         { required: true, message: 'Please input daily price' },
-                        { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                        ({ getFieldValue }) => ({
-                          validator(_, value) {
-                            const hourlyPrice = getFieldValue('hourlyPrice');
-                            if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
-                              return Promise.resolve();
+                        { type: 'number', message: 'Price must be a number' },
+                        { 
+                          validator: (_, value) => {
+                            if (value <= 0) {
+                              return Promise.reject('Price must be greater than 0');
                             }
-                            return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
-                          },
-                        }),
+                            if (!Number.isInteger(value)) {
+                              return Promise.reject('Price must be a whole number');
+                            }
+                            if (!/^\d+$/.test(String(value))) {
+                              return Promise.reject('Price can only contain numbers');
+                            }
+                            const hourlyPrice = form.getFieldValue('hourlyPrice');
+                            if (hourlyPrice && value < hourlyPrice * 20) {
+                              return Promise.reject('Daily price must be at least 20 times the hourly price');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
                       ]}
-                      tooltip="Daily price should be at least 20 times the hourly price"
+                      tooltip="Price must be a positive whole number and at least 20 times the hourly price"
                     >
                       <InputNumber
                         style={{ width: '100%' }}
                         formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={value => value.replace(/\$\s?|(,*)/g, '')}
                         addonAfter="VND/day"
+                        min={1}
+                        precision={0}
                       />
                     </Form.Item>
 
                     <Form.Item
                       name="maxOccupancy"
                       label="Maximum Occupancy"
-                      rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                      rules={[
+                        { required: true, message: 'Please input maximum occupancy' },
+                        { type: 'number', message: 'Occupancy must be a number' },
+                        {
+                          validator: (_, value) => {
+                            if (value <= 0) {
+                              return Promise.reject('Occupancy must be greater than 0');
+                            }
+                            if (!Number.isInteger(value)) {
+                              return Promise.reject('Occupancy must be a whole number');
+                            }
+                            if (!/^\d+$/.test(String(value))) {
+                              return Promise.reject('Occupancy can only contain numbers');
+                            }
+                            if (value > 10) {
+                              return Promise.reject('Maximum occupancy cannot exceed 10 people');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
+                      ]}
+                      tooltip="Occupancy must be a whole number between 1 and 10"
                     >
-                      <InputNumber 
-                        min={1} 
-                        style={{ width: '100%' }} 
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        min={1}
+                        max={10}
+                        precision={0}
                         placeholder="Enter maximum number of guests"
                       />
                     </Form.Item>
@@ -1939,15 +2089,31 @@ const RoomsManagementPage = () => {
                         label="Hourly Price"
                         rules={[
                           { required: true, message: 'Please input hourly price' },
-                          { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                          { type: 'number', message: 'Price must be a number' },
+                          { 
+                            validator: (_, value) => {
+                              if (value <= 0) {
+                                return Promise.reject('Price must be greater than 0');
+                              }
+                              if (!Number.isInteger(value)) {
+                                return Promise.reject('Price must be a whole number');
+                              }
+                              if (!/^\d+$/.test(String(value))) {
+                                return Promise.reject('Price can only contain numbers');
+                              }
+                              return Promise.resolve();
+                            }
+                          }
                         ]}
-                        tooltip="Daily price should be 20 times the hourly price"
+                        tooltip="Price must be a positive whole number"
                       >
                         <InputNumber
                           style={{ width: '100%' }}
                           formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                           parser={value => value.replace(/\$\s?|(,*)/g, '')}
                           addonAfter="VND/hour"
+                          min={1}
+                          precision={0}
                         />
                       </Form.Item>
 
@@ -1956,35 +2122,69 @@ const RoomsManagementPage = () => {
                         label="Daily Price"
                         rules={[
                           { required: true, message: 'Please input daily price' },
-                          { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                          ({ getFieldValue }) => ({
-                            validator(_, value) {
-                              const hourlyPrice = getFieldValue('hourlyPrice');
-                              if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
-                                return Promise.resolve();
+                          { type: 'number', message: 'Price must be a number' },
+                          { 
+                            validator: (_, value) => {
+                              if (value <= 0) {
+                                return Promise.reject('Price must be greater than 0');
                               }
-                              return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
-                            },
-                          }),
+                              if (!Number.isInteger(value)) {
+                                return Promise.reject('Price must be a whole number');
+                              }
+                              if (!/^\d+$/.test(String(value))) {
+                                return Promise.reject('Price can only contain numbers');
+                              }
+                              const hourlyPrice = form.getFieldValue('hourlyPrice');
+                              if (hourlyPrice && value < hourlyPrice * 20) {
+                                return Promise.reject('Daily price must be at least 20 times the hourly price');
+                              }
+                              return Promise.resolve();
+                            }
+                          }
                         ]}
-                        tooltip="Daily price should be at least 20 times the hourly price"
+                        tooltip="Price must be a positive whole number and at least 20 times the hourly price"
                       >
                         <InputNumber
                           style={{ width: '100%' }}
                           formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                           parser={value => value.replace(/\$\s?|(,*)/g, '')}
                           addonAfter="VND/day"
+                          min={1}
+                          precision={0}
                         />
                       </Form.Item>
 
                       <Form.Item
                         name="maxOccupancy"
                         label="Maximum Occupancy"
-                        rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                        rules={[
+                          { required: true, message: 'Please input maximum occupancy' },
+                          { type: 'number', message: 'Occupancy must be a number' },
+                          {
+                            validator: (_, value) => {
+                              if (value <= 0) {
+                                return Promise.reject('Occupancy must be greater than 0');
+                              }
+                              if (!Number.isInteger(value)) {
+                                return Promise.reject('Occupancy must be a whole number');
+                              }
+                              if (!/^\d+$/.test(String(value))) {
+                                return Promise.reject('Occupancy can only contain numbers');
+                              }
+                              if (value > 10) {
+                                return Promise.reject('Maximum occupancy cannot exceed 10 people');
+                              }
+                              return Promise.resolve();
+                            }
+                          }
+                        ]}
+                        tooltip="Occupancy must be a whole number between 1 and 10"
                       >
-                        <InputNumber 
-                          min={1} 
-                          style={{ width: '100%' }} 
+                        <InputNumber
+                          style={{ width: '100%' }}
+                          min={1}
+                          max={10}
+                          precision={0}
                           placeholder="Enter maximum number of guests"
                         />
                       </Form.Item>
@@ -2153,15 +2353,31 @@ const RoomsManagementPage = () => {
                       label="Hourly Price"
                       rules={[
                         { required: true, message: 'Please input hourly price' },
-                        { type: 'number', min: 0, message: 'Price must be greater than 0' }
+                        { type: 'number', message: 'Price must be a number' },
+                        { 
+                          validator: (_, value) => {
+                            if (value <= 0) {
+                              return Promise.reject('Price must be greater than 0');
+                            }
+                            if (!Number.isInteger(value)) {
+                              return Promise.reject('Price must be a whole number');
+                            }
+                            if (!/^\d+$/.test(String(value))) {
+                              return Promise.reject('Price can only contain numbers');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
                       ]}
-                      tooltip="Daily price should be 20 times the hourly price"
+                      tooltip="Price must be a positive whole number"
                     >
                       <InputNumber
                         style={{ width: '100%' }}
                         formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={value => value.replace(/\$\s?|(,*)/g, '')}
                         addonAfter="VND/hour"
+                        min={1}
+                        precision={0}
                       />
                     </Form.Item>
 
@@ -2170,35 +2386,69 @@ const RoomsManagementPage = () => {
                       label="Daily Price"
                       rules={[
                         { required: true, message: 'Please input daily price' },
-                        { type: 'number', min: 0, message: 'Price must be greater than 0' },
-                        ({ getFieldValue }) => ({
-                          validator(_, value) {
-                            const hourlyPrice = getFieldValue('hourlyPrice');
-                            if (!value || !hourlyPrice || value >= hourlyPrice * 20) {
-                              return Promise.resolve();
+                        { type: 'number', message: 'Price must be a number' },
+                        { 
+                          validator: (_, value) => {
+                            if (value <= 0) {
+                              return Promise.reject('Price must be greater than 0');
                             }
-                            return Promise.reject(new Error('Daily price must be at least 20 times the hourly price'));
-                          },
-                        }),
+                            if (!Number.isInteger(value)) {
+                              return Promise.reject('Price must be a whole number');
+                            }
+                            if (!/^\d+$/.test(String(value))) {
+                              return Promise.reject('Price can only contain numbers');
+                            }
+                            const hourlyPrice = form.getFieldValue('hourlyPrice');
+                            if (hourlyPrice && value < hourlyPrice * 20) {
+                              return Promise.reject('Daily price must be at least 20 times the hourly price');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
                       ]}
-                      tooltip="Daily price should be at least 20 times the hourly price"
+                      tooltip="Price must be a positive whole number and at least 20 times the hourly price"
                     >
                       <InputNumber
                         style={{ width: '100%' }}
                         formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                         parser={value => value.replace(/\$\s?|(,*)/g, '')}
                         addonAfter="VND/day"
+                        min={1}
+                        precision={0}
                       />
                     </Form.Item>
 
                     <Form.Item
                       name="maxOccupancy"
                       label="Maximum Occupancy"
-                      rules={[{ required: true, message: 'Please input max occupancy!' }]}
+                      rules={[
+                        { required: true, message: 'Please input maximum occupancy' },
+                        { type: 'number', message: 'Occupancy must be a number' },
+                        {
+                          validator: (_, value) => {
+                            if (value <= 0) {
+                              return Promise.reject('Occupancy must be greater than 0');
+                            }
+                            if (!Number.isInteger(value)) {
+                              return Promise.reject('Occupancy must be a whole number');
+                            }
+                            if (!/^\d+$/.test(String(value))) {
+                              return Promise.reject('Occupancy can only contain numbers');
+                            }
+                            if (value > 10) {
+                              return Promise.reject('Maximum occupancy cannot exceed 10 people');
+                            }
+                            return Promise.resolve();
+                          }
+                        }
+                      ]}
+                      tooltip="Occupancy must be a whole number between 1 and 10"
                     >
-                      <InputNumber 
-                        min={1} 
-                        style={{ width: '100%' }} 
+                      <InputNumber
+                        style={{ width: '100%' }}
+                        min={1}
+                        max={10}
+                        precision={0}
                         placeholder="Enter maximum number of guests"
                       />
                     </Form.Item>
