@@ -13,10 +13,27 @@ exports.getAllItems = async (req, res) => {
 // Tạo món ăn mới
 exports.createItem = async (req, res) => {
   try {
+    // Kiểm tra xem tên món ăn đã tồn tại chưa
+    const existingItem = await RestaurantItem.findOne({ 
+      name: { $regex: new RegExp(`^${req.body.name}$`, 'i') } 
+    });
+    
+    if (existingItem) {
+      return res.status(400).json({ 
+        message: `Menu item "${req.body.name}" already exists. Please choose a different name.` 
+      });
+    }
+
     const item = new RestaurantItem(req.body);
     const newItem = await item.save();
     res.status(201).json(newItem);
   } catch (error) {
+    // Xử lý lỗi duplicate key nếu có
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: `Menu item "${req.body.name}" already exists. Please choose a different name.`
+      });
+    }
     res.status(400).json({ message: error.message });
   }
 };
@@ -42,7 +59,20 @@ exports.updateItem = async (req, res) => {
       return res.status(404).json({ message: 'Item not found' });
     }
 
-    // Kiểm tra và cập nhật từng trường
+    // Nếu tên được cập nhật, kiểm tra xem có trùng không
+    if (req.body.name && req.body.name !== item.name) {
+      const existingItem = await RestaurantItem.findOne({ 
+        name: { $regex: new RegExp(`^${req.body.name}$`, 'i') },
+        _id: { $ne: req.params.id } // Loại trừ item hiện tại
+      });
+      
+      if (existingItem) {
+        return res.status(400).json({ 
+          message: `Menu item "${req.body.name}" already exists. Please choose a different name.` 
+        });
+      }
+    }
+
     const updates = Object.keys(req.body);
     const allowedUpdates = ['name', 'description', 'price', 'category', 'image', 'isAvailable'];
     const isValidOperation = updates.every(update => allowedUpdates.includes(update));
@@ -59,6 +89,12 @@ exports.updateItem = async (req, res) => {
 
     res.json(updatedItem);
   } catch (error) {
+    // Xử lý lỗi duplicate key nếu có
+    if (error.code === 11000) {
+      return res.status(400).json({ 
+        message: `Menu item "${req.body.name}" already exists. Please choose a different name.`
+      });
+    }
     res.status(400).json({ message: error.message });
   }
 };
