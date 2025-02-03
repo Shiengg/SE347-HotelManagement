@@ -300,6 +300,12 @@ const getStatusTag = (status) => {
 const BookingDetailModal = ({ booking, visible, onClose }) => {
   if (!booking) return null;
 
+  // Tính tổng giá service
+  const calculateServiceTotal = (service) => {
+    if (!service.serviceID || !service.quantity) return 0;
+    return service.serviceID.servicePrice * service.quantity;
+  };
+
   return (
     <DetailModal
       title="Booking Details"
@@ -356,14 +362,7 @@ const BookingDetailModal = ({ booking, visible, onClose }) => {
           <div className="value">{getStatusTag(booking.status)}</div>
         </DetailItem>
 
-        <DetailItem>
-          <div className="label">Total Price</div>
-          <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
-            {formatVND(booking.totalPrice)}
-          </div>
-        </DetailItem>
-
-        {booking.services.length > 0 && (
+        {booking.services && booking.services.length > 0 && (
           <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
             <div className="label">Services</div>
             <div className="value" style={{ width: '100%' }}>
@@ -376,13 +375,40 @@ const BookingDetailModal = ({ booking, visible, onClose }) => {
                   borderRadius: '4px',
                   marginBottom: '4px'
                 }}>
-                  <span>{service.serviceID.serviceName} × {service.quantity}</span>
-                  <span>{formatVND(service.totalPrice)}</span>
+                  <span>
+                    {service.serviceID?.serviceName} × {service.quantity}
+                  </span>
+                  <span>
+                    {formatVND(calculateServiceTotal(service))}
+                  </span>
                 </div>
               ))}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                padding: '8px',
+                background: '#e6f7ff',
+                borderRadius: '4px',
+                marginTop: '8px',
+                fontWeight: 'bold'
+              }}>
+                <span>Total Services:</span>
+                <span>
+                  {formatVND(booking.services.reduce((total, service) => 
+                    total + calculateServiceTotal(service), 0
+                  ))}
+                </span>
+              </div>
             </div>
           </DetailItem>
         )}
+
+        <DetailItem>
+          <div className="label">Total Price</div>
+          <div className="value" style={{ color: '#00a854', fontWeight: 'bold' }}>
+            {formatVND(booking.totalPrice)}
+          </div>
+        </DetailItem>
       </DetailSection>
     </DetailModal>
   );
