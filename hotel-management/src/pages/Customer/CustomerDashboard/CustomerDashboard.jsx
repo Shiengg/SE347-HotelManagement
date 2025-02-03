@@ -20,45 +20,31 @@ const PageContainer = styled.div`
 
 const WelcomeSection = styled.div`
   padding: 48px 40px;
-  background: linear-gradient(135deg, #1a3353 0%, #4158d0 50%, #2c5282 100%);
+  background: #1a3353;
   border-radius: 30px;
   margin-bottom: 40px;
   color: white;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 20px 40px rgba(26, 51, 83, 0.15);
-  transform-style: preserve-3d;
-  perspective: 1000px;
+  box-shadow: 0 10px 20px rgba(26, 51, 83, 0.1);
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-    pointer-events: none;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 500px;
-    height: 500px;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-    transform: rotate(-45deg);
-    pointer-events: none;
+  @media (max-width: 768px) {
+    padding: 32px 24px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 8px rgba(26, 51, 83, 0.08);
   }
 
   h1 {
     font-size: 42px;
     margin-bottom: 16px;
     color: white;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    text-shadow: none;
     font-weight: 700;
+
+    @media (max-width: 768px) {
+      font-size: 28px;
+    }
   }
 
   p {
@@ -66,24 +52,29 @@ const WelcomeSection = styled.div`
     opacity: 0.95;
     max-width: 600px;
     line-height: 1.8;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    text-shadow: none;
+
+    @media (max-width: 768px) {
+      font-size: 16px;
+      line-height: 1.6;
+    }
   }
 `;
 
 const FeatureCard = styled(motion.div)`
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   border-radius: 24px;
   padding: 30px;
   height: 100%;
   position: relative;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
-    0 10px 20px rgba(0,0,0,0.05),
-    0 6px 6px rgba(0,0,0,0.1),
-    inset 0 -2px 5px rgba(255,255,255,0.5);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
+  border: 1px solid #edf2f7;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  }
 
   &::before {
     content: '';

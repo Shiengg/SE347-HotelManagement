@@ -18,9 +18,13 @@ const PageContainer = styled.div`
   padding: 24px;
   min-height: calc(100vh - 64px);
   background: #f8fafc;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 768px) {
     padding: 16px;
+    min-height: calc(100vh - 56px);
   }
 `;
 
@@ -32,12 +36,12 @@ const ContentWrapper = styled.div`
   height: 100%;
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(0);
-  -webkit-backdrop-filter: blur(0);
 
   @media (max-width: 768px) {
     padding: 16px;
     border-width: 1px;
+    border-radius: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
   }
 `;
 
@@ -103,11 +107,11 @@ const MenuButton = styled(Button)`
   height: 40px;
   border-radius: 10px;
   border: none;
-  background: linear-gradient(135deg, #1a3353, #2c5282);
+  background: #1a3353;
   color: white;
   
   &:hover, &:focus {
-    background: linear-gradient(135deg, #2c5282, #1a3353);
+    background: #2c5282;
     color: white;
   }
 
@@ -123,7 +127,7 @@ const StyledTable = styled(Table)`
   }
 
   .ant-table-thead > tr > th {
-    background: #f8fafc;
+    background: #f8fafc !important;
     color: #1a3353;
     font-weight: 600;
     border-bottom: 2px solid #edf2f7;
@@ -137,16 +141,22 @@ const StyledTable = styled(Table)`
   .ant-table-tbody > tr > td {
     padding: 16px;
     border-bottom: 1px solid #edf2f7;
+    background: white !important;
   }
 
   .ant-table-tbody > tr:hover > td {
-    background: #f8fafc;
+    background: #f8fafc !important;
   }
 
   @media (max-width: 768px) {
     .ant-table-thead > tr > th,
     .ant-table-tbody > tr > td {
       padding: 12px 8px;
+    }
+    
+    .ant-table-content {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
   }
 `;
@@ -160,6 +170,22 @@ const StatusTag = styled(Tag)`
   align-items: center;
   gap: 4px;
   font-size: 13px;
+  background: ${props => {
+    switch (props.color) {
+      case 'orange': return '#fff7e6';
+      case 'blue': return '#e6f7ff';
+      case 'green': return '#f6ffed';
+      default: return '#f5f5f5';
+    }
+  }};
+  color: ${props => {
+    switch (props.color) {
+      case 'orange': return '#fa8c16';
+      case 'blue': return '#1890ff';
+      case 'green': return '#52c41a';
+      default: return '#666666';
+    }
+  }};
 
   .anticon {
     font-size: 12px;
