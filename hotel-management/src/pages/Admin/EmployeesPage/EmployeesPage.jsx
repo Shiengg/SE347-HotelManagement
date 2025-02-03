@@ -593,9 +593,30 @@ const EmployeesPage = () => {
           <Form.Item
             name="phonenumber"
             label="Phone Number"
-            rules={[{ required: true, message: 'Please input phone number!' }]}
+            rules={[
+              { required: true, message: 'Please input phone number!' },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+
+                  // Kiểm tra số điện thoại bắt đầu bằng 0 và có đúng 10 số
+                  const phoneRegex = /^0\d{9}$/;
+                  
+                  if (!phoneRegex.test(value)) {
+                    return Promise.reject(
+                      'Phone number must start with 0 and contain exactly 10 digits!'
+                    );
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
-            <Input prefix={<PhoneOutlined />} placeholder="Enter phone number" />
+            <Input 
+              prefix={<PhoneOutlined />} 
+              placeholder="Enter phone number (e.g. 0123456789)"
+              maxLength={10}
+            />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
