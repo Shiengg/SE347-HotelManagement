@@ -377,7 +377,6 @@ const RestaurantService = () => {
     try {
       const orderTotal = calculateTotal();
 
-      // Validate total before sending
       if (typeof orderTotal !== 'number' || isNaN(orderTotal)) {
         throw new Error('Invalid order total');
       }
@@ -385,6 +384,7 @@ const RestaurantService = () => {
       const orderItems = cart.map(item => ({
         itemId: item._id,
         name: item.name,
+        category: item.category,
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity

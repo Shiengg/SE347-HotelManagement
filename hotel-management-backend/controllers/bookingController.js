@@ -449,8 +449,9 @@ exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
 
     // Chuyển đổi itemId thành ObjectId và thêm timestamp
     const newOrderItems = orderedItems.map(item => ({
-      itemId: new mongoose.Types.ObjectId(item.itemId), // Chuyển string thành ObjectId
+      itemId: new mongoose.Types.ObjectId(item.itemId),
       name: item.name,
+      category: item.category,
       quantity: item.quantity,
       price: item.price,
       total: item.total,
