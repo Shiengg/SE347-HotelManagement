@@ -13,6 +13,7 @@ import {
   faBowlFood,
   faMugHot,
   faCake,
+  faKey,
 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import React, { useEffect, useRef, useState } from "react";
@@ -492,9 +493,8 @@ const InvoiceDetailComponent = ({ selectedInvoice }) => {
     <InvoiceDetailLayout>
       <Header ref={scrollRef}>
         <IconWrapper>
-          <FontAwesomeIcon icon={faHouse} />{" "}
-          {selectedInvoice?.bookingID.roomID.roomNumber}
-          {" - "}
+          <FontAwesomeIcon icon={faKey} />{" "}
+          {selectedInvoice?.bookingID.roomID.roomNumber}{" "}
           {selectedInvoice?.bookingID.roomID.roomType}
         </IconWrapper>
         <InvoiceId>

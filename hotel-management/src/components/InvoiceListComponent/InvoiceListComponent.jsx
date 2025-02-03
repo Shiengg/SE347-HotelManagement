@@ -264,8 +264,8 @@ const InvoiceListComponent = ({
   // Filter and sort states
   const [sortDate, setSortDate] = useState("desc"); // "asc" or "desc"
   const [sortTotal, setSortTotal] = useState("all"); // "asc" or "desc" or "all"
-  const [filterStatus, setFilterStatus] = useState("all"); // true or false or "all"
-  const [filterMethod, setFilterMethod] = useState("all"); // "cash", "credit", etc.
+  const [filterStatus, setFilterStatus] = useState("all"); // paid or unpaid or "all"
+  const [filterMethod, setFilterMethod] = useState("all"); // "cash", "card", "all".
 
   const searchRef = useRef("");
 
@@ -290,6 +290,7 @@ const InvoiceListComponent = ({
       filterStatus,
       sortTotal
     ).then((data) => {
+      console.log(data)
       setTotalInvoices(data?.totalInvoices);
       setTimeout(() => {
         setIsLoading(false);
@@ -384,16 +385,10 @@ const InvoiceListComponent = ({
                 Cash
               </Space>
             </Option>
-            <Option value="CreditCard">
+            <Option value="Card">
               <Space style={{ color: "#6366f1" }}>
                 <FontAwesomeIcon icon={faCreditCard} />
-                Credit
-              </Space>
-            </Option>
-            <Option value="DebitCard">
-              <Space style={{ color: "#ef4444" }}>
-                <FontAwesomeIcon icon={faCreditCard} />
-                Debit
+                Card
               </Space>
             </Option>
           </StyledSelect>
@@ -410,13 +405,13 @@ const InvoiceListComponent = ({
                 All Status
               </Space>
             </Option>
-            <Option value={true}>
+            <Option value={"Paid"}>
               <Space>
                 <CheckCircleOutlined style={{ color: " #10b981" }} />
                 Paid
               </Space>
             </Option>
-            <Option value={false}>
+            <Option value={"Unpaid"}>
               <Space>
                 <CloseCircleOutlined style={{ color: "#ef4444" }} />
                 Unpaid
