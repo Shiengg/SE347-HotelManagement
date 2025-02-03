@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Alert, Spin } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const PageContainer = styled.div`
@@ -191,6 +191,79 @@ const LoadingState = styled.div`
   }
 `;
 
+const SearchSection = styled.div`
+  margin: 0 0 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+
+  .search-wrapper {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+
+    .ant-input-affix-wrapper {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+      background: white;
+      
+      &:hover, &:focus-within {
+        border-color: #1a3353;
+        box-shadow: 0 2px 8px rgba(26, 51, 83, 0.1);
+      }
+
+      .anticon-search {
+        color: #1a3353;
+        font-size: 18px;
+      }
+
+      .ant-input {
+        font-size: 15px;
+        
+        &::placeholder {
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+
+  .search-result {
+    background: #1a3353;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .count {
+      background: white;
+      color: #1a3353;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .search-wrapper {
+      max-width: 100%;
+    }
+  }
+`;
+
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -198,6 +271,8 @@ const EmployeesPage = () => {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [form] = Form.useForm();
   const [error, setError] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   // Fetch employees data
   const fetchEmployees = async () => {
@@ -330,6 +405,19 @@ const EmployeesPage = () => {
     }
   };
 
+  // Thêm useEffect để xử lý search
+  useEffect(() => {
+    if (!searchText.trim()) {
+      setFilteredEmployees(employees);
+      return;
+    }
+
+    const filtered = employees.filter(employee => 
+      employee.fullname.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredEmployees(filtered);
+  }, [searchText, employees]);
+
   const columns = [
     {
       title: 'Full Name',
@@ -436,16 +524,33 @@ const EmployeesPage = () => {
           </AddButton>
         </HeaderSection>
 
+        <SearchSection>
+          <div className="search-wrapper">
+            <Input
+              placeholder="Search employees by name..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </div>
+          {searchText && (
+            <div className="search-result">
+              Results: <span className="count">{filteredEmployees.length}</span>
+            </div>
+          )}
+        </SearchSection>
+
         <TableContainer>
           {loading ? (
             <LoadingState>
               <Spin size="large" />
               <div className="text">Loading employees...</div>
             </LoadingState>
-          ) : employees.length > 0 ? (
+          ) : filteredEmployees.length > 0 ? (
             <StyledTable
               columns={columns}
-              dataSource={employees}
+              dataSource={filteredEmployees}
               rowKey="_id"
               pagination={{
                 defaultPageSize: 10,
@@ -456,21 +561,28 @@ const EmployeesPage = () => {
           ) : (
             <EmptyState>
               <TeamOutlined className="icon" />
-              <div className="title">No Employees Found</div>
-              <div className="subtitle">
-                Start by adding your first employee to the system
+              <div className="title">
+                {searchText ? 'No Matching Employees Found' : 'No Employees Found'}
               </div>
-              <AddButton
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setEditingEmployee(null);
-                  form.resetFields();
-                  setIsModalVisible(true);
-                }}
-              >
-                Add New Employee
-              </AddButton>
+              <div className="subtitle">
+                {searchText 
+                  ? 'Try adjusting your search criteria'
+                  : 'Start by adding your first employee to the system'
+                }
+              </div>
+              {!searchText && (
+                <AddButton
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setEditingEmployee(null);
+                    form.resetFields();
+                    setIsModalVisible(true);
+                  }}
+                >
+                  Add New Employee
+                </AddButton>
+              )}
             </EmptyState>
           )}
         </TableContainer>
