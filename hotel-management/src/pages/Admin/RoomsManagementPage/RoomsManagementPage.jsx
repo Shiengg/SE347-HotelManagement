@@ -698,8 +698,14 @@ const StyledForm = styled(Form)`
   }
 
   .ant-form-item-explain-error {
-    margin-top: 4px;
+    margin-top: 10px; // Thêm khoảng cách phía trên thông báo lỗi
     font-size: 0.9em;
+    padding-left: 2px; // Thêm padding trái để không sát lề
+  }
+
+  // Thêm khoảng cách giữa form item và thông báo lỗi
+  .ant-form-item-with-help {
+    margin-bottom: 24px;
   }
 `;
 
