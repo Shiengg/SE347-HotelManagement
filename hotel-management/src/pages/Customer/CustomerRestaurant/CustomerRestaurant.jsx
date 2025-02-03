@@ -334,12 +334,12 @@ const CustomerRestaurant = () => {
 
   const addToCart = (item) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(i => i._id === item._id);
+      const existingItem = prevCart.find(cartItem => cartItem._id === item._id);
       if (existingItem) {
-        return prevCart.map(i =>
-          i._id === item._id
-            ? { ...i, quantity: i.quantity + 1 }
-            : i
+        return prevCart.map(cartItem =>
+          cartItem._id === item._id
+            ? { ...cartItem, quantity: cartItem.quantity + 1 }
+            : cartItem
         );
       }
       return [...prevCart, { ...item, quantity: 1 }];
@@ -386,6 +386,7 @@ const CustomerRestaurant = () => {
       const orderItems = cart.map(item => ({
         itemId: item._id,
         name: item.name,
+        category: item.category,
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity

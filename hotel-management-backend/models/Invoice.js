@@ -8,6 +8,7 @@ const orderedItemSchema = new mongoose.Schema({
     required: true
   },
   name: String,
+  category: String,
   quantity: Number,
   price: Number,
   total: Number,
