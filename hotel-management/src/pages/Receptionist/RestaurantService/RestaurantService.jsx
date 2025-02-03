@@ -514,15 +514,7 @@ const RestaurantService = () => {
               <Option key={booking._id} value={booking._id}>
                 <BookingOption>
                   <div className="room-number">
-                    Room {booking.roomID?.roomNumber} - {booking.roomID?.roomType}
-                  </div>
-                  <div className="dates">
-                    Check-in: {dayjs(booking.checkInDate).format('DD/MM/YYYY HH:mm')}
-                    <br />
-                    Check-out: {dayjs(booking.checkOutDate).format('DD/MM/YYYY HH:mm')}
-                  </div>
-                  <div className="price" style={{ color: '#00a854' }}>
-                    Total: {booking.totalPrice?.toLocaleString('vi-VN')}đ
+                    Room {booking.roomID?.roomNumber} - {booking.roomID?.roomType} - {booking.customerID?.fullname}
                   </div>
                 </BookingOption>
               </Option>

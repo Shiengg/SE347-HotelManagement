@@ -32,9 +32,10 @@ exports.getDashboardStats = async (req, res) => {
       status: 'Available' 
     });
 
-    // Đếm số booking đã confirmed
+    // Đếm số booking đã confirmed và chưa completed
     const confirmedBookings = await Booking.countDocuments({ 
-      status: 'Confirmed' 
+      status: 'Confirmed',
+      checkOutDate: { $gte: today } // Chỉ đếm các booking chưa checkout
     });
 
     // Đếm số check-in trong ngày
@@ -46,15 +47,11 @@ exports.getDashboardStats = async (req, res) => {
       status: 'Confirmed'
     });
 
-    // Tính doanh thu trong ngày (từ các invoice đã thanh toán)
-    const todayRevenue = await Invoice.aggregate([
+    // Tính tổng doanh thu từ tất cả invoice đã thanh toán
+    const totalRevenueResult = await Invoice.aggregate([
       {
         $match: {
-          paymentStatus: 'Paid',
-          paymentDate: {
-            $gte: today,
-            $lt: tomorrow
-          }
+          paymentStatus: 'Paid'
         }
       },
       {
@@ -77,7 +74,7 @@ exports.getDashboardStats = async (req, res) => {
       availableRooms,
       confirmedBookings,
       todayCheckIns,
-      todayRevenue: todayRevenue[0]?.total || 0,
+      totalRevenue: totalRevenueResult[0]?.total || 0,
       recentBookings: recentBookings.length
     });
 
@@ -86,7 +83,7 @@ exports.getDashboardStats = async (req, res) => {
       availableRooms,
       confirmedBookings,
       todayCheckIns,
-      todayRevenue: todayRevenue[0]?.total || 0,
+      totalRevenue: totalRevenueResult[0]?.total || 0,
       recentBookings
     });
   } catch (error) {

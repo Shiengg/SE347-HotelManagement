@@ -339,19 +339,24 @@ const BookingDetailModal = ({ booking, visible, onClose }) => {
           <DetailItem style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
             <div className="label">Services</div>
             <div className="value" style={{ width: '100%' }}>
-              {booking.services.map((service, index) => (
-                <div key={index} style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between',
-                  padding: '8px',
-                  background: '#f8f9fa',
-                  borderRadius: '4px',
-                  marginBottom: '4px'
-                }}>
-                  <span>{service.serviceID.serviceName} × {service.quantity}</span>
-                  <span>{formatVND(service.totalPrice)}</span>
-                </div>
-              ))}
+              {booking.services.map((service, index) => {
+                // Tính toán tổng giá cho mỗi service
+                const serviceTotal = service.serviceID.servicePrice * service.quantity;
+                
+                return (
+                  <div key={index} style={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between',
+                    padding: '8px',
+                    background: '#f8f9fa',
+                    borderRadius: '4px',
+                    marginBottom: '4px'
+                  }}>
+                    <span>{service.serviceID.serviceName} × {service.quantity}</span>
+                    <span>{formatVND(serviceTotal)}</span>
+                  </div>
+                );
+              })}
             </div>
           </DetailItem>
         )}
