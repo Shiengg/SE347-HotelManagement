@@ -4,7 +4,8 @@ const restaurantItemSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    unique: true
   },
   description: {
     type: String,
@@ -32,6 +33,8 @@ const restaurantItemSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+restaurantItemSchema.index({ name: 1 }, { unique: true });
 
 const RestaurantItem = mongoose.model('RestaurantItem', restaurantItemSchema);
 module.exports = RestaurantItem; 

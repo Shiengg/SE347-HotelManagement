@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Spin } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 // Reuse styled components from GuestsPage
@@ -126,12 +126,87 @@ const StyledModal = styled(Modal)`
   }
 `;
 
+const SearchSection = styled.div`
+  margin: 0 0 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+
+  .search-wrapper {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+
+    .ant-input-affix-wrapper {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+      background: white;
+      
+      &:hover, &:focus-within {
+        border-color: #1890ff;
+        box-shadow: 0 2px 8px rgba(24, 144, 255, 0.1);
+      }
+
+      .anticon-search {
+        color: #1890ff;
+        font-size: 18px;
+      }
+
+      .ant-input {
+        font-size: 15px;
+        
+        &::placeholder {
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+
+  .search-result {
+    background: #1890ff;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .count {
+      background: white;
+      color: #1890ff;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .search-wrapper {
+      max-width: 100%;
+    }
+  }
+`;
+
 const GuestManagement = () => {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editingGuest, setEditingGuest] = useState(null);
   const [form] = Form.useForm();
+  const [searchText, setSearchText] = useState('');
+  const [filteredGuests, setFilteredGuests] = useState([]);
 
   // Fetch guests data
   const fetchGuests = async () => {
@@ -155,6 +230,7 @@ const GuestManagement = () => {
       );
       
       setGuests(customers);
+      setFilteredGuests(customers);
     } catch (error) {
       console.error('Error fetching guests:', error);
       message.error('Failed to fetch guests');
@@ -300,6 +376,50 @@ const GuestManagement = () => {
     },
   ];
 
+  // Thêm hàm kiểm tra username và email
+  const checkUsername = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/check-username?username=${username}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking username:', error);
+      return false;
+    }
+  };
+
+  const checkEmail = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/check-email?email=${email}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking email:', error);
+      return false;
+    }
+  };
+
+  // Thêm useEffect cho search
+  useEffect(() => {
+    if (!searchText.trim()) {
+      setFilteredGuests(guests);
+      return;
+    }
+
+    const filtered = guests.filter(guest => 
+      guest.fullname.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredGuests(filtered);
+  }, [searchText, guests]);
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -327,16 +447,33 @@ const GuestManagement = () => {
           </AddButton>
         </HeaderSection>
 
+        <SearchSection>
+          <div className="search-wrapper">
+            <Input
+              placeholder="Search guests by name..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </div>
+          {searchText && (
+            <div className="search-result">
+              Results: <span className="count">{filteredGuests.length}</span>
+            </div>
+          )}
+        </SearchSection>
+
         <TableContainer>
           {loading ? (
             <LoadingState>
               <Spin size="large" />
               <div className="text">Loading guests...</div>
             </LoadingState>
-          ) : guests.length > 0 ? (
+          ) : filteredGuests.length > 0 ? (
             <Table
               columns={columns}
-              dataSource={guests}
+              dataSource={filteredGuests}
               rowKey="_id"
               pagination={{
                 defaultPageSize: 10,
@@ -347,8 +484,28 @@ const GuestManagement = () => {
           ) : (
             <EmptyState>
               <TeamOutlined className="icon" />
-              <div className="title">No Guests Found</div>
-              <div className="subtitle">Start by adding your first guest</div>
+              <div className="title">
+                {searchText ? 'No Matching Guests Found' : 'No Guests Found'}
+              </div>
+              <div className="subtitle">
+                {searchText 
+                  ? 'Try adjusting your search criteria'
+                  : 'Start by adding your first guest'
+                }
+              </div>
+              {!searchText && (
+                <AddButton
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setEditingGuest(null);
+                    form.resetFields();
+                    setIsModalVisible(true);
+                  }}
+                >
+                  Add New Guest
+                </AddButton>
+              )}
             </EmptyState>
           )}
         </TableContainer>
@@ -370,7 +527,20 @@ const GuestManagement = () => {
             <Form.Item
               name="fullname"
               label="Full Name"
-              rules={[{ required: true, message: 'Please input full name!' }]}
+              rules={[
+                { required: true, message: 'Please input full name!' },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    
+                    const validNameRegex = /^[a-zA-ZÀ-ỹ\s]*$/;
+                    if (!validNameRegex.test(value)) {
+                      return Promise.reject('Full name can only contain letters and spaces!');
+                    }
+                    return Promise.resolve();
+                  }
+                }
+              ]}
             >
               <Input prefix={<UserOutlined />} placeholder="Enter full name" />
             </Form.Item>
@@ -378,7 +548,22 @@ const GuestManagement = () => {
             <Form.Item
               name="username"
               label="Username"
-              rules={[{ required: true, message: 'Please input username!' }]}
+              rules={[
+                { required: true, message: 'Please input username!' },
+                {
+                  validator: async (_, value) => {
+                    if (!value) return Promise.resolve();
+                    
+                    if (editingGuest) return Promise.resolve();
+                    
+                    const exists = await checkUsername(value);
+                    if (exists) {
+                      return Promise.reject('This username is already taken!');
+                    }
+                    return Promise.resolve();
+                  }
+                }
+              ]}
             >
               <Input 
                 prefix={<UserOutlined />} 
@@ -402,18 +587,62 @@ const GuestManagement = () => {
               label="Email"
               rules={[
                 { required: true, message: 'Please input email!' },
-                { type: 'email', message: 'Please enter a valid email!' }
+                { type: 'email', message: 'Please enter a valid email!' },
+                {
+                  validator: async (_, value) => {
+                    if (!value) return Promise.resolve();
+                    
+                    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+                    if (!emailRegex.test(value)) {
+                      return Promise.reject('Please enter a valid email address! (e.g. example@domain.com)');
+                    }
+
+                    if (editingGuest && value === editingGuest.email) {
+                      return Promise.resolve();
+                    }
+                    
+                    const exists = await checkEmail(value);
+                    if (exists) {
+                      return Promise.reject('This email is already registered!');
+                    }
+                    
+                    return Promise.resolve();
+                  }
+                }
               ]}
             >
-              <Input prefix={<MailOutlined />} placeholder="Enter email" />
+              <Input 
+                prefix={<MailOutlined />} 
+                placeholder="Enter email (e.g. example@domain.com)" 
+              />
             </Form.Item>
 
             <Form.Item
               name="phonenumber"
               label="Phone Number"
-              rules={[{ required: true, message: 'Please input phone number!' }]}
+              rules={[
+                { required: true, message: 'Please input phone number!' },
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+
+                    const phoneRegex = /^0\d{9}$/;
+                    
+                    if (!phoneRegex.test(value)) {
+                      return Promise.reject(
+                        'Phone number must start with 0 and contain exactly 10 digits!'
+                      );
+                    }
+                    return Promise.resolve();
+                  }
+                }
+              ]}
             >
-              <Input prefix={<PhoneOutlined />} placeholder="Enter phone number" />
+              <Input 
+                prefix={<PhoneOutlined />} 
+                placeholder="Enter phone number (e.g. 0123456789)"
+                maxLength={10}
+              />
             </Form.Item>
 
             <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>

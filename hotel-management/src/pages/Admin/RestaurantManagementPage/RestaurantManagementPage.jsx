@@ -895,41 +895,54 @@ const RestaurantManagementPage = () => {
   // Cập nhật hàm handleSubmit
   const handleSubmit = async (values) => {
     try {
-      if (editingItem) {
-        // Xử lý update
-        const response = await fetch(`http://localhost:5000/api/restaurant/${editingItem._id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify(values)
-        });
+      const url = editingItem 
+        ? `http://localhost:5000/api/restaurant/${editingItem._id}`
+        : 'http://localhost:5000/api/restaurant';
+      
+      const method = editingItem ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(values)
+      });
 
-        if (response.ok) {
-          message.success('Item updated successfully');
-          fetchItems();
-          resetForm(); // Sử dụng hàm resetForm
+      const data = await response.json();
+
+      if (response.ok) {
+        message.success(`Menu item ${editingItem ? 'updated' : 'created'} successfully`);
+        resetForm();
+        fetchItems();
+        if (isMobile) {
+          setIsAddModalVisible(false);
+          setIsDetailModalVisible(false);
         }
       } else {
-        // Xử lý create
-        const response = await fetch('http://localhost:5000/api/restaurant', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+        // Hiển thị thông báo lỗi từ server với vị trí cao hơn
+        message.error({
+          content: data.message || 'Failed to save menu item',
+          style: {
+            marginTop: '10vh', // Giảm xuống từ 20vh thành 10vh
           },
-          body: JSON.stringify(values)
+          duration: 3, // Thêm thời gian hiển thị là 3 giây
         });
-
-        if (response.ok) {
-          message.success('Item created successfully');
-          fetchItems();
-          resetForm(); // Sử dụng hàm resetForm
+        
+        // Nếu là lỗi trùng tên, focus vào trường name
+        if (data.message?.includes('already exists')) {
+          form.scrollToField('name');
         }
       }
     } catch (error) {
-      message.error('Failed to save item');
+      message.error({
+        content: 'Failed to save menu item',
+        style: {
+          marginTop: '10vh', 
+        },
+        duration: 3,
+      });
     }
   };
 
@@ -1252,13 +1265,34 @@ const RestaurantManagementPage = () => {
                   <Form.Item
                     name="price"
                     label="Price"
-                    rules={[{ required: true, message: 'Please enter price' }]}
+                    rules={[
+                      { required: true, message: 'Please input price' },
+                      { type: 'number', message: 'Price must be a number' },
+                      { 
+                        validator: (_, value) => {
+                          if (value <= 0) {
+                            return Promise.reject('Price must be greater than 0');
+                          }
+                          if (!Number.isInteger(value)) {
+                            return Promise.reject('Price must be a whole number');
+                          }
+                          if (!/^\d+$/.test(String(value))) {
+                            return Promise.reject('Price can only contain numbers');
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
+                    tooltip="Price must be a positive whole number"
                   >
                     <InputNumber
-                      min={0}
                       style={{ width: '100%' }}
                       formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                      addonAfter="VND"
+                      min={1}
+                      precision={0}
+                      placeholder="Enter price (e.g. 50000)"
                     />
                   </Form.Item>
 
@@ -1293,6 +1327,7 @@ const RestaurantManagementPage = () => {
 
                   <Form.Item
                     name="isAvailable"
+                    label="Status"
                     valuePropName="checked"
                   >
                     <Select>
@@ -1491,13 +1526,34 @@ const RestaurantManagementPage = () => {
           <Form.Item
             name="price"
             label="Price"
-            rules={[{ required: true, message: 'Please enter price' }]}
+            rules={[
+              { required: true, message: 'Please input price' },
+              { type: 'number', message: 'Price must be a number' },
+              { 
+                validator: (_, value) => {
+                  if (value <= 0) {
+                    return Promise.reject('Price must be greater than 0');
+                  }
+                  if (!Number.isInteger(value)) {
+                    return Promise.reject('Price must be a whole number');
+                  }
+                  if (!/^\d+$/.test(String(value))) {
+                    return Promise.reject('Price can only contain numbers');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
+            tooltip="Price must be a positive whole number"
           >
             <InputNumber
-              min={0}
               style={{ width: '100%' }}
               formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={value => value.replace(/\$\s?|(,*)/g, '')}
+              addonAfter="VND"
+              min={1}
+              precision={0}
+              placeholder="Enter price (e.g. 50000)"
             />
           </Form.Item>
 
@@ -1532,6 +1588,7 @@ const RestaurantManagementPage = () => {
 
           <Form.Item
             name="isAvailable"
+            label="Status"
             valuePropName="checked"
           >
             <Select>
@@ -1763,13 +1820,34 @@ const RestaurantManagementPage = () => {
               <Form.Item
                 name="price"
                 label="Price"
-                rules={[{ required: true, message: 'Please enter price' }]}
+                rules={[
+                  { required: true, message: 'Please input price' },
+                  { type: 'number', message: 'Price must be a number' },
+                  { 
+                    validator: (_, value) => {
+                      if (value <= 0) {
+                        return Promise.reject('Price must be greater than 0');
+                      }
+                      if (!Number.isInteger(value)) {
+                        return Promise.reject('Price must be a whole number');
+                      }
+                      if (!/^\d+$/.test(String(value))) {
+                        return Promise.reject('Price can only contain numbers');
+                      }
+                      return Promise.resolve();
+                    }
+                  }
+                ]}
+                tooltip="Price must be a positive whole number"
               >
                 <InputNumber
-                  min={0}
                   style={{ width: '100%' }}
                   formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                   parser={value => value.replace(/\$\s?|(,*)/g, '')}
+                  addonAfter="VND"
+                  min={1}
+                  precision={0}
+                  placeholder="Enter price (e.g. 50000)"
                 />
               </Form.Item>
 

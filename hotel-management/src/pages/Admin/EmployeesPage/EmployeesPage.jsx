@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Alert, Spin } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const PageContainer = styled.div`
@@ -191,6 +191,79 @@ const LoadingState = styled.div`
   }
 `;
 
+const SearchSection = styled.div`
+  margin: 0 0 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+
+  .search-wrapper {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+
+    .ant-input-affix-wrapper {
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+      background: white;
+      
+      &:hover, &:focus-within {
+        border-color: #1a3353;
+        box-shadow: 0 2px 8px rgba(26, 51, 83, 0.1);
+      }
+
+      .anticon-search {
+        color: #1a3353;
+        font-size: 18px;
+      }
+
+      .ant-input {
+        font-size: 15px;
+        
+        &::placeholder {
+          color: #94a3b8;
+        }
+      }
+    }
+  }
+
+  .search-result {
+    background: #1a3353;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .count {
+      background: white;
+      color: #1a3353;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    
+    .search-wrapper {
+      max-width: 100%;
+    }
+  }
+`;
+
 const EmployeesPage = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -198,6 +271,8 @@ const EmployeesPage = () => {
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [form] = Form.useForm();
   const [error, setError] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [filteredEmployees, setFilteredEmployees] = useState([]);
 
   // Fetch employees data
   const fetchEmployees = async () => {
@@ -241,6 +316,38 @@ const EmployeesPage = () => {
     fetchEmployees();
   }, []);
 
+  // Thêm hàm kiểm tra username
+  const checkUsername = async (username) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/check-username?username=${username}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking username:', error);
+      return false;
+    }
+  };
+
+  // Thêm hàm kiểm tra email
+  const checkEmail = async (email) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/users/check-email?email=${email}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      return data.exists;
+    } catch (error) {
+      console.error('Error checking email:', error);
+      return false;
+    }
+  };
+
   const handleAddEdit = async (values) => {
     try {
       const url = editingEmployee 
@@ -249,10 +356,9 @@ const EmployeesPage = () => {
       
       const method = editingEmployee ? 'PUT' : 'POST';
 
-      // Thêm role_id cho receptionist
       const userData = {
         ...values,
-        role_id: '6783da9402236e8ab00f4fee' // Chỉ cần gửi ID
+        role_id: '6783da9402236e8ab00f4fee'
       };
 
       const response = await fetch(url, {
@@ -264,14 +370,16 @@ const EmployeesPage = () => {
         body: JSON.stringify(userData)
       });
 
-      if (response.ok) {
-        message.success(`Employee ${editingEmployee ? 'updated' : 'added'} successfully`);
-        setIsModalVisible(false);
-        form.resetFields();
-        fetchEmployees();
-      } else {
-        throw new Error('Failed to save employee');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save employee');
       }
+
+      message.success(`Employee ${editingEmployee ? 'updated' : 'added'} successfully`);
+      setIsModalVisible(false);
+      form.resetFields();
+      fetchEmployees();
     } catch (error) {
       message.error(error.message);
     }
@@ -296,6 +404,19 @@ const EmployeesPage = () => {
       message.error(error.message);
     }
   };
+
+  // Thêm useEffect để xử lý search
+  useEffect(() => {
+    if (!searchText.trim()) {
+      setFilteredEmployees(employees);
+      return;
+    }
+
+    const filtered = employees.filter(employee => 
+      employee.fullname.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredEmployees(filtered);
+  }, [searchText, employees]);
 
   const columns = [
     {
@@ -403,16 +524,33 @@ const EmployeesPage = () => {
           </AddButton>
         </HeaderSection>
 
+        <SearchSection>
+          <div className="search-wrapper">
+            <Input
+              placeholder="Search employees by name..."
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+          </div>
+          {searchText && (
+            <div className="search-result">
+              Results: <span className="count">{filteredEmployees.length}</span>
+            </div>
+          )}
+        </SearchSection>
+
         <TableContainer>
           {loading ? (
             <LoadingState>
               <Spin size="large" />
               <div className="text">Loading employees...</div>
             </LoadingState>
-          ) : employees.length > 0 ? (
+          ) : filteredEmployees.length > 0 ? (
             <StyledTable
               columns={columns}
-              dataSource={employees}
+              dataSource={filteredEmployees}
               rowKey="_id"
               pagination={{
                 defaultPageSize: 10,
@@ -423,21 +561,28 @@ const EmployeesPage = () => {
           ) : (
             <EmptyState>
               <TeamOutlined className="icon" />
-              <div className="title">No Employees Found</div>
-              <div className="subtitle">
-                Start by adding your first employee to the system
+              <div className="title">
+                {searchText ? 'No Matching Employees Found' : 'No Employees Found'}
               </div>
-              <AddButton
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setEditingEmployee(null);
-                  form.resetFields();
-                  setIsModalVisible(true);
-                }}
-              >
-                Add New Employee
-              </AddButton>
+              <div className="subtitle">
+                {searchText 
+                  ? 'Try adjusting your search criteria'
+                  : 'Start by adding your first employee to the system'
+                }
+              </div>
+              {!searchText && (
+                <AddButton
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setEditingEmployee(null);
+                    form.resetFields();
+                    setIsModalVisible(true);
+                  }}
+                >
+                  Add New Employee
+                </AddButton>
+              )}
             </EmptyState>
           )}
         </TableContainer>
@@ -460,15 +605,47 @@ const EmployeesPage = () => {
           <Form.Item
             name="fullname"
             label="Full Name"
-            rules={[{ required: true, message: 'Please input full name!' }]}
+            rules={[
+              { required: true, message: 'Please input full name!' },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+                  
+                  // Kiểm tra chỉ cho phép chữ cái (bao gồm tiếng Việt có dấu), khoảng trắng
+                  const validNameRegex = /^[a-zA-ZÀ-ỹ\s]*$/;
+                  if (!validNameRegex.test(value)) {
+                    return Promise.reject('Full name can only contain letters and spaces!');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
-            <Input prefix={<UserOutlined />} placeholder="Enter full name" />
+            <Input 
+              prefix={<UserOutlined />} 
+              placeholder="Enter full name"
+            />
           </Form.Item>
 
           <Form.Item
             name="username"
             label="Username"
-            rules={[{ required: true, message: 'Please input username!' }]}
+            rules={[
+              { required: true, message: 'Please input username!' },
+              {
+                validator: async (_, value) => {
+                  if (!value) return Promise.resolve();
+                  
+                  if (editingEmployee) return Promise.resolve();
+                  
+                  const exists = await checkUsername(value);
+                  if (exists) {
+                    return Promise.reject('This username is already taken!');
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
             <Input 
               prefix={<UserOutlined />} 
@@ -493,18 +670,65 @@ const EmployeesPage = () => {
             label="Email"
             rules={[
               { required: true, message: 'Please input email!' },
-              { type: 'email', message: 'Please enter a valid email!' }
+              { type: 'email', message: 'Please enter a valid email!' },
+              {
+                validator: async (_, value) => {
+                  if (!value) return Promise.resolve();
+                  
+                  // Kiểm tra định dạng email
+                  const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+                  if (!emailRegex.test(value)) {
+                    return Promise.reject('Please enter a valid email address! (e.g. example@domain.com)');
+                  }
+
+                  // Kiểm tra email tồn tại
+                  if (editingEmployee && value === editingEmployee.email) {
+                    return Promise.resolve();
+                  }
+                  
+                  const exists = await checkEmail(value);
+                  if (exists) {
+                    return Promise.reject('This email is already registered!');
+                  }
+                  
+                  return Promise.resolve();
+                }
+              }
             ]}
           >
-            <Input prefix={<MailOutlined />} placeholder="Enter email" />
+            <Input 
+              prefix={<MailOutlined />} 
+              placeholder="Enter email (e.g. example@domain.com)" 
+            />
           </Form.Item>
 
           <Form.Item
             name="phonenumber"
             label="Phone Number"
-            rules={[{ required: true, message: 'Please input phone number!' }]}
+            rules={[
+              { required: true, message: 'Please input phone number!' },
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve();
+
+                  // Kiểm tra số điện thoại bắt đầu bằng 0 và có đúng 10 số
+                  const phoneRegex = /^0\d{9}$/;
+                  
+                  if (!phoneRegex.test(value)) {
+                    return Promise.reject(
+                      'Phone number must start with 0 and contain exactly 10 digits!'
+                    );
+                  }
+                  return Promise.resolve();
+                }
+              }
+            ]}
           >
-            <Input prefix={<PhoneOutlined />} placeholder="Enter phone number" />
+            <Input 
+              prefix={<PhoneOutlined />} 
+              placeholder="Enter phone number (e.g. 0123456789)"
+              maxLength={10}
+            />
           </Form.Item>
 
           <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>

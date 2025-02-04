@@ -24,10 +24,24 @@ exports.createRoom = async (req, res) => {
             });
         }
 
+        // Kiểm tra số phòng đã tồn tại chưa
+        const existingRoom = await Room.findOne({ roomNumber: req.body.roomNumber });
+        if (existingRoom) {
+            return res.status(400).json({ 
+                message: `Room number ${req.body.roomNumber} already exists. Please choose a different room number.` 
+            });
+        }
+
         const room = new Room(req.body);
         const newRoom = await room.save();
         res.status(201).json(newRoom);
     } catch (error) {
+        // Xử lý lỗi duplicate key nếu có
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                message: `Room number ${req.body.roomNumber} already exists. Please choose a different room number.`
+            });
+        }
         res.status(400).json({ message: error.message });
     }
 };

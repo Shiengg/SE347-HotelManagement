@@ -2,7 +2,8 @@ const { default: mongoose } = require("mongoose");
 const Booking = require("../models/Booking");
 const Invoice = require("../models/Invoice");
 const User = require("../models/User");
-const bookingController = require('./bookingController');
+const bookingController = require("./bookingController");
+const RestaurantItem = require("../models/Restaurant");
 
 exports.getInvoices = async (req, res) => {
   try {
@@ -34,16 +35,21 @@ exports.getInvoices = async (req, res) => {
     const totalCount = await Invoice.countDocuments(query);
 
     // Fetch the invoices with pagination
-    const invoices = await Invoice.find()
-      .populate({
-        path: "bookingID",
-        populate: [
-          { path: "customerID" }, // Populate customerID
-          { path: "receptionistID" }, // Populate receptionistID
-          { path: "services.serviceID" }, // Populate serviceID inside services array
-          { path: "roomID" },
-        ],
-      })
+    const invoices = await Invoice.find(query)
+      .populate([
+        {
+          path: "bookingID",
+          populate: [
+            { path: "customerID" }, // Populate customerID
+            { path: "receptionistID" }, // Populate receptionistID
+            { path: "services.serviceID" }, // Populate serviceID inside services array
+            { path: "roomID" },
+          ],
+        },
+        {
+          path: "orderedItems.itemId", // Populate orderedItems at the same level as bookingID
+        },
+      ])
       .skip(startIndex) // Skip records for previous pages
       .limit(limit) // Limit the number of records for this page
       .sort(sort); // Optional: Sort by creation date (newest first)
@@ -86,16 +92,21 @@ exports.getInvoiceById = async (req, res) => {
       user.role_id.role_name === "admin" ||
       user.role_id.role_name === "receptionist"
     ) {
-       // Admin or receptionist can access any invoice
-      invoice = await Invoice.findById(id).populate({
-        path: "bookingID",
-        populate: [
-          { path: "customerID" },
-          { path: "receptionistID" },
-          { path: "services.serviceID" },
-          { path: "roomID" },
-        ],
-      });
+      // Admin or receptionist can access any invoice
+      invoice = await Invoice.findById(id).populate([
+        {
+          path: "bookingID",
+          populate: [
+            { path: "customerID" }, // Populate customerID
+            { path: "receptionistID" }, // Populate receptionistID
+            { path: "services.serviceID" }, // Populate serviceID inside services array
+            { path: "roomID" },
+          ],
+        },
+        {
+          path: "orderedItems.itemId", // Populate orderedItems at the same level as bookingID
+        },
+      ]);
     } else if (user.role_id.role_name === "customer") {
       // If the user is a customer, they can only access their own invoice
       const bookings = await Booking.find({
@@ -109,21 +120,24 @@ exports.getInvoiceById = async (req, res) => {
       invoice = await Invoice.findOne({
         _id: id,
         bookingID: { $in: bookings.map((bk) => bk._id) },
-      }).populate({
-        path: "bookingID",
-        match: { customerID: user._id },
-        populate: [
-          { path: "customerID" },
-          { path: "receptionistID" },
-          { path: "services.serviceID" },
-          { path: "roomID" },
-        ],
-      });
+      }).populate([
+        {
+          path: "bookingID",
+          match: { customerID: user._id },
+          populate: [
+            { path: "customerID" },
+            { path: "receptionistID" },
+            { path: "services.serviceID" },
+            { path: "roomID" },
+          ],
+        },
+        {
+          path: "orderedItems.itemId", // Populate orderedItems at the same level as bookingID
+        },
+      ]);
     } else {
       return res.status(403).json({ message: "Unauthorized role" });
     }
-
-
 
     // Return the invoice with status 200
     res.status(200).json(invoice);
@@ -186,16 +200,21 @@ exports.getCustomerInvoices = async (req, res) => {
       bookingID: { $in: bookings.map((bk) => bk._id) },
       ...query, // Apply any additional filters
     })
-      .populate({
-        path: "bookingID",
-        match: { customerID: customerID },
-        populate: [
-          { path: "customerID" }, // Populate customerID
-          { path: "receptionistID" }, // Populate receptionistID
-          { path: "services.serviceID" }, // Populate serviceID inside services array
-          { path: "roomID" },
-        ],
-      })
+      .populate([
+        {
+          path: "bookingID",
+          match: { customerID: customerID },
+          populate: [
+            { path: "customerID" }, // Populate customerID
+            { path: "receptionistID" }, // Populate receptionistID
+            { path: "services.serviceID" }, // Populate serviceID inside services array
+            { path: "roomID" },
+          ],
+        },
+        {
+          path: "orderedItems.itemId", // Populate orderedItems at the same level as bookingID
+        },
+      ])
       .skip(startIndex)
       .limit(limit)
       .sort(sort); // Optional: Sort by creation date (newest first);
@@ -240,16 +259,19 @@ exports.updateInvoice = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    
+
     const invoice = await Invoice.findById(id).session(session);
     if (!invoice) {
-      throw new Error('Invoice not found');
+      throw new Error("Invoice not found");
     }
 
     // Nếu đang cập nhật trạng thái thành Paid
-    if (updateData.paymentStatus === 'Paid' && invoice.paymentStatus !== 'Paid') {
+    if (
+      updateData.paymentStatus === "Paid" &&
+      invoice.paymentStatus !== "Paid"
+    ) {
       updateData.paymentDate = new Date();
-      
+
       // Cập nhật booking sang trạng thái Completed
       await bookingController.handleInvoicePaid(invoice.bookingID, session);
     }
@@ -261,18 +283,22 @@ exports.updateInvoice = async (req, res) => {
     await session.commitTransaction();
 
     // Trả về invoice đã được cập nhật
-    const updatedInvoice = await Invoice.findById(id)
-      .populate({
-        path: 'bookingID',
+    const updatedInvoice = await Invoice.findById(id).populate([
+      {
+        path: "bookingID",
         populate: [
-          { path: 'customerID' },
-          { path: 'roomID' },
-          { path: 'services.serviceID' },
-        ]
-      });
+          { path: "customerID" }, // Populate customerID
+          { path: "receptionistID" }, // Populate receptionistID
+          { path: "services.serviceID" }, // Populate serviceID inside services array
+          { path: "roomID" },
+        ],
+      },
+      {
+        path: "orderedItems.itemId", // Populate orderedItems at the same level as bookingID
+      },
+    ]);
 
     res.json(updatedInvoice);
-
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ message: error.message });

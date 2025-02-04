@@ -104,55 +104,117 @@ const PriceDisplay = styled.div`
 `;
 
 const StatusSection = styled.div`
-  margin-top: 16px;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px dashed #e2e8f0;
-
-  .status-title {
-    font-weight: 600;
-    color: #1a3353;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .status-description {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #666;
   }
 
   .status-buttons {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
+    position: relative;
   }
 
   .status-button {
-    flex: 1;
-    height: 40px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-weight: 500;
+    padding: 16px;
+    border-radius: 8px;
+    border: 2px solid transparent;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+
+    .status-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    .status-title {
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    .status-desc {
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
 
     &.pending {
-      background: ${props => props.status === 'Pending' ? '#fff7e6' : '#fff'};
-      color: #fa8c16;
-      border: 1px solid #ffd591;
+      background: #fff7e6;
+      border-color: #ffd591;
       
+      .status-icon, .status-title {
+        color: #fa8c16;
+      }
+
       &:hover {
-        background: #fff7e6;
+        background: #fff1b8;
+        border-color: #ffa940;
+      }
+
+      &.active {
+        background: #fff1b8;
+        border-color: #ffa940;
+        
+        &::after {
+          content: '✓';
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #fa8c16;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+        }
       }
     }
 
     &.confirmed {
-      background: ${props => props.status === 'Confirmed' ? '#f6ffed' : '#fff'};
-      color: #52c41a;
-      border: 1px solid #b7eb8f;
+      background: #f6ffed;
+      border-color: #b7eb8f;
       
+      .status-icon, .status-title {
+        color: #52c41a;
+      }
+
       &:hover {
-        background: #f6ffed;
+        background: #d9f7be;
+        border-color: #73d13d;
+      }
+
+      &.active {
+        background: #d9f7be;
+        border-color: #73d13d;
+        
+        &::after {
+          content: '✓';
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: #52c41a;
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 12px;
+        }
       }
     }
   }
@@ -185,7 +247,7 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
   const [bookingType, setBookingType] = useState(booking?.bookingType || 'Daily');
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [estimatedPrice, setEstimatedPrice] = useState(0);
-  const [previousStatus, setPreviousStatus] = useState(booking?.status || 'Pending');
+  const [currentStatus, setCurrentStatus] = useState(booking?.status || 'Pending');
 
   useEffect(() => {
     fetchRooms();
@@ -206,7 +268,6 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
         receptionistID: booking.receptionistID?._id || currentUser?.id
       });
       setBookingType(booking.bookingType);
-      setPreviousStatus(booking.status);
       setSelectedRoom(booking.roomID);
       setEstimatedPrice(booking.totalPrice);
     }
@@ -294,8 +355,11 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
   }, [booking]);
 
   useEffect(() => {
-    setPreviousStatus(booking?.status || 'Pending');
-  }, [booking]);
+    const status = form.getFieldValue('status');
+    if (status) {
+      setCurrentStatus(status);
+    }
+  }, [form.getFieldValue('status')]);
 
   const fetchRooms = async () => {
     try {
@@ -322,13 +386,19 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/users?role=customer', {
+      const response = await fetch('http://localhost:5000/api/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       const data = await response.json();
-      setCustomers(data);
+      
+      // Lọc chỉ lấy users có role là Customer
+      const customersList = data.filter(user => 
+        user.role_id._id === '6783daa202236e8ab00f4ff0' // ID của role Customer
+      );
+      
+      setCustomers(customersList);
     } catch (error) {
       message.error('Failed to fetch customers');
     }
@@ -509,10 +579,17 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
               placeholder="Select customer"
               showSearch
               optionFilterProp="children"
+              filterOption={(input, option) =>
+                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+              }
             >
               {customers.map(customer => (
                 <Option key={customer._id} value={customer._id}>
-                  {customer.fullname || customer.username}
+                  <Space>
+                    <UserOutlined />
+                    <span>{customer.fullname}</span>
+                    <span style={{ color: '#8c8c8c' }}>({customer.email})</span>
+                  </Space>
                 </Option>
               ))}
             </Select>
@@ -704,29 +781,48 @@ const BookingForm = forwardRef(({ booking, onSubmit, onCancel, isFormVisible }, 
             Booking Status
           </div>
           
-          <Form.Item
-            name="status"
-            initialValue={booking?.status || 'Pending'}
-          >
-            <StatusSection status={form.getFieldValue('status')}>
+          <StatusSection>
+            <div className="status-description">
+              Choose the appropriate status for this booking. This will affect room availability and invoice generation.
+            </div>
+            
+            <Form.Item
+              name="status"
+              initialValue={booking?.status || 'Pending'}
+            >
               <div className="status-buttons">
-                <Button
-                  className={`status-button pending ${form.getFieldValue('status') === 'Pending' ? 'active' : ''}`}
-                  onClick={() => form.setFieldsValue({ status: 'Pending' })}
+                <div
+                  className={`status-button pending ${currentStatus === 'Pending' ? 'active' : ''}`}
+                  onClick={() => {
+                    form.setFieldsValue({ status: 'Pending' });
+                    setCurrentStatus('Pending');
+                  }}
                 >
-                  <ClockCircleOutlined />
-                  Pending
-                </Button>
-                <Button
-                  className={`status-button confirmed ${form.getFieldValue('status') === 'Confirmed' ? 'active' : ''}`}
-                  onClick={() => form.setFieldsValue({ status: 'Confirmed' })}
+                  <ClockCircleOutlined className="status-icon" />
+                  <div className="status-title">Pending</div>
+                  <div className="status-desc">
+                    Reserve the room without immediate confirmation.
+                    No invoice will be generated.
+                  </div>
+                </div>
+
+                <div
+                  className={`status-button confirmed ${currentStatus === 'Confirmed' ? 'active' : ''}`}
+                  onClick={() => {
+                    form.setFieldsValue({ status: 'Confirmed' });
+                    setCurrentStatus('Confirmed');
+                  }}
                 >
-                  <CheckCircleOutlined />
-                  Confirmed
-                </Button>
+                  <CheckCircleOutlined className="status-icon" />
+                  <div className="status-title">Confirmed</div>
+                  <div className="status-desc">
+                    Confirm the booking and generate an invoice.
+                    Room will be marked as occupied.
+                  </div>
+                </div>
               </div>
-            </StatusSection>
-          </Form.Item>
+            </Form.Item>
+          </StatusSection>
         </FormSection>
 
         <Form.Item>

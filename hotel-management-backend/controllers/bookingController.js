@@ -25,20 +25,7 @@ exports.getAllBookings = async (req, res) => {
         select: 'serviceName servicePrice'
       });
 
-    // Tính lại tổng tiền cho mỗi booking để đảm bảo chính xác
-    const calculatedBookings = bookings.map(booking => {
-      const roomPrice = booking.bookingType === 'Daily' 
-        ? booking.roomID.dailyPrice * booking.totalDays
-        : booking.roomID.hourlyPrice * booking.totalHours;
-
-      const servicesPrice = booking.services.reduce((total, service) => 
-        total + (service.serviceID.servicePrice * service.quantity), 0);
-
-      booking.totalPrice = roomPrice + servicesPrice;
-      return booking;
-    });
-
-    res.json(calculatedBookings);
+    res.json(bookings);
   } catch (error) {
     console.error('Error fetching bookings:', error);
     res.status(500).json({ message: error.message });
@@ -180,11 +167,16 @@ exports.createBooking = async (req, res) => {
     if (req.body.status === 'Confirmed') {
       const invoice = new Invoice({
         bookingID: booking._id,
+        customerID: customerID,
         roomCharges: roomPrice,
         serviceCharges: totalServicePrice,
         restaurantCharges: 0,
         totalAmount: roomPrice + totalServicePrice,
-        status: 'Pending'
+        status: 'Pending',
+        paymentStatus: 'Unpaid',
+        paymentMethod: null,
+        paymentDate: null,
+        orderedItems: []
       });
 
       await invoice.save({ session });
@@ -210,7 +202,11 @@ exports.getBookingById = async (req, res) => {
       .populate('customerID', 'fullname email phone')
       .populate('receptionistID', 'fullname')
       .populate('roomID', 'roomNumber roomType price')
-      .populate('services.serviceID', 'serviceName servicePrice');
+      .populate({
+        path: 'services.serviceID',
+        select: 'serviceName servicePrice'
+      });
+
     if (!booking) {
       return res.status(404).json({ message: 'Booking not found' });
     }
@@ -451,9 +447,14 @@ exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
     const newTotalAmount = currentTotalAmount + restaurantCharges;
     const newRestaurantCharges = currentRestaurantCharges + restaurantCharges;
 
-    // Thêm timestamp vào mỗi order mới
+    // Chuyển đổi itemId thành ObjectId và thêm timestamp
     const newOrderItems = orderedItems.map(item => ({
-      ...item,
+      itemId: new mongoose.Types.ObjectId(item.itemId),
+      name: item.name,
+      category: item.category,
+      quantity: item.quantity,
+      price: item.price,
+      total: item.total,
       orderedAt: new Date()
     }));
 
@@ -462,21 +463,14 @@ exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
     invoice.restaurantCharges = newRestaurantCharges;
     invoice.orderedItems = [...currentOrderedItems, ...newOrderItems];
 
-    console.log('Updating invoice with values:', {
-      previousTotalAmount: currentTotalAmount,
-      newOrderAmount: restaurantCharges,
-      newTotalAmount: newTotalAmount,
-      previousRestaurantCharges: currentRestaurantCharges,
-      newRestaurantCharges: newRestaurantCharges,
-      previousOrderCount: currentOrderedItems.length,
-      newOrderCount: newOrderItems.length,
-      totalOrderCount: invoice.orderedItems.length
-    });
-
     const updatedInvoice = await invoice.save({ session });
     await session.commitTransaction();
 
-    res.json(updatedInvoice);
+    // Populate itemId trong orderedItems khi trả về response
+    const populatedInvoice = await Invoice.findById(updatedInvoice._id)
+      .populate('orderedItems.itemId', 'name price category');
+
+    res.json(populatedInvoice);
   } catch (error) {
     await session.abortTransaction();
     console.error('Error updating invoice:', error);
