@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Card, Row, Col, Statistic, Table, Spin, List, Tag } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Tabs } from 'antd';
 import { TeamOutlined, HomeOutlined, CalendarOutlined, DollarOutlined, UserOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { Line, Pie } from '@ant-design/plots';
 import axios from 'axios';
@@ -107,6 +107,35 @@ const ChartContainer = styled(Card)`
   }
 `;
 
+const RevenueCard = styled(StatCard)`
+  .ant-tabs {
+    margin-top: -16px;
+  }
+
+  .ant-tabs-nav {
+    margin-bottom: 12px;
+  }
+
+  .ant-tabs-tab {
+    padding: 6px 12px;
+    
+    &:hover {
+      color: #1890ff;
+    }
+  }
+
+  .ant-tabs-tab-active {
+    .ant-tabs-tab-btn {
+      color: #1890ff !important;
+      font-weight: 500;
+    }
+  }
+
+  .revenue-content {
+    padding-top: 8px;
+  }
+`;
+
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('vi-VN', {
     style: 'currency',
@@ -117,15 +146,17 @@ const formatCurrency = (value) => {
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [revenueType, setRevenueType] = useState('total'); // total, daily, monthly, yearly
 
   useEffect(() => {
     fetchDashboardStats();
-  }, []);
+  }, [revenueType]);
 
   const fetchDashboardStats = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/dashboard/stats', {
+      const response = await axios.get(`/api/dashboard/stats?revenueType=${revenueType}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -197,28 +228,60 @@ const AdminDashboard = () => {
     },
   ];
 
+  const items = [
+    {
+      key: 'total',
+      label: 'Total',
+    },
+    {
+      key: 'daily',
+      label: 'Today',
+    },
+    {
+      key: 'monthly',
+      label: 'This Month',
+    },
+    {
+      key: 'yearly',
+      label: 'This Year',
+    },
+  ];
+
   return (
     <PageContainer>
       <Title>Overview</Title>
       
       <StatsGrid>
-        <StatCard iconcolor="#4F46E5" iconbg="#ede9fe">
-          <Statistic
-            title={
-              <>
-                <UserOutlined />
-                Total Guests
-              </>
-            }
-            value={stats?.totalGuests}
-            valueStyle={{ 
-              color: '#1a1a1a',
-              fontWeight: 700,
-              fontSize: '32px',
-              textAlign: 'right'
-            }}
+        <RevenueCard iconcolor="#4F46E5" iconbg="#ede9fe">
+          <Tabs
+            activeKey={revenueType}
+            onChange={setRevenueType}
+            items={items}
+            size="small"
+            type="card"
           />
-        </StatCard>
+          <div className="revenue-content">
+            <Statistic
+              title={
+                <>
+                  <DollarOutlined />
+                  {revenueType === 'daily' && "Today's Revenue"}
+                  {revenueType === 'monthly' && "This Month's Revenue"}
+                  {revenueType === 'yearly' && "This Year's Revenue"}
+                  {revenueType === 'total' && "Total Revenue"}
+                </>
+              }
+              value={stats?.revenue || 0}
+              valueStyle={{ 
+                color: '#1a1a1a',
+                fontWeight: 700,
+                fontSize: '32px',
+                textAlign: 'right'
+              }}
+              formatter={formatCurrency}
+            />
+          </div>
+        </RevenueCard>
         <StatCard iconcolor="#059669" iconbg="#dcfce7">
           <Statistic
             title={
@@ -251,24 +314,6 @@ const AdminDashboard = () => {
               fontSize: '32px',
               textAlign: 'right'
             }}
-          />
-        </StatCard>
-        <StatCard iconcolor="#DC2626" iconbg="#fef2f2">
-          <Statistic
-            title={
-              <>
-                <DollarOutlined />
-                Total Revenue
-              </>
-            }
-            value={stats?.totalRevenue}
-            valueStyle={{ 
-              color: '#1a1a1a',
-              fontWeight: 700,
-              fontSize: '32px',
-              textAlign: 'right'
-            }}
-            formatter={formatCurrency}
           />
         </StatCard>
       </StatsGrid>
