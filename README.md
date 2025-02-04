@@ -6,7 +6,7 @@
 
 <h1 align="center"><b>SE347.P11- Công nghệ Web và ứng dụng</b></h>
 
-## Nhóm xx:
+## Nhóm 25:
 |**STT**|**MSSV**|     **Họ và tên**   |       **Email**      |
 |-------|--------|---------------------|----------------------|
 |   1   |22521312|    Trần Nhật Tân    |22521312@gm.uit.edu.vn|
