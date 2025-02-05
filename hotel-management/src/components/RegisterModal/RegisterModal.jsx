@@ -61,22 +61,43 @@ const RegisterModal = ({ visible, onCancel }) => {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.username) newErrors.username = 'Username is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.fullname) newErrors.fullname = 'Full name is required';
-    if (!formData.phonenumber) newErrors.phonenumber = 'Phone number is required';
     
+    // Username validation
+    if (!formData.username) {
+      newErrors.username = 'Username is required';
+    } else if (!/^[a-zA-Z0-9]+$/.test(formData.username)) {
+      newErrors.username = 'Username can only contain letters and numbers';
+    }
+
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    // Full Name validation
+    if (!formData.fullname) {
+      newErrors.fullname = 'Full name is required';
+    } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(formData.fullname)) {
+      newErrors.fullname = 'Full name can only contain letters';
+    }
+
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
+    if (!formData.email) {
+      newErrors.email = 'Email is required';
+    } else {
+      const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+      if (!emailRegex.test(formData.email)) {
+        newErrors.email = 'Invalid email format';
+      }
     }
 
     // Phone number validation
-    const phoneRegex = /^\d{10}$/;
-    if (formData.phonenumber && !phoneRegex.test(formData.phonenumber)) {
-      newErrors.phonenumber = 'Phone number must be 10 digits';
+    if (!formData.phonenumber) {
+      newErrors.phonenumber = 'Phone number is required';
+    } else if (!/^0\d{9}$/.test(formData.phonenumber)) {
+      newErrors.phonenumber = 'Phone number must start with 0 and have 10 digits';
     }
 
     setErrors(newErrors);
@@ -100,19 +121,53 @@ const RegisterModal = ({ visible, onCancel }) => {
       if (response.ok) {
         message.success('Registration successful! Please login.');
         onCancel();
+        // Reset form
+        setFormData({
+          username: '',
+          password: '',
+          fullname: '',
+          email: '',
+          phonenumber: ''
+        });
       } else {
-        message.error(data.message || 'Registration failed');
+        // Xử lý các lỗi cụ thể từ server
+        if (data.message.includes('Username already exists')) {
+          setErrors(prev => ({
+            ...prev,
+            username: 'Username already exists'
+          }));
+        } else if (data.message.includes('Email already exists')) {
+          setErrors(prev => ({
+            ...prev,
+            email: 'Email already exists'
+          }));
+        } else {
+          message.error(data.message || 'Registration failed');
+        }
       }
     } catch (error) {
       message.error('Registration failed. Please try again.');
     }
   };
 
+  // Thêm hàm để reset form khi đóng modal
+  const handleCancel = () => {
+    setFormData({
+      username: '',
+      password: '',
+      fullname: '',
+      email: '',
+      phonenumber: ''
+    });
+    setErrors({});
+    onCancel();
+  };
+
   return (
     <Modal
       title="Register New Account"
       open={visible}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       onOk={handleSubmit}
       okText="Register"
     >
@@ -122,7 +177,7 @@ const RegisterModal = ({ visible, onCancel }) => {
           name="username"
           value={formData.username}
           onChange={handleChange}
-          placeholder="Enter username"
+          placeholder="Enter username (letters and numbers only)"
         />
         {errors.username && <ErrorText>{errors.username}</ErrorText>}
       </FormGroup>
@@ -134,7 +189,7 @@ const RegisterModal = ({ visible, onCancel }) => {
           name="password"
           value={formData.password}
           onChange={handleChange}
-          placeholder="Enter password"
+          placeholder="Enter password (minimum 6 characters)"
         />
         {errors.password && <ErrorText>{errors.password}</ErrorText>}
       </FormGroup>
@@ -145,7 +200,7 @@ const RegisterModal = ({ visible, onCancel }) => {
           name="fullname"
           value={formData.fullname}
           onChange={handleChange}
-          placeholder="Enter full name"
+          placeholder="Enter full name (letters only)"
         />
         {errors.fullname && <ErrorText>{errors.fullname}</ErrorText>}
       </FormGroup>
@@ -157,7 +212,7 @@ const RegisterModal = ({ visible, onCancel }) => {
           name="email"
           value={formData.email}
           onChange={handleChange}
-          placeholder="Enter email"
+          placeholder="Enter valid email address"
         />
         {errors.email && <ErrorText>{errors.email}</ErrorText>}
       </FormGroup>
@@ -168,7 +223,7 @@ const RegisterModal = ({ visible, onCancel }) => {
           name="phonenumber"
           value={formData.phonenumber}
           onChange={handleChange}
-          placeholder="Enter phone number"
+          placeholder="Enter phone number (start with 0, 10 digits)"
         />
         {errors.phonenumber && <ErrorText>{errors.phonenumber}</ErrorText>}
       </FormGroup>
