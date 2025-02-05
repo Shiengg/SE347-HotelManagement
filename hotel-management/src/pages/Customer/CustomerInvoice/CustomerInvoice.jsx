@@ -2,6 +2,7 @@ import React from 'react';
 import styled from 'styled-components';
 import { Table, Tag, Space, Button } from 'antd';
 import { FileTextOutlined, MenuOutlined } from '@ant-design/icons';
+import InvoicePage from '../../InvoicePage/InvoicePage';
 
 const PageContainer = styled.div`
   padding: 24px;
@@ -152,25 +153,7 @@ const StyledTable = styled(Table)`
 
 const CustomerInvoice = ({ onToggleSidebar }) => {
   return (
-    <PageContainer>
-      <ContentWrapper>
-        <HeaderSection>
-          <TitleSection>
-            <div className="icon-wrapper">
-              <FileTextOutlined />
-            </div>
-            <Title>My Invoices</Title>
-          </TitleSection>
-          <MenuButton onClick={onToggleSidebar}>
-            <MenuOutlined />
-          </MenuButton>
-        </HeaderSection>
-
-        <StyledTable
-          // Thêm cấu hình table cho Invoice ở đây
-        />
-      </ContentWrapper>
-    </PageContainer>
+    <InvoicePage/>
   );
 };
 

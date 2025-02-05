@@ -63,7 +63,7 @@ const WelcomeSection = styled.div`
 
 const FeatureCard = styled(motion.div)`
   background: white;
-  border-radius: 24px;
+  border-radius: 0px 0px 24px 24px ;
   padding: 30px;
   height: 100%;
   position: relative;
