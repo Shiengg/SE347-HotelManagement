@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { Button, Form, Input, Select, DatePicker, message, Space, Modal, Spin, Table, Tabs } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, CalendarOutlined, UserOutlined, HomeOutlined, InfoCircleOutlined, HistoryOutlined, MenuOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import BookingForm from '../../Admin/BookingsManagementPage/BookingForm';
 
@@ -9,8 +9,17 @@ const { Option } = Select;
 
 // Reuse styled components but change the theme color to blue
 const PageContainer = styled.div`
-  padding: 12px;
-  width: 100%;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
 `;
 
 const ContentWrapper = styled.div`
@@ -22,15 +31,16 @@ const ContentWrapper = styled.div`
 `;
 
 const HeaderSection = styled.div`
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eee;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 576px) {
+    margin-bottom: 24px;
+  }
 `;
 
 const TitleSection = styled.div`
@@ -41,7 +51,7 @@ const TitleSection = styled.div`
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    background: linear-gradient(45deg, #1890ff, #69c0ff);
+    background: #1890ff;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -52,6 +62,14 @@ const TitleSection = styled.div`
       font-size: 24px;
       color: white;
     }
+
+    @media (max-width: 576px) {
+      width: 40px;
+      height: 40px;
+      .anticon {
+        font-size: 20px;
+      }
+    }
   }
 
   .text-content {
@@ -59,12 +77,20 @@ const TitleSection = styled.div`
       margin: 0;
       font-size: 24px;
       color: #1a3353;
+      
+      @media (max-width: 576px) {
+        font-size: 20px;
+      }
     }
 
     p {
       margin: 4px 0 0;
       color: #666;
       font-size: 14px;
+      
+      @media (max-width: 576px) {
+        font-size: 12px;
+      }
     }
   }
 `;
@@ -91,6 +117,18 @@ const StyledTable = styled(Table)`
 
   .ant-table-tbody > tr:hover > td {
     background: #f8fafc;
+  }
+
+  @media (max-width: 576px) {
+    .desktop-column {
+      display: none;
+    }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-column {
+      display: none;
+    }
   }
 `;
 
@@ -365,8 +403,34 @@ const BookingDetailModal = ({ booking, visible, onClose }) => {
   );
 };
 
-const BookingManagement = () => {
-  // Reuse all state and handlers from BookingsManagementPage
+// Thêm MenuButton component
+const MenuButton = styled(Button)`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: #1a3353;
+  color: white;
+  
+  &:hover, &:focus {
+    background: #2c5282;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  @media (max-width: 576px) {
+    width: 36px;
+    height: 36px;
+  }
+`;
+
+const BookingManagement = ({ onToggleSidebar }) => {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -376,8 +440,198 @@ const BookingManagement = () => {
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
   const formRef = useRef(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [columns, setColumns] = useState([]);
+  const [historyColumns, setHistoryColumns] = useState([]);
 
-  // Reuse all the same functions from BookingsManagementPage
+  // Định nghĩa columns mặc định trong useEffect
+  useEffect(() => {
+    const defaultColumns = [
+      {
+        title: 'Booking ID',
+        key: 'bookingId',
+        className: 'desktop-column',
+        render: (record) => `#${record._id.slice(-6)}`,
+      },
+      {
+        title: 'Room',
+        key: 'room',
+        className: 'desktop-column',
+        render: (record) => `Room ${record.roomID.roomNumber}`,
+      },
+      {
+        title: 'Customer',
+        key: 'customer',
+        className: 'desktop-column',
+        render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
+      },
+      {
+        title: 'Check In',
+        key: 'checkIn',
+        className: 'desktop-column',
+        render: (record) => formatDateTime(record.checkInDate, record.bookingType),
+      },
+      {
+        title: 'Check Out',
+        key: 'checkOut',
+        className: 'desktop-column',
+        render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
+      },
+      {
+        title: 'Total Price',
+        key: 'totalPrice',
+        className: 'desktop-column',
+        render: (record) => formatVND(record.totalPrice),
+      },
+      {
+        title: 'Status',
+        key: 'status',
+        className: 'desktop-column',
+        render: (record) => getStatusTag(record.status),
+      },
+      {
+        title: 'Services',
+        key: 'services',
+        className: 'desktop-column',
+        render: (record) => `${record.services.length} services`,
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        className: 'desktop-column',
+        render: (_, record) => (
+          <Space>
+            <Button 
+              type="text" 
+              icon={<InfoCircleOutlined />}
+              size="small"
+              onClick={() => {
+                setSelectedBooking(record);
+                setIsDetailModalVisible(true);
+              }}
+            />
+            <Button 
+              type="text" 
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => {
+                setEditingBooking(record);
+                setFormMode('edit');
+                setIsFormVisible(true);
+              }}
+            />
+            <Button 
+              type="text" 
+              danger
+              icon={<DeleteOutlined />}
+              size="small"
+              onClick={() => handleDelete(record._id)}
+            />
+          </Space>
+        ),
+      },
+    ];
+
+    const defaultHistoryColumns = [
+      {
+        title: 'Booking ID',
+        key: 'bookingId',
+        className: 'desktop-column',
+        render: (record) => `#${record._id.slice(-6)}`,
+      },
+      {
+        title: 'Room',
+        key: 'room',
+        className: 'desktop-column',
+        render: (record) => `Room ${record.roomID.roomNumber}`,
+      },
+      {
+        title: 'Customer',
+        key: 'customer',
+        className: 'desktop-column',
+        render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
+      },
+      {
+        title: 'Check In',
+        key: 'checkIn',
+        className: 'desktop-column',
+        render: (record) => formatDateTime(record.checkInDate, record.bookingType),
+      },
+      {
+        title: 'Check Out',
+        key: 'checkOut',
+        className: 'desktop-column',
+        render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
+      },
+      {
+        title: 'Duration',
+        key: 'duration',
+        className: 'desktop-column',
+        render: (record) => (
+          record.bookingType === 'Daily' 
+            ? `${record.totalDays} days`
+            : `${record.totalHours} hours`
+        ),
+      },
+      {
+        title: 'Total Price',
+        key: 'totalPrice',
+        className: 'desktop-column',
+        render: (record) => formatVND(record.totalPrice),
+      },
+      {
+        title: 'Completed Date',
+        key: 'completedDate',
+        className: 'desktop-column',
+        render: (record) => dayjs(record.updatedAt).format('DD/MM/YYYY HH:mm'),
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        className: 'desktop-column',
+        render: (_, record) => (
+          <Button 
+            type="text" 
+            icon={<InfoCircleOutlined />}
+            size="small"
+            onClick={() => {
+              setSelectedBooking(record);
+              setIsDetailModalVisible(true);
+            }}
+          />
+        ),
+      },
+    ];
+
+    setColumns(defaultColumns);
+    setHistoryColumns(defaultHistoryColumns);
+  }, []);
+
+  // Cập nhật useEffect theo dõi resize
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setWindowWidth(width);
+    };
+
+    // Thêm debounce để tránh cập nhật quá nhiều
+    let timeoutId = null;
+    const debouncedHandleResize = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(handleResize, 150);
+    };
+
+    window.addEventListener('resize', debouncedHandleResize);
+    
+    // Gọi handleResize ngay lập tức để có giá trị khởi tạo
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', debouncedHandleResize);
+      clearTimeout(timeoutId);
+    };
+  }, []);
+
   const fetchBookings = async () => {
     setLoading(true);
     try {
@@ -475,56 +729,35 @@ const BookingManagement = () => {
     }
   };
 
-  // Reuse the same columns configuration
-  const columns = [
-    {
-      title: 'Booking ID',
-      key: 'bookingId',
-      render: (record) => `#${record._id.slice(-6)}`,
-    },
-    {
-      title: 'Room',
-      key: 'room',
-      render: (record) => `Room ${record.roomID.roomNumber}`,
-    },
-    {
-      title: 'Customer',
-      key: 'customer',
-      render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
-    },
-    {
-      title: 'Check In',
-      key: 'checkIn',
-      render: (record) => formatDateTime(record.checkInDate, record.bookingType),
-    },
-    {
-      title: 'Check Out',
-      key: 'checkOut',
-      render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
-    },
-    {
-      title: 'Total Price',
-      key: 'totalPrice',
-      render: (record) => formatVND(record.totalPrice),
-    },
-    {
-      title: 'Status',
-      key: 'status',
-      render: (record) => getStatusTag(record.status),
-    },
-    {
-      title: 'Services',
-      key: 'services',
-      render: (record) => `${record.services.length} services`,
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_, record) => (
-        <Space>
+  // Thêm mobile column cho Active Bookings
+  const mobileColumn = {
+    title: 'Booking Info',
+    key: 'bookingInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>#{record._id.slice(-6)}</div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <HomeOutlined /> Room {record.roomID.roomNumber}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <UserOutlined /> {record.customerID?.fullname || 'N/A'}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Check In: {formatDateTime(record.checkInDate, record.bookingType)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Check Out: {formatDateTime(record.checkOutDate, record.bookingType)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#1890ff' }}>
+          {formatVND(record.totalPrice)}
+        </div>
+        <div>{getStatusTag(record.status)}</div>
+        <Space style={{ marginTop: 8 }}>
           <Button 
             type="text" 
             icon={<InfoCircleOutlined />}
+            size="small"
             onClick={() => {
               setSelectedBooking(record);
               setIsDetailModalVisible(true);
@@ -533,6 +766,7 @@ const BookingManagement = () => {
           <Button 
             type="text" 
             icon={<EditOutlined />}
+            size="small"
             onClick={() => {
               setEditingBooking(record);
               setFormMode('edit');
@@ -543,6 +777,133 @@ const BookingManagement = () => {
             type="text" 
             danger
             icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => handleDelete(record._id)}
+          />
+        </Space>
+      </Space>
+    ),
+  };
+
+  // Thêm mobile column cho History
+  const mobileHistoryColumn = {
+    title: 'Booking Info',
+    key: 'bookingInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>#{record._id.slice(-6)}</div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <HomeOutlined /> Room {record.roomID.roomNumber}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <UserOutlined /> {record.customerID?.fullname || 'N/A'}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Duration: {record.bookingType === 'Daily' 
+            ? `${record.totalDays} days`
+            : `${record.totalHours} hours`
+          }
+        </div>
+        <div style={{ fontSize: '12px', color: '#1890ff' }}>
+          {formatVND(record.totalPrice)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Completed: {dayjs(record.updatedAt).format('DD/MM/YYYY HH:mm')}
+        </div>
+        <Button 
+          type="text" 
+          icon={<InfoCircleOutlined />}
+          size="small"
+          onClick={() => {
+            setSelectedBooking(record);
+            setIsDetailModalVisible(true);
+          }}
+        />
+      </Space>
+    ),
+  };
+
+  // Thêm desktop columns cho Active Bookings
+  const desktopColumns = [
+    {
+      title: 'Booking ID',
+      key: 'bookingId',
+      className: 'desktop-column',
+      render: (record) => `#${record._id.slice(-6)}`,
+    },
+    {
+      title: 'Room',
+      key: 'room',
+      className: 'desktop-column',
+      render: (record) => `Room ${record.roomID.roomNumber}`,
+    },
+    {
+      title: 'Customer',
+      key: 'customer',
+      className: 'desktop-column',
+      render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
+    },
+    {
+      title: 'Check In',
+      key: 'checkIn',
+      className: 'desktop-column',
+      render: (record) => formatDateTime(record.checkInDate, record.bookingType),
+    },
+    {
+      title: 'Check Out',
+      key: 'checkOut',
+      className: 'desktop-column',
+      render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
+    },
+    {
+      title: 'Total Price',
+      key: 'totalPrice',
+      className: 'desktop-column',
+      render: (record) => formatVND(record.totalPrice),
+    },
+    {
+      title: 'Status',
+      key: 'status',
+      className: 'desktop-column',
+      render: (record) => getStatusTag(record.status),
+    },
+    {
+      title: 'Services',
+      key: 'services',
+      className: 'desktop-column',
+      render: (record) => `${record.services.length} services`,
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      className: 'desktop-column',
+      render: (_, record) => (
+        <Space>
+          <Button 
+            type="text" 
+            icon={<InfoCircleOutlined />}
+            size="small"
+            onClick={() => {
+              setSelectedBooking(record);
+              setIsDetailModalVisible(true);
+            }}
+          />
+          <Button 
+            type="text" 
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => {
+              setEditingBooking(record);
+              setFormMode('edit');
+              setIsFormVisible(true);
+            }}
+          />
+          <Button 
+            type="text" 
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
             onClick={() => handleDelete(record._id)}
           />
         </Space>
@@ -550,35 +911,42 @@ const BookingManagement = () => {
     },
   ];
 
-  const historyColumns = [
+  // Thêm desktop columns cho History
+  const desktopHistoryColumns = [
     {
       title: 'Booking ID',
       key: 'bookingId',
+      className: 'desktop-column',
       render: (record) => `#${record._id.slice(-6)}`,
     },
     {
       title: 'Room',
       key: 'room',
+      className: 'desktop-column',
       render: (record) => `Room ${record.roomID.roomNumber}`,
     },
     {
       title: 'Customer',
       key: 'customer',
+      className: 'desktop-column',
       render: (record) => record.customerID?.fullname || record.customerID?.username || 'N/A',
     },
     {
       title: 'Check In',
       key: 'checkIn',
+      className: 'desktop-column',
       render: (record) => formatDateTime(record.checkInDate, record.bookingType),
     },
     {
       title: 'Check Out',
       key: 'checkOut',
+      className: 'desktop-column',
       render: (record) => formatDateTime(record.checkOutDate, record.bookingType),
     },
     {
       title: 'Duration',
       key: 'duration',
+      className: 'desktop-column',
       render: (record) => (
         record.bookingType === 'Daily' 
           ? `${record.totalDays} days`
@@ -588,20 +956,24 @@ const BookingManagement = () => {
     {
       title: 'Total Price',
       key: 'totalPrice',
+      className: 'desktop-column',
       render: (record) => formatVND(record.totalPrice),
     },
     {
       title: 'Completed Date',
       key: 'completedDate',
+      className: 'desktop-column',
       render: (record) => dayjs(record.updatedAt).format('DD/MM/YYYY HH:mm'),
     },
     {
       title: 'Actions',
       key: 'actions',
+      className: 'desktop-column',
       render: (_, record) => (
         <Button 
           type="text" 
           icon={<InfoCircleOutlined />}
+          size="small"
           onClick={() => {
             setSelectedBooking(record);
             setIsDetailModalVisible(true);
@@ -610,6 +982,9 @@ const BookingManagement = () => {
       ),
     },
   ];
+
+  const activeColumns = [mobileColumn, ...desktopColumns];
+  const historyColumnsResponsive = [mobileHistoryColumn, ...desktopHistoryColumns];
 
   return (
     <PageContainer>
@@ -625,14 +1000,19 @@ const BookingManagement = () => {
             </div>
           </TitleSection>
           
-          <Button 
-            type="primary" 
-            icon={<PlusOutlined />}
-            onClick={resetForm}
-            style={{ background: '#1890ff' }}
-          >
-            Add New Booking
-          </Button>
+          <Space>
+            <Button 
+              type="primary" 
+              icon={<PlusOutlined />}
+              onClick={resetForm}
+              style={{ background: '#1890ff' }}
+            >
+              Add New Booking
+            </Button>
+            <MenuButton onClick={onToggleSidebar}>
+              <MenuOutlined />
+            </MenuButton>
+          </Space>
         </HeaderSection>
 
         <TabsContainer>
@@ -657,14 +1037,16 @@ const BookingManagement = () => {
                       </LoadingState>
                     ) : (
                       <StyledTable
-                        columns={columns}
+                        columns={activeColumns}
                         dataSource={bookings.filter(b => b.status !== 'Completed')}
                         rowKey="_id"
                         pagination={{
                           defaultPageSize: 10,
                           showSizeChanger: true,
-                          showTotal: (total) => `Total ${total} active bookings`
+                          showTotal: (total) => `Total ${total} active bookings`,
+                          responsive: true,
                         }}
+                        scroll={{ x: true }}
                       />
                     )}
                   </TableContainer>
@@ -686,14 +1068,16 @@ const BookingManagement = () => {
                       </LoadingState>
                     ) : (
                       <StyledTable
-                        columns={historyColumns}
+                        columns={historyColumnsResponsive}
                         dataSource={bookings.filter(b => b.status === 'Completed')}
                         rowKey="_id"
                         pagination={{
                           defaultPageSize: 10,
                           showSizeChanger: true,
-                          showTotal: (total) => `Total ${total} completed bookings`
+                          showTotal: (total) => `Total ${total} completed bookings`,
+                          responsive: true,
                         }}
+                        scroll={{ x: true }}
                       />
                     )}
                   </TableContainer>
