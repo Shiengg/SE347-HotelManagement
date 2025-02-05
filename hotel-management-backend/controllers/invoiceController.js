@@ -176,28 +176,12 @@ exports.getCustomerInvoices = async (req, res) => {
     if (totalAmountSort && totalAmountSort !== "all")
       sort["totalAmount"] = totalAmountSort === "asc" ? 1 : -1; // Sort by totalAmount
 
-    // 1. Get all bookings for the customer
-    const bookings = await Booking.find({ customerID }).select("_id"); // Get booking IDs
 
-    // 2. If there are no bookings, return empty response
-    if (bookings.length === 0) {
-      return res.json({
-        data: [],
-        currentPage: page,
-        totalPages: 0,
-        totalInvoices: 0,
-      });
-    }
-
-    // 3. Get the total count of invoices that match the query and belong to the bookings
-    const totalCount = await Invoice.countDocuments({
-      bookingID: { $in: bookings.map((bk) => bk._id) },
-      ...query, // Apply any additional filters (paymentMethod, paymentStatus)
-    });
+    const totalCount = await Invoice.countDocuments({ customerID: customerID,...query});
 
     // 4. Fetch the invoices for the customer with pagination and sorting
     const invoices = await Invoice.find({
-      bookingID: { $in: bookings.map((bk) => bk._id) },
+      customerID: customerID,
       ...query, // Apply any additional filters
     })
       .populate([
