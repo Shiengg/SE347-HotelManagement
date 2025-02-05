@@ -96,8 +96,16 @@ const LoadingState = styled.div`
 `;
 
 const StyledTable = styled(Table)`
-  .ant-table-row:hover {
-    background-color: #f8f9fa;
+  @media (max-width: 576px) {
+    .desktop-column {
+      display: none;
+    }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-column {
+      display: none;
+    }
   }
 `;
 
@@ -356,11 +364,64 @@ const GuestsPage = () => {
     setFilteredGuests(filtered);
   }, [searchText, guests]);
 
-  const columns = [
+  // Thêm mobile column
+  const mobileColumn = {
+    title: 'Guest Info',
+    key: 'guestInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>
+          <UserOutlined /> {record.fullname}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Username: {record.username}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <MailOutlined /> {record.email}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <PhoneOutlined /> {record.phonenumber}
+        </div>
+        <Space style={{ marginTop: 8 }}>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => {
+              setEditingGuest(record);
+              form.setFieldsValue(record);
+              setIsModalVisible(true);
+            }}
+          />
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => {
+              Modal.confirm({
+                title: 'Are you sure you want to delete this guest?',
+                content: 'This action cannot be undone.',
+                okText: 'Yes',
+                okType: 'danger',
+                cancelText: 'No',
+                onOk: () => handleDelete(record._id)
+              });
+            }}
+          />
+        </Space>
+      </Space>
+    ),
+  };
+
+  // Thêm desktop columns
+  const desktopColumns = [
     {
       title: 'Full Name',
       dataIndex: 'fullname',
       key: 'fullname',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <UserOutlined />
@@ -372,11 +433,13 @@ const GuestsPage = () => {
       title: 'Username',
       dataIndex: 'username',
       key: 'username',
+      className: 'desktop-column',
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <MailOutlined />
@@ -388,6 +451,7 @@ const GuestsPage = () => {
       title: 'Phone',
       dataIndex: 'phonenumber',
       key: 'phonenumber',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <PhoneOutlined />
@@ -396,18 +460,13 @@ const GuestsPage = () => {
       ),
     },
     {
-      title: 'Created At',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date) => dayjs(date).format('DD/MM/YYYY'),
-    },
-    {
       title: 'Actions',
       key: 'actions',
+      className: 'desktop-column',
       render: (_, record) => (
         <Space>
           <Button
-            type="text"
+            type="primary"
             icon={<EditOutlined />}
             onClick={() => {
               setEditingGuest(record);
@@ -416,7 +475,7 @@ const GuestsPage = () => {
             }}
           />
           <Button
-            type="text"
+            type="primary"
             danger
             icon={<DeleteOutlined />}
             onClick={() => {
@@ -434,6 +493,8 @@ const GuestsPage = () => {
       ),
     },
   ];
+
+  const allColumns = [mobileColumn, ...desktopColumns];
 
   return (
     <PageContainer>
@@ -487,14 +548,16 @@ const GuestsPage = () => {
             </LoadingState>
           ) : filteredGuests.length > 0 ? (
             <StyledTable
-              columns={columns}
+              columns={allColumns}
               dataSource={filteredGuests}
               rowKey="_id"
               pagination={{
                 defaultPageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total) => `Total ${total} guests`
+                showTotal: (total) => `Total ${total} guests`,
+                responsive: true,
               }}
+              scroll={{ x: true }}
             />
           ) : (
             <EmptyState>

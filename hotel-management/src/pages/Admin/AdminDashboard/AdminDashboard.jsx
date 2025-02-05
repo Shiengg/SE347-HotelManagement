@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Tabs } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Tabs, Space } from 'antd';
 import { TeamOutlined, HomeOutlined, CalendarOutlined, DollarOutlined, UserOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { Line, Pie } from '@ant-design/plots';
 import axios from 'axios';
@@ -9,7 +9,14 @@ import { format } from 'date-fns';
 const PageContainer = styled.div`
   padding: 24px;
   background: #f0f2f5;
-  min-height: 100vh;
+  min-height: calc(100vh - 64px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
 `;
 
 const Title = styled.h1`
@@ -19,6 +26,11 @@ const Title = styled.h1`
   margin-bottom: 32px;
   text-align: left;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 576px) {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
 `;
 
 const StatsGrid = styled.div`
@@ -143,6 +155,20 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+const StyledTable = styled(Table)`
+  @media (max-width: 576px) {
+    .desktop-column {
+      display: none;
+    }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-column {
+      display: none;
+    }
+  }
+`;
+
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -203,23 +229,50 @@ const AdminDashboard = () => {
     interactions: [{ type: 'element-active' }],
   };
 
-  const recentBookingsColumns = [
+  const mobileColumn = {
+    title: 'Booking Info',
+    key: 'bookingInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>
+          <UserOutlined /> {record.customerID?.fullname}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <HomeOutlined /> Room {record.roomID?.roomNumber}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          {format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm')}
+        </div>
+        <Tag color={record.status === 'Confirmed' ? 'green' : 'gold'}>
+          {record.status}
+        </Tag>
+      </Space>
+    ),
+  };
+
+  const desktopColumns = [
     {
       title: 'Customer',
       dataIndex: ['customerID', 'fullname'],
+      className: 'desktop-column',
     },
     {
       title: 'Room',
       dataIndex: ['roomID', 'roomNumber'],
+      className: 'desktop-column',
+      render: (number) => `Room ${number}`,
     },
     {
       title: 'Date',
       dataIndex: 'createdAt',
+      className: 'desktop-column',
       render: (date) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
     },
     {
       title: 'Status',
       dataIndex: 'status',
+      className: 'desktop-column',
       render: (status) => (
         <Tag color={status === 'Confirmed' ? 'green' : 'gold'}>
           {status}
@@ -227,6 +280,8 @@ const AdminDashboard = () => {
       ),
     },
   ];
+
+  const allColumns = [mobileColumn, ...desktopColumns];
 
   const items = [
     {
@@ -319,11 +374,12 @@ const AdminDashboard = () => {
       </StatsGrid>
 
       <ChartContainer title="Recent Bookings">
-        <Table
-          columns={recentBookingsColumns}
+        <StyledTable
+          columns={allColumns}
           dataSource={stats?.recentBookings}
           rowKey="_id"
           pagination={false}
+          scroll={{ x: true }}
         />
       </ChartContainer>
     </PageContainer>
