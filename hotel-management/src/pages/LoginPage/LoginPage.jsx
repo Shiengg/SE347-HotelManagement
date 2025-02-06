@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useAuth } from "../../contexts/AuthContext";
 import logo from "../../svg/AppLogo.svg";
 import { message } from "antd";
+import RegisterModal from '../../components/RegisterModal/RegisterModal';
 
 export const LogoWrapper = styled.div`
   display: flex;
@@ -213,6 +214,28 @@ const ErrorMessage = styled.div`
   }
 `;
 
+const RegisterLink = styled.div`
+  text-align: center;
+  margin-top: 20px;
+  color: #6b7280;
+  font-size: 14px;
+
+  button {
+    color: #ffcc00;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    margin-left: 5px;
+
+    &:hover {
+      color: #ff9900;
+    }
+  }
+`;
+
 const LoginPage = React.memo(() => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -220,6 +243,7 @@ const LoginPage = React.memo(() => {
     password: "",
   });
   const [error, setError] = useState("");
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -305,7 +329,18 @@ const LoginPage = React.memo(() => {
         </InputGroup>
         <Button type="submit">Sign In</Button>
         <ErrorMessage visible={!!error}>{error}</ErrorMessage>
+        <RegisterLink>
+          Don't have an account?
+          <button type="button" onClick={() => setShowRegisterModal(true)}>
+            Register now
+          </button>
+        </RegisterLink>
       </LoginForm>
+
+      <RegisterModal
+        visible={showRegisterModal}
+        onCancel={() => setShowRegisterModal(false)}
+      />
     </LoginContainer>
   );
 });
