@@ -1,6 +1,6 @@
-import React from 'react';
-import styled from 'styled-components';
-import InvoicePage from '../../InvoicePage/InvoicePage';
+import React from "react";
+import styled from "styled-components";
+import InvoicePage from "../../InvoicePage/InvoicePage";
 
 const PageContainer = styled.div`
   padding: 24px;
@@ -13,7 +13,7 @@ const PageContainer = styled.div`
   transform: translateZ(0);
   backface-visibility: hidden;
   perspective: 1000px;
-  -webkit-transform: translate3d(0,0,0);
+  -webkit-transform: translate3d(0, 0, 0);
   -webkit-backface-visibility: hidden;
   -webkit-perspective: 1000;
 
@@ -37,7 +37,7 @@ const ContentWrapper = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   transform: translateZ(0);
-  -webkit-transform: translate3d(0,0,0);
+  -webkit-transform: translate3d(0, 0, 0);
 
   @media (max-width: 768px) {
     padding: 16px;
@@ -51,13 +51,7 @@ const ContentWrapper = styled.div`
 `;
 
 const InvoicesManagementPage = () => {
-  return (
-    <PageContainer>
-      <ContentWrapper>
-        <InvoicePage />
-      </ContentWrapper>
-    </PageContainer>
-  );
+  return <InvoicePage />;
 };
 
-export default InvoicesManagementPage; 
+export default InvoicesManagementPage;
