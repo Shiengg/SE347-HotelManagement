@@ -211,23 +211,32 @@ const CustomerBooking = ({ onToggleSidebar }) => {
   const fetchBookings = async () => {
     try {
       const userStr = localStorage.getItem('user');
-      const user = JSON.parse(userStr);
-      const userId = user._id || user.id;
+      if (!userStr) {
+        message.error('User information not found');
+        navigate('/login');
+        return;
+      }
 
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const user = JSON.parse(userStr);
+      if (!user || (!user._id && !user.id)) {
+        message.error('Invalid user information');
+        navigate('/login');
+        return;
+      }
+
+      // Thay đổi endpoint để sử dụng route getCustomerBookings
+      const response = await fetch('http://localhost:5000/api/bookings/customer', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch bookings');
+      }
       
       const data = await response.json();
-      
-      // Lọc chỉ lấy booking của customer hiện tại
-      const customerBookings = data.filter(booking => 
-        booking.customerID._id === userId || booking.customerID.id === userId
-      );
-      
-      setBookings(customerBookings);
+      setBookings(data);
     } catch (error) {
       console.error('Failed to fetch bookings:', error);
       message.error('Failed to load bookings');

@@ -485,11 +485,11 @@ exports.updateInvoiceWithRestaurantCharges = async (req, res) => {
 
 exports.getCustomerBookings = async (req, res) => {
   try {
-    console.log('User from request:', req.user); // Log user info
+    console.log('User from request:', req.user);
 
     const bookings = await Booking.find({ 
       customerID: req.user._id,
-      status: 'Confirmed'
+      status: { $in: ['Pending', 'Confirmed'] }
     })
     .populate({
       path: 'roomID',
@@ -509,7 +509,7 @@ exports.getCustomerBookings = async (req, res) => {
     })
     .sort({ checkInDate: -1 });
 
-    console.log('Found bookings:', bookings); // Log found bookings
+    console.log('Found bookings:', bookings);
 
     const calculatedBookings = bookings.map(booking => {
       const roomPrice = booking.bookingType === 'Daily' 
@@ -525,7 +525,7 @@ exports.getCustomerBookings = async (req, res) => {
       };
     });
     
-    console.log('Calculated bookings:', calculatedBookings); // Log final result
+    console.log('Calculated bookings:', calculatedBookings);
     res.json(calculatedBookings);
   } catch (error) {
     console.error('Error fetching customer bookings:', error);
