@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Role = require('../models/Role');
 const bcrypt = require('bcryptjs');
+const Booking = require('../models/Booking');
 
 exports.getAllUsers = async (req, res) => {
   try {
@@ -86,7 +87,6 @@ exports.deleteUser = async (req, res) => {
     }
 
     // Kiểm tra xem user có liên quan đến booking nào không
-    const Booking = require('../models/Booking');
     const hasBookings = await Booking.exists({ customerID: id });
     if (hasBookings) {
       return res.status(400).json({ 
@@ -162,5 +162,26 @@ exports.registerCustomer = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+exports.checkUserHasBookings = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const bookingsAsCustomer = await Booking.find({ customerID: userId });
+    const bookingsAsReceptionist = await Booking.find({ receptionistID: userId });
+    
+    const totalBookings = bookingsAsCustomer.length + bookingsAsReceptionist.length;
+    
+    res.json({ 
+      hasBookings: totalBookings > 0,
+      bookingCount: totalBookings,
+      details: {
+        asCustomer: bookingsAsCustomer.length,
+        asReceptionist: bookingsAsReceptionist.length
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 }; 

@@ -169,6 +169,25 @@ const StyledTable = styled(Table)`
   }
 `;
 
+const StyledTabs = styled(Tabs)`
+  @media (max-width: 576px) {
+    .ant-tabs-nav-list {
+      gap: 4px;
+    }
+    
+    .ant-tabs-tab {
+      padding: 4px 8px !important;
+      margin: 0 !important;
+      font-size: 12px;
+      min-width: auto;
+      
+      .ant-tabs-tab-btn {
+        font-size: 12px;
+      }
+    }
+  }
+`;
+
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -283,7 +302,7 @@ const AdminDashboard = () => {
 
   const allColumns = [mobileColumn, ...desktopColumns];
 
-  const items = [
+  const tabItems = [
     {
       key: 'total',
       label: 'Total',
@@ -308,10 +327,10 @@ const AdminDashboard = () => {
       
       <StatsGrid>
         <RevenueCard iconcolor="#4F46E5" iconbg="#ede9fe">
-          <Tabs
+          <StyledTabs
             activeKey={revenueType}
             onChange={setRevenueType}
-            items={items}
+            items={tabItems}
             size="small"
             type="card"
           />
