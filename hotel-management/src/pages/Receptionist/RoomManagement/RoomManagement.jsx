@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import styled from 'styled-components';
 import { Table, Button, Space, Modal, Select, message, Spin } from 'antd';
-import { HomeOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined, SortAscendingOutlined, SortDescendingOutlined, DollarOutlined } from '@ant-design/icons';
+import { HomeOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined, SortAscendingOutlined, SortDescendingOutlined, DollarOutlined, MenuOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { Option } = Select;
 
 const PageContainer = styled.div`
-  padding: 12px;
-  width: 100%;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
 `;
 
 const ContentWrapper = styled.div`
@@ -17,18 +25,21 @@ const ContentWrapper = styled.div`
   padding: 16px;
   border: 2px solid #1890ff;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 `;
 
 const HeaderSection = styled.div`
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eee;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 576px) {
+    margin-bottom: 24px;
+  }
 `;
 
 const TitleSection = styled.div`
@@ -39,7 +50,7 @@ const TitleSection = styled.div`
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    background: linear-gradient(45deg, #1890ff, #69c0ff);
+    background: #1890ff;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -50,6 +61,14 @@ const TitleSection = styled.div`
       font-size: 24px;
       color: white;
     }
+
+    @media (max-width: 576px) {
+      width: 40px;
+      height: 40px;
+      .anticon {
+        font-size: 20px;
+      }
+    }
   }
 
   .text-content {
@@ -57,12 +76,20 @@ const TitleSection = styled.div`
       margin: 0;
       font-size: 24px;
       color: #1a3353;
+      
+      @media (max-width: 576px) {
+        font-size: 20px;
+      }
     }
 
     p {
       margin: 4px 0 0;
       color: #666;
       font-size: 14px;
+      
+      @media (max-width: 576px) {
+        font-size: 12px;
+      }
     }
   }
 `;
@@ -71,26 +98,22 @@ const FilterSection = styled.div`
   background: linear-gradient(to right, #f8f9fa, #ffffff);
   border-radius: 12px;
   padding: 16px 20px;
-  display: flex;
-  gap: 24px;
-  align-items: flex-end;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #eee;
-  flex-wrap: wrap;
 
   @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: stretch;
+    grid-template-columns: 1fr;
   }
 `;
 
 const FilterGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  flex: 1;
-  min-width: 200px;
+  gap: 8px;
 
   .filter-label {
     font-size: 0.9em;
@@ -104,6 +127,10 @@ const FilterGroup = styled.div`
       font-size: 14px;
       color: #666;
     }
+  }
+
+  .ant-select {
+    width: 100%;
   }
 `;
 
@@ -144,7 +171,47 @@ const StatusTag = styled.span`
   }
 `;
 
-const RoomManagement = () => {
+const MenuButton = styled(Button)`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: #1a3353;
+  color: white;
+  
+  &:hover, &:focus {
+    background: #2c5282;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  @media (max-width: 576px) {
+    width: 36px;
+    height: 36px;
+  }
+`;
+
+const StyledTable = styled(Table)`
+  @media (max-width: 576px) {
+    .desktop-column {
+      display: none;
+    }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-column {
+      display: none;
+    }
+  }
+`;
+
+const RoomManagement = ({ onToggleSidebar }) => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [filterType, setFilterType] = useState('All');
@@ -237,11 +304,47 @@ const RoomManagement = () => {
     return `${price.toLocaleString('vi-VN')}đ`;
   };
 
-  const columns = [
+  const mobileColumn = {
+    title: 'Room Info',
+    key: 'roomInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>
+          <HomeOutlined /> Room {record.roomNumber}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          {record.roomType}
+        </div>
+        <div style={{ fontSize: '12px', color: '#1890ff' }}>
+          Daily: {formatVND(record.dailyPrice)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Hourly: {formatVND(record.hourlyPrice)}
+        </div>
+        <div style={{ fontSize: '12px' }}>
+          {getStatusTag(record.status)}
+        </div>
+        <Select
+          value={record.status}
+          style={{ width: '100%' }}
+          onChange={(value) => handleStatusUpdate(record._id, value)}
+          disabled={record.status === 'Reserved' || record.status === 'Occupied'}
+          size="small"
+        >
+          <Option value="Available">Available</Option>
+          <Option value="Maintenance">Maintenance</Option>
+        </Select>
+      </Space>
+    ),
+  };
+
+  const desktopColumns = [
     {
       title: 'Room Number',
       dataIndex: 'roomNumber',
       key: 'roomNumber',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <HomeOutlined />
@@ -253,23 +356,27 @@ const RoomManagement = () => {
       title: 'Room Type',
       dataIndex: 'roomType',
       key: 'roomType',
+      className: 'desktop-column',
     },
     {
       title: 'Daily Price',
       dataIndex: 'dailyPrice',
       key: 'dailyPrice',
+      className: 'desktop-column',
       render: (price) => formatVND(price),
     },
     {
       title: 'Hourly Price',
       dataIndex: 'hourlyPrice',
       key: 'hourlyPrice',
+      className: 'desktop-column',
       render: (price) => formatVND(price),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      className: 'desktop-column',
       render: (status, record) => (
         <Select
           value={status}
@@ -286,9 +393,12 @@ const RoomManagement = () => {
       title: 'Max Occupancy',
       dataIndex: 'maxOccupancy',
       key: 'maxOccupancy',
+      className: 'desktop-column',
       render: (occupancy) => `${occupancy} persons`,
     },
   ];
+
+  const allColumns = [mobileColumn, ...desktopColumns];
 
   const filteredRooms = rooms.filter(room => {
     const matchesType = filterType === 'All' || room.roomType === filterType;
@@ -311,6 +421,10 @@ const RoomManagement = () => {
               <p>View and manage room status</p>
             </div>
           </TitleSection>
+
+          <MenuButton onClick={onToggleSidebar}>
+            <MenuOutlined />
+          </MenuButton>
         </HeaderSection>
 
         <FilterSection>
@@ -372,15 +486,17 @@ const RoomManagement = () => {
             <Spin size="large" />
           </div>
         ) : (
-          <Table
-            columns={columns}
+          <StyledTable
+            columns={allColumns}
             dataSource={filteredRooms}
             rowKey="_id"
             pagination={{
               defaultPageSize: 10,
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} rooms`
+              showTotal: (total) => `Total ${total} rooms`,
+              responsive: true,
             }}
+            scroll={{ x: true }}
           />
         )}
       </ContentWrapper>

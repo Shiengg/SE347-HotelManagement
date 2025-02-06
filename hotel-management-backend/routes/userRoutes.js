@@ -10,5 +10,6 @@ router.put('/:id', authMiddleware, userController.updateUser);
 router.delete('/:id', authMiddleware, userController.deleteUser);
 router.get('/check-username', authMiddleware, userController.checkUsername);
 router.get('/check-email', authMiddleware, userController.checkEmail);
+router.post('/register', userController.registerCustomer);
 
 module.exports = router; 

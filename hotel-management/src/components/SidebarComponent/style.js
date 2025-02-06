@@ -6,6 +6,7 @@ export const MenuWrapper = styled.div`
   display: flex;
   width: 100%;
   flex-direction: column;
+  overflow-y:auto;
   height: 100vh;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Đổ bóng cho sidebar */
   gap: 10px;

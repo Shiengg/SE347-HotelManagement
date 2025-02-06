@@ -121,4 +121,46 @@ exports.checkEmail = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
+};
+
+exports.registerCustomer = async (req, res) => {
+  try {
+    // Kiểm tra username tồn tại
+    const existingUsername = await User.findOne({ username: req.body.username });
+    if (existingUsername) {
+      return res.status(400).json({ message: 'Username already exists' });
+    }
+
+    // Kiểm tra email tồn tại
+    const existingEmail = await User.findOne({ email: req.body.email });
+    if (existingEmail) {
+      return res.status(400).json({ message: 'Email already exists' });
+    }
+
+    // Tìm role_id cho customer - sửa từ name thành role_name
+    const customerRole = await Role.findOne({ role_name: 'customer' });
+    if (!customerRole) {
+      return res.status(400).json({ message: 'Customer role not found' });
+    }
+
+    const userData = {
+      ...req.body,
+      role_id: customerRole._id
+    };
+
+    const user = new User(userData);
+    await user.save();
+    
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      user: {
+        username: user.username,
+        email: user.email,
+        fullname: user.fullname
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
 }; 

@@ -6,6 +6,8 @@ const Role = require('../models/Role');
 
 exports.getDashboardStats = async (req, res) => {
   try {
+    const { revenueType = 'total' } = req.query;
+    
     // Lấy ngày hiện tại và đặt thời gian về 00:00:00
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -47,10 +49,50 @@ exports.getDashboardStats = async (req, res) => {
       status: 'Confirmed'
     });
 
-    // Tính tổng doanh thu từ tất cả invoice đã thanh toán
-    const totalRevenueResult = await Invoice.aggregate([
+    // Tính toán revenue dựa trên revenueType
+    let revenueMatch = {};
+    
+    switch (revenueType) {
+      case 'daily':
+        revenueMatch = {
+          paymentDate: {
+            $gte: today,
+            $lt: tomorrow
+          }
+        };
+        break;
+      case 'monthly':
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59);
+        revenueMatch = {
+          paymentDate: {
+            $gte: startOfMonth,
+            $lte: endOfMonth
+          }
+        };
+        break;
+      case 'yearly':
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        const endOfYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59);
+        revenueMatch = {
+          paymentDate: {
+            $gte: startOfYear,
+            $lte: endOfYear
+          }
+        };
+        break;
+      default:
+        // Tổng revenue (không cần filter theo date)
+        revenueMatch = {
+          paymentStatus: 'Paid'
+        };
+    }
+
+    // Tính revenue theo filter
+    const revenueResult = await Invoice.aggregate([
       {
         $match: {
+          ...revenueMatch,
           paymentStatus: 'Paid'
         }
       },
@@ -74,7 +116,7 @@ exports.getDashboardStats = async (req, res) => {
       availableRooms,
       confirmedBookings,
       todayCheckIns,
-      totalRevenue: totalRevenueResult[0]?.total || 0,
+      revenue: revenueResult[0]?.total || 0,
       recentBookings: recentBookings.length
     });
 
@@ -83,7 +125,7 @@ exports.getDashboardStats = async (req, res) => {
       availableRooms,
       confirmedBookings,
       todayCheckIns,
-      totalRevenue: totalRevenueResult[0]?.total || 0,
+      revenue: revenueResult[0]?.total || 0,
       recentBookings
     });
   } catch (error) {

@@ -95,6 +95,18 @@ const StyledTable = styled(Table)`
   .ant-table-tbody > tr:hover > td {
     background: #f8fafc;
   }
+
+  @media (max-width: 576px) {
+    .desktop-column {
+      display: none;
+    }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-column {
+      display: none;
+    }
+  }
 `;
 
 const BookingDetailContainer = styled.div`
@@ -711,6 +723,118 @@ const BookingsManagementPage = () => {
     },
   ];
 
+  // Thêm mobile column cho Active Bookings
+  const mobileColumn = {
+    title: 'Booking Info',
+    key: 'bookingInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>#{record._id.slice(-6)}</div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <HomeOutlined /> Room {record.roomID.roomNumber}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <UserOutlined /> {record.customerID?.fullname || record.customerID?.username || 'N/A'}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Check In: {formatDateTime(record.checkInDate, record.bookingType)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Check Out: {formatDateTime(record.checkOutDate, record.bookingType)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#1890ff' }}>
+          {formatVND(record.totalPrice)}
+        </div>
+        <div>{getStatusTag(record.status)}</div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Services: {record.services.length}
+        </div>
+        <Space style={{ marginTop: 8 }}>
+          <Button 
+            type="primary"
+            icon={<InfoCircleOutlined />}
+            size="small"
+            onClick={() => {
+              setSelectedBooking(record);
+              setIsDetailModalVisible(true);
+            }}
+          />
+          <Button 
+            type="primary"
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => {
+              setEditingBooking(record);
+              setFormMode('edit');
+              setIsFormVisible(true);
+            }}
+          />
+          <Button 
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => handleDelete(record._id)}
+          />
+        </Space>
+      </Space>
+    ),
+  };
+
+  // Thêm mobile column cho History
+  const mobileHistoryColumn = {
+    title: 'Booking Info',
+    key: 'bookingInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>#{record._id.slice(-6)}</div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <HomeOutlined /> Room {record.roomID.roomNumber}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <UserOutlined /> {record.customerID?.fullname || record.customerID?.username || 'N/A'}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Duration: {record.bookingType === 'Daily' 
+            ? `${record.totalDays} days`
+            : `${record.totalHours} hours`
+          }
+        </div>
+        <div style={{ fontSize: '12px', color: '#1890ff' }}>
+          {formatVND(record.totalPrice)}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          Completed: {dayjs(record.updatedAt).format('DD/MM/YYYY HH:mm')}
+        </div>
+        <Button 
+          type="primary"
+          icon={<InfoCircleOutlined />}
+          size="small"
+          onClick={() => {
+            setSelectedBooking(record);
+            setIsDetailModalVisible(true);
+          }}
+        />
+      </Space>
+    ),
+  };
+
+  // Cập nhật desktop columns với className
+  const desktopColumns = columns.map(col => ({
+    ...col,
+    className: 'desktop-column'
+  }));
+
+  const desktopHistoryColumns = historyColumns.map(col => ({
+    ...col,
+    className: 'desktop-column'
+  }));
+
+  const activeColumns = [mobileColumn, ...desktopColumns];
+  const historyColumnsResponsive = [mobileHistoryColumn, ...desktopHistoryColumns];
+
   return (
     <PageContainer>
       <ContentWrapper>
@@ -756,15 +880,17 @@ const BookingsManagementPage = () => {
                       </LoadingState>
                     ) : (
                       <StyledTable
-                        columns={columns}
+                        columns={activeColumns}
                         dataSource={bookings.filter(b => b.status !== 'Completed')}
                         rowKey="_id"
                         pagination={{
                           defaultPageSize: 10,
                           showSizeChanger: true,
                           showTotal: (total) => `Total ${total} active bookings`,
-                          pageSizeOptions: ['10', '20', '50', '100']
+                          pageSizeOptions: ['10', '20', '50', '100'],
+                          responsive: true,
                         }}
+                        scroll={{ x: true }}
                       />
                     )}
                   </TableContainer>
@@ -786,15 +912,17 @@ const BookingsManagementPage = () => {
                       </LoadingState>
                     ) : (
                       <StyledTable
-                        columns={historyColumns}
+                        columns={historyColumnsResponsive}
                         dataSource={bookings.filter(b => b.status === 'Completed')}
                         rowKey="_id"
                         pagination={{
                           defaultPageSize: 10,
                           showSizeChanger: true,
                           showTotal: (total) => `Total ${total} completed bookings`,
-                          pageSizeOptions: ['10', '20', '50', '100']
+                          pageSizeOptions: ['10', '20', '50', '100'],
+                          responsive: true,
                         }}
+                        scroll={{ x: true }}
                       />
                     )}
                   </TableContainer>

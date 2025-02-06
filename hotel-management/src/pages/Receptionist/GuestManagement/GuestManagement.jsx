@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Spin } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined, MenuOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 // Reuse styled components from GuestsPage
 const PageContainer = styled.div`
-  padding: 12px;
-  width: 100%;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
 `;
 
 const ContentWrapper = styled.div`
@@ -19,15 +28,16 @@ const ContentWrapper = styled.div`
 `;
 
 const HeaderSection = styled.div`
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 12px;
-  padding: 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eee;
+  margin-bottom: 32px;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  @media (max-width: 576px) {
+    margin-bottom: 24px;
+  }
 `;
 
 const TitleSection = styled.div`
@@ -38,7 +48,7 @@ const TitleSection = styled.div`
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    background: linear-gradient(45deg, #1890ff, #69c0ff);
+    background: #1890ff;
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -49,19 +59,35 @@ const TitleSection = styled.div`
       font-size: 24px;
       color: white;
     }
+
+    @media (max-width: 576px) {
+      width: 40px;
+      height: 40px;
+      .anticon {
+        font-size: 20px;
+      }
+    }
   }
 
   .text-content {
     h1 {
       margin: 0;
-      font-size: 24px;
+      font-size: 28px;
       color: #1a3353;
+      
+      @media (max-width: 576px) {
+        font-size: 22px;
+      }
     }
 
     p {
       margin: 4px 0 0;
       color: #666;
       font-size: 14px;
+      
+      @media (max-width: 576px) {
+        font-size: 12px;
+      }
     }
   }
 `;
@@ -69,8 +95,47 @@ const TitleSection = styled.div`
 const AddButton = styled(Button)`
   background-color: #1890ff;
   color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
   &:hover {
     background-color: #40a9ff;
+  }
+
+  @media (max-width: 576px) {
+    padding: 4px 12px;
+    font-size: 14px;
+    
+    .anticon {
+      font-size: 14px;
+    }
+  }
+`;
+
+const MenuButton = styled(Button)`
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: #1a3353;
+  color: white;
+  
+  &:hover, &:focus {
+    background: #2c5282;
+    color: white;
+  }
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+
+  @media (max-width: 576px) {
+    width: 36px;
+    height: 36px;
   }
 `;
 
@@ -199,7 +264,22 @@ const SearchSection = styled.div`
   }
 `;
 
-const GuestManagement = () => {
+// Thêm StyledTable component
+const StyledTable = styled(Table)`
+  @media (max-width: 576px) {
+    .desktop-column {
+      display: none;
+    }
+  }
+
+  @media (min-width: 577px) {
+    .mobile-column {
+      display: none;
+    }
+  }
+`;
+
+const GuestManagement = ({ onToggleSidebar }) => {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -297,11 +377,62 @@ const GuestManagement = () => {
     }
   };
 
-  const columns = [
+  // Thêm mobile column
+  const mobileColumn = {
+    title: 'Guest Info',
+    key: 'guestInfo',
+    className: 'mobile-column',
+    render: (record) => (
+      <Space direction="vertical" size={4}>
+        <div style={{ fontWeight: 500 }}>{record.fullname}</div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <UserOutlined /> {record.username}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <MailOutlined /> {record.email}
+        </div>
+        <div style={{ fontSize: '12px', color: '#666' }}>
+          <PhoneOutlined /> {record.phonenumber}
+        </div>
+        <Space style={{ marginTop: 8 }}>
+          <Button
+            type="primary"
+            icon={<EditOutlined />}
+            size="small"
+            onClick={() => {
+              setEditingGuest(record);
+              form.setFieldsValue(record);
+              setIsModalVisible(true);
+            }}
+          />
+          <Button
+            type="primary"
+            danger
+            icon={<DeleteOutlined />}
+            size="small"
+            onClick={() => {
+              Modal.confirm({
+                title: 'Are you sure you want to delete this guest?',
+                content: 'This action cannot be undone.',
+                okText: 'Yes',
+                okType: 'danger',
+                cancelText: 'No',
+                onOk: () => handleDelete(record._id)
+              });
+            }}
+          />
+        </Space>
+      </Space>
+    ),
+  };
+
+  // Thêm desktop columns
+  const desktopColumns = [
     {
       title: 'Full Name',
       dataIndex: 'fullname',
       key: 'fullname',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <UserOutlined />
@@ -313,11 +444,13 @@ const GuestManagement = () => {
       title: 'Username',
       dataIndex: 'username',
       key: 'username',
+      className: 'desktop-column',
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <MailOutlined />
@@ -329,6 +462,7 @@ const GuestManagement = () => {
       title: 'Phone',
       dataIndex: 'phonenumber',
       key: 'phonenumber',
+      className: 'desktop-column',
       render: (text) => (
         <Space>
           <PhoneOutlined />
@@ -340,11 +474,13 @@ const GuestManagement = () => {
       title: 'Created At',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      className: 'desktop-column',
       render: (date) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
       title: 'Actions',
       key: 'actions',
+      className: 'desktop-column',
       render: (_, record) => (
         <Space>
           <Button
@@ -375,6 +511,8 @@ const GuestManagement = () => {
       ),
     },
   ];
+
+  const allColumns = [mobileColumn, ...desktopColumns];
 
   // Thêm hàm kiểm tra username và email
   const checkUsername = async (username) => {
@@ -471,15 +609,17 @@ const GuestManagement = () => {
               <div className="text">Loading guests...</div>
             </LoadingState>
           ) : filteredGuests.length > 0 ? (
-            <Table
-              columns={columns}
+            <StyledTable
+              columns={allColumns}
               dataSource={filteredGuests}
               rowKey="_id"
               pagination={{
                 defaultPageSize: 10,
                 showSizeChanger: true,
-                showTotal: (total) => `Total ${total} guests`
+                showTotal: (total) => `Total ${total} guests`,
+                responsive: true,
               }}
+              scroll={{ x: true }}
             />
           ) : (
             <EmptyState>
