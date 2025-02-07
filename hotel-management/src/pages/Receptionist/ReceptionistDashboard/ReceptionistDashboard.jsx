@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Button, Space } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Button, Space, Tabs } from 'antd';
 import { 
   TeamOutlined, 
   HomeOutlined, 
@@ -243,18 +243,97 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
+const StyledTabs = styled(Tabs)`
+  .ant-tabs-nav-list {
+    width: 100%;
+    display: flex !important;
+    justify-content: space-between;
+  }
+
+  .ant-tabs-tab {
+    margin: 0 !important;
+    padding: 8px 0 !important;
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    min-width: auto !important;
+  }
+
+  @media (max-width: 576px) {
+    .ant-tabs-nav-list {
+      gap: 4px;
+    }
+    
+    .ant-tabs-tab {
+      padding: 4px 0 !important;
+      font-size: 12px;
+      
+      .ant-tabs-tab-btn {
+        font-size: 12px;
+      }
+    }
+  }
+`;
+
+const RevenueCard = styled(StatCard)`
+  .ant-tabs {
+    margin-top: -16px;
+  }
+
+  .ant-tabs-nav {
+    margin-bottom: 12px;
+  }
+
+  .ant-tabs-tab {
+    &:hover {
+      color: #1890ff;
+    }
+  }
+
+  .ant-tabs-tab-active {
+    .ant-tabs-tab-btn {
+      color: #1890ff !important;
+      font-weight: 500;
+    }
+  }
+
+  .revenue-content {
+    padding-top: 8px;
+  }
+`;
+
 const ReceptionistDashboard = ({ onToggleSidebar }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
+  const [revenueType, setRevenueType] = useState('total');
+  
+  const tabItems = [
+    {
+      key: 'total',
+      label: 'Total',
+    },
+    {
+      key: 'daily',
+      label: 'Today',
+    },
+    {
+      key: 'monthly',
+      label: 'This Month',
+    },
+    {
+      key: 'yearly',
+      label: 'This Year',
+    },
+  ];
 
   useEffect(() => {
     fetchDashboardStats();
-  }, []);
+  }, [revenueType]);
 
   const fetchDashboardStats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/dashboard/stats', {
+      const response = await axios.get(`/api/dashboard/stats?revenueType=${revenueType}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -398,24 +477,36 @@ const ReceptionistDashboard = ({ onToggleSidebar }) => {
             }}
           />
         </StatCard>
-        <StatCard iconcolor="#DC2626" iconbg="#fef2f2">
-          <Statistic
-            title={
-              <>
-                <DollarOutlined />
-                Total Revenue
-              </>
-            }
-            value={stats?.totalRevenue}
-            valueStyle={{ 
-              color: '#1a1a1a',
-              fontWeight: 700,
-              fontSize: '32px',
-              textAlign: 'right'
-            }}
-            formatter={formatCurrency}
+        <RevenueCard iconcolor="#4F46E5" iconbg="#ede9fe">
+          <StyledTabs
+            activeKey={revenueType}
+            onChange={setRevenueType}
+            items={tabItems}
+            size="small"
+            type="card"
           />
-        </StatCard>
+          <div className="revenue-content">
+            <Statistic
+              title={
+                <>
+                  <DollarOutlined />
+                  {revenueType === 'daily' && "Today's Revenue"}
+                  {revenueType === 'monthly' && "This Month's Revenue"}
+                  {revenueType === 'yearly' && "This Year's Revenue"}
+                  {revenueType === 'total' && "Total Revenue"}
+                </>
+              }
+              value={stats?.revenue || 0}
+              valueStyle={{ 
+                color: '#1a1a1a',
+                fontWeight: 700,
+                fontSize: '32px',
+                textAlign: 'right'
+              }}
+              formatter={formatCurrency}
+            />
+          </div>
+        </RevenueCard>
       </StatsGrid>
 
       <ChartContainer title="Recent Bookings">
