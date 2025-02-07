@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Button, Space, Tabs } from 'antd';
+import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Button, Space, Tabs, Badge } from 'antd';
 import { 
   TeamOutlined, 
   HomeOutlined, 
@@ -302,6 +302,132 @@ const RevenueCard = styled(StatCard)`
   }
 `;
 
+const RoomOverviewContainer = styled(Card)`
+  margin: 0 24px;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: none;
+  overflow: hidden;
+
+  .ant-card-head {
+    border-bottom: none;
+    padding: 24px 28px;
+    
+    .ant-card-head-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a3353;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      &:before {
+        content: '🏨';
+        font-size: 24px;
+      }
+    }
+  }
+
+  .ant-card-body {
+    padding: 0 28px 28px;
+  }
+`;
+
+const RoomList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+`;
+
+const RoomGroup = styled.div`
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .status-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px dashed #e5e7eb;
+
+    .ant-badge-status-dot {
+      width: 12px;
+      height: 12px;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+
+    span {
+      font-weight: 600;
+      color: #1a3353;
+      font-size: 18px;
+    }
+
+    .count {
+      margin-left: auto;
+      background: ${props => props.statusColor || '#e5e7eb'};
+      color: white;
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .room-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .ant-tag {
+      margin: 0;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: default;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      &:before {
+        content: '🏠';
+        font-size: 14px;
+      }
+
+      &:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+`;
+
+const getStatusOrder = (status) => {
+  const order = {
+    'Available': 1,
+    'Reserved': 2,
+    'Occupied': 3,
+    'Maintenance': 4
+  };
+  return order[status] || 999;
+};
+
 const ReceptionistDashboard = ({ onToggleSidebar }) => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
@@ -509,15 +635,59 @@ const ReceptionistDashboard = ({ onToggleSidebar }) => {
         </RevenueCard>
       </StatsGrid>
 
-      <ChartContainer title="Recent Bookings">
-        <StyledTable
-          columns={getResponsiveColumns()}
-          dataSource={stats?.recentBookings}
-          rowKey="_id"
-          pagination={false}
-          scroll={{ x: true }}
-        />
-      </ChartContainer>
+      <RoomOverviewContainer title="Room Overview">
+        <RoomList>
+          {Object.entries(stats?.roomOverview?.roomsByStatus || {})
+            .sort(([statusA], [statusB]) => getStatusOrder(statusA) - getStatusOrder(statusB))
+            .map(([status, rooms]) => (
+              <RoomGroup 
+                key={status} 
+                statusColor={
+                  status === 'Available' ? '#10b981' : 
+                  status === 'Reserved' ? '#6366f1' : 
+                  status === 'Occupied' ? '#ef4444' : 
+                  '#f59e0b'
+                }
+              >
+                <div className="status-header">
+                  <Badge 
+                    color={
+                      status === 'Available' ? '#10b981' :
+                      status === 'Reserved' ? '#6366f1' :
+                      status === 'Occupied' ? '#ef4444' :
+                      '#f59e0b'
+                    } 
+                  />
+                  <span>{status}</span>
+                  <span className="count" style={{
+                    background: status === 'Available' ? '#10b981' :
+                               status === 'Reserved' ? '#6366f1' :
+                               status === 'Occupied' ? '#ef4444' :
+                               '#f59e0b'
+                  }}>
+                    {rooms.length} rooms
+                  </span>
+                </div>
+                <div className="room-chips">
+                  {rooms.map(room => (
+                    <Tag 
+                      key={room.roomNumber}
+                      color={
+                        status === 'Available' ? 'success' :
+                        status === 'Reserved' ? 'processing' :
+                        status === 'Occupied' ? 'error' :
+                        'warning'
+                      }
+                    >
+                      {room.roomNumber} - {room.roomType}
+                    </Tag>
+                  ))}
+                </div>
+              </RoomGroup>
+            ))
+          }
+        </RoomList>
+      </RoomOverviewContainer>
     </PageContainer>
   );
 };
