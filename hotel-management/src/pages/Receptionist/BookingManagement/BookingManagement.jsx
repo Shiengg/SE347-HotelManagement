@@ -430,6 +430,41 @@ const MenuButton = styled(Button)`
   }
 `;
 
+const AddButton = styled(Button)`
+  height: 48px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  background: linear-gradient(45deg, #1890ff, #096dd9);
+  border: none;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+  transition: all 0.3s ease;
+
+  .anticon {
+    font-size: 18px;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(45deg, #40a9ff, #1890ff);
+    box-shadow: 0 6px 16px rgba(24, 144, 255, 0.25);
+  }
+
+  @media (max-width: 576px) {
+    height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+    
+    .anticon {
+      font-size: 16px;
+    }
+  }
+`;
+
 const BookingManagement = ({ onToggleSidebar }) => {
   const [bookings, setBookings] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -1001,14 +1036,13 @@ const BookingManagement = ({ onToggleSidebar }) => {
           </TitleSection>
           
           <Space>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />}
-              onClick={resetForm}
-              style={{ background: '#1890ff' }}
-            >
-              Add New Booking
-            </Button>
+            <AddButton type="primary" onClick={() => {
+              setFormMode('create');
+              setIsFormVisible(true);
+            }}>
+              <PlusOutlined />
+              New Booking
+            </AddButton>
             <MenuButton onClick={onToggleSidebar}>
               <MenuOutlined />
             </MenuButton>

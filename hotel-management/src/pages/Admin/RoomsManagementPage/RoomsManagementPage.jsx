@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Button, Modal, Form, Input, Select, InputNumber, message, Space, Drawer } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, HomeOutlined, SortAscendingOutlined, SortDescendingOutlined, CheckCircleOutlined, CloseCircleOutlined, ToolOutlined, CalendarOutlined, DollarOutlined, ClockCircleOutlined, SettingOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import AddButton from '../../../components/common/AddButton';
 
 const { Option } = Select;
 
@@ -101,38 +102,6 @@ const Subtitle = styled.p`
   margin: 0;
   color: #666;
   font-size: 0.9em;
-`;
-
-const AddButton = styled(Button)`
-  height: 45px;
-  padding: 0 24px;
-  border-radius: 10px;
-  font-size: 1.1em;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #1a3353;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-
-  @media (max-width: 576px) {
-    width: 100%;
-    justify-content: center;
-    height: 40px;
-    font-size: 1em;
-  }
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
-    background: #264773;
-  }
-
-  .anticon {
-    font-size: 18px;
-  }
 `;
 
 const RoomListContainer = styled.div`
@@ -920,14 +889,8 @@ const RoomsManagementPage = () => {
               </div>
             </TitleSection>
             
-            <AddButton 
-              type="primary" 
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setSelectedRoom(null);
-                form.resetFields();
-              }}
-            >
+            <AddButton onClick={() => setIsAddDrawerVisible(true)}>
+              <PlusOutlined />
               Add New Room
             </AddButton>
           </HeaderSection>
@@ -1839,14 +1802,8 @@ const RoomsManagementPage = () => {
                 </div>
               </TitleSection>
               
-              <AddButton 
-                type="primary" 
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setSelectedRoom(null);
-                  form.resetFields();
-                }}
-              >
+              <AddButton onClick={() => setIsAddDrawerVisible(true)}>
+                <PlusOutlined />
                 Add New Room
               </AddButton>
             </HeaderSection>
