@@ -878,7 +878,9 @@ const RoomsManagementPage = () => {
     const matchesStatus = filterStatus === 'All' || room.status === filterStatus;
     return matchesType && matchesStatus;
   }).sort((a, b) => {
-    return sortPrice === 'asc' ? a.price - b.price : b.price - a.price;
+    return sortPrice === 'asc' 
+      ? a.dailyPrice - b.dailyPrice 
+      : b.dailyPrice - a.dailyPrice;
   });
 
   // Thêm hàm format tiền VND

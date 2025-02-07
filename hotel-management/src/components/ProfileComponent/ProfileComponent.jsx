@@ -22,6 +22,9 @@ export const AvatarWrapper = styled.div`
 `;
 
 export const Username = styled.div`
+  font-weight: 500;
+  color: #1a3353;
+  
   @media (max-width: 680px) {
     display: none;
   }
@@ -38,7 +41,9 @@ const ProfileComponent = () => {
           alt="avatar"
           size="big"
         />
-        <Username>{currentUser?.name || "User"}</Username>
+        <Username>
+          {currentUser?.username || "User"}
+        </Username>
       </AvatarWrapper>
     </ProfileWrapper>
   );

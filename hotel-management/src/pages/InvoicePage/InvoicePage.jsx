@@ -201,7 +201,6 @@ const InvoicePage = () => {
         authService.getCurrentUser().role === "admin" ||
         authService.getCurrentUser().role === "receptionist"
       ) {
-        // Fetch all invoices if the user is an admin or receptionist
         response = await getInvoices(
           page,
           limit,
@@ -211,7 +210,6 @@ const InvoicePage = () => {
           totalAmountSort
         );
       } else if (authService.getCurrentUser().role === "customer") {
-        // Fetch customer-specific invoices
         response = await getCustomerInvoices(
           page,
           limit,
@@ -226,11 +224,16 @@ const InvoicePage = () => {
         return;
       }
 
-      console.log(response);
+      // Sort ở client side nếu totalAmountSort có giá trị và khác 'all'
+      if (totalAmountSort && totalAmountSort !== 'all') {
+        response.data.sort((a, b) => {
+          return totalAmountSort === 'asc' 
+            ? a.totalAmount - b.totalAmount 
+            : b.totalAmount - a.totalAmount;
+        });
+      }
 
-      // Update the state with fetched invoices
       setInvoiceItems(response.data);
-
       return response;
     } catch (error) {
       console.error("Error fetching invoices:", error);

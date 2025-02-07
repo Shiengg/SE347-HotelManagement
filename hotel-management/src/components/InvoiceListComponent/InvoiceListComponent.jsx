@@ -309,7 +309,22 @@ const InvoiceListComponent = ({
   }, []);
 
   useEffect(() => {
-    fetchInvoices();
+    setIsLoading(true);
+    handlePagination(
+      currentPage,
+      itemsPerPage,
+      sortDate,
+      filterMethod,
+      filterStatus,
+      sortTotal
+    ).then((data) => {
+      if (data) {
+        setTotalInvoices(data.totalInvoices);
+      }
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+    });
   }, [sortDate, sortTotal, filterMethod, filterStatus, currentPage]);
 
   // Pagination logic
