@@ -104,12 +104,34 @@ exports.getDashboardStats = async (req, res) => {
       }
     ]);
 
-    // Lấy danh sách booking gần đây
-    const recentBookings = await Booking.find()
-      .populate('customerID', 'fullname')
-      .populate('roomID', 'roomNumber')
-      .sort({ createdAt: -1 })
-      .limit(10);
+    // Thêm thống kê về phòng
+    const roomStats = await Room.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+          rooms: { 
+            $push: {
+              roomNumber: '$roomNumber',
+              roomType: '$roomType',
+              status: '$status'
+            }
+          }
+        }
+      }
+    ]);
+
+    // Format lại dữ liệu phòng
+    const roomOverview = {
+      available: roomStats.find(s => s._id === 'Available')?.count || 0,
+      occupied: roomStats.find(s => s._id === 'Occupied')?.count || 0,
+      maintenance: roomStats.find(s => s._id === 'Maintenance')?.count || 0,
+      reserved: roomStats.find(s => s._id === 'Reserved')?.count || 0,
+      roomsByStatus: roomStats.reduce((acc, curr) => {
+        acc[curr._id] = curr.rooms;
+        return acc;
+      }, {})
+    };
 
     console.log('Dashboard stats:', {
       totalGuests,
@@ -117,7 +139,7 @@ exports.getDashboardStats = async (req, res) => {
       confirmedBookings,
       todayCheckIns,
       revenue: revenueResult[0]?.total || 0,
-      recentBookings: recentBookings.length
+      roomOverview: roomOverview
     });
 
     res.json({
@@ -126,7 +148,7 @@ exports.getDashboardStats = async (req, res) => {
       confirmedBookings,
       todayCheckIns,
       revenue: revenueResult[0]?.total || 0,
-      recentBookings
+      roomOverview
     });
   } catch (error) {
     console.error('Dashboard Error:', error);

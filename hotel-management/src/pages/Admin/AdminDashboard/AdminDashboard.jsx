@@ -1,58 +1,74 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Tabs, Space } from 'antd';
-import { TeamOutlined, HomeOutlined, CalendarOutlined, DollarOutlined, UserOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { Line, Pie } from '@ant-design/plots';
+import { Card, Row, Col, Statistic, Table, Spin, List, Tag, Tabs, Space, Badge } from 'antd';
+import { TeamOutlined, HomeOutlined, CalendarOutlined, DollarOutlined, UserOutlined, CheckCircleOutlined, ToolOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { format } from 'date-fns';
 
 const PageContainer = styled.div`
-  padding: 24px;
-  background: #f0f2f5;
+  padding: 32px;
+  background: #f8fafc;
   min-height: calc(100vh - 64px);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 768px) {
-    padding: 16px;
-    min-height: calc(100vh - 56px);
+    padding: 20px;
   }
 `;
 
 const Title = styled.h1`
   font-size: 32px;
-  font-weight: 600;
+  font-weight: 700;
   color: #1a1a1a;
-  margin-bottom: 32px;
-  text-align: left;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 40px;
+  position: relative;
+  padding-left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 
-  @media (max-width: 576px) {
-    font-size: 24px;
-    margin-bottom: 24px;
+  &:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 32px;
+    background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+    border-radius: 6px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+    color: #6b7280;
+    font-weight: 400;
+    margin-left: 8px;
   }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
-  margin-bottom: 32px;
-  padding: 0 16px;
+  margin-bottom: 40px;
+  padding: 0 20px;
 `;
 
 const StatCard = styled(Card)`
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   background: white;
+  border: none;
 
   .ant-statistic-title {
-    color: #666;
+    color: #4b5563;
     font-size: 16px;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
     display: flex;
     align-items: center;
   }
@@ -63,59 +79,35 @@ const StatCard = styled(Card)`
   }
 
   .ant-statistic-content-value {
-    font-size: 32px;
+    font-size: 36px;
     font-weight: 700;
-    color: #1a1a1a;
-  }
-
-  .percentage {
-    font-size: 14px;
-    color: #16a34a;
-    background: #dcfce7;
-    padding: 4px 8px;
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    margin-left: 8px;
+    background: linear-gradient(45deg, #1a1a1a, #4b5563);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 
   &:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-  }
-
-  .ant-card-body {
-    padding: 20px;
-    background: white;
-  }
-
-  .anticon {
-    font-size: 20px;
-    margin-right: 8px;
-    color: ${props => props.iconcolor};
-    background: ${props => props.iconbg};
-    padding: 8px;
-    border-radius: 8px;
-  }
-`;
-
-const ChartContainer = styled(Card)`
-  margin: 24px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-
-  .ant-card-head {
-    border-bottom: 1px solid #f0f0f0;
-    padding: 16px 24px;
-    
-    .ant-card-head-title {
-      font-size: 18px;
-      font-weight: 600;
-    }
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   }
 
   .ant-card-body {
     padding: 24px;
+    background: white;
+  }
+
+  .anticon {
+    font-size: 22px;
+    margin-right: 10px;
+    color: ${props => props.iconcolor};
+    background: ${props => props.iconbg};
+    padding: 10px;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  &:hover .anticon {
+    transform: scale(1.1);
   }
 `;
 
@@ -155,24 +147,190 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-const StyledTable = styled(Table)`
+const StyledTabs = styled(Tabs)`
   @media (max-width: 576px) {
-    .desktop-column {
-      display: none;
+    .ant-tabs-nav-list {
+      gap: 4px;
     }
-  }
-
-  @media (min-width: 577px) {
-    .mobile-column {
-      display: none;
+    
+    .ant-tabs-tab {
+      padding: 4px 8px !important;
+      margin: 0 !important;
+      font-size: 12px;
+      min-width: auto;
+      
+      .ant-tabs-tab-btn {
+        font-size: 12px;
+      }
     }
   }
 `;
 
+const RoomOverviewContainer = styled(Card)`
+  margin: 0 24px;
+  border-radius: 24px;
+  background: white;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border: none;
+  overflow: hidden;
+
+  .ant-card-head {
+    border-bottom: none;
+    padding: 24px 28px;
+    
+    .ant-card-head-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #1a3353;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      &:before {
+        content: '🏨';
+        font-size: 24px;
+      }
+    }
+  }
+
+  .ant-card-body {
+    padding: 0 28px 28px;
+  }
+`;
+
+const StatusCard = styled.div`
+  padding: 20px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  .title {
+    color: #4b5563;
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .anticon {
+      font-size: 18px;
+      color: ${props => props.color};
+    }
+  }
+
+  .count {
+    font-size: 28px;
+    font-weight: 600;
+    color: ${props => props.color};
+  }
+`;
+
+const RoomList = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+`;
+
+const RoomGroup = styled.div`
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .status-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px dashed #e5e7eb;
+
+    .ant-badge-status-dot {
+      width: 12px;
+      height: 12px;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+    }
+
+    span {
+      font-weight: 600;
+      color: #1a3353;
+      font-size: 18px;
+    }
+
+    .count {
+      margin-left: auto;
+      background: ${props => props.statusColor || '#e5e7eb'};
+      color: white;
+      padding: 6px 16px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+  }
+
+  .room-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    .ant-tag {
+      margin: 0;
+      padding: 8px 16px;
+      font-size: 14px;
+      border-radius: 12px;
+      border: none;
+      cursor: default;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      &:before {
+        content: '🏠';
+        font-size: 14px;
+      }
+
+      &:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+`;
+
+const getStatusOrder = (status) => {
+  const order = {
+    'Available': 1,
+    'Reserved': 2,
+    'Occupied': 3,
+    'Maintenance': 4
+  };
+  return order[status] || 999;
+};
+
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState(null);
-  const [revenueType, setRevenueType] = useState('total'); // total, daily, monthly, yearly
+  const [revenueType, setRevenueType] = useState('total');
 
   useEffect(() => {
     fetchDashboardStats();
@@ -203,87 +361,7 @@ const AdminDashboard = () => {
     );
   }
 
-  const bookingLineConfig = {
-    data: stats?.monthlyBookings || [],
-    xField: '_id',
-    yField: 'count',
-    point: {
-      size: 5,
-      shape: 'diamond',
-    },
-    label: {
-      style: {
-        fill: '#aaa',
-      },
-    },
-  };
-
-  const roomTypePieConfig = {
-    data: stats?.roomTypeDistribution || [],
-    angleField: 'count',
-    colorField: '_id',
-    radius: 0.8,
-    label: {
-      type: 'outer',
-    },
-    interactions: [{ type: 'element-active' }],
-  };
-
-  const mobileColumn = {
-    title: 'Booking Info',
-    key: 'bookingInfo',
-    className: 'mobile-column',
-    render: (record) => (
-      <Space direction="vertical" size={4}>
-        <div style={{ fontWeight: 500 }}>
-          <UserOutlined /> {record.customerID?.fullname}
-        </div>
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          <HomeOutlined /> Room {record.roomID?.roomNumber}
-        </div>
-        <div style={{ fontSize: '12px', color: '#666' }}>
-          {format(new Date(record.createdAt), 'dd/MM/yyyy HH:mm')}
-        </div>
-        <Tag color={record.status === 'Confirmed' ? 'green' : 'gold'}>
-          {record.status}
-        </Tag>
-      </Space>
-    ),
-  };
-
-  const desktopColumns = [
-    {
-      title: 'Customer',
-      dataIndex: ['customerID', 'fullname'],
-      className: 'desktop-column',
-    },
-    {
-      title: 'Room',
-      dataIndex: ['roomID', 'roomNumber'],
-      className: 'desktop-column',
-      render: (number) => `Room ${number}`,
-    },
-    {
-      title: 'Date',
-      dataIndex: 'createdAt',
-      className: 'desktop-column',
-      render: (date) => format(new Date(date), 'dd/MM/yyyy HH:mm'),
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      className: 'desktop-column',
-      render: (status) => (
-        <Tag color={status === 'Confirmed' ? 'green' : 'gold'}>
-          {status}
-        </Tag>
-      ),
-    },
-  ];
-
-  const allColumns = [mobileColumn, ...desktopColumns];
-
-  const items = [
+  const tabItems = [
     {
       key: 'total',
       label: 'Total',
@@ -304,14 +382,16 @@ const AdminDashboard = () => {
 
   return (
     <PageContainer>
-      <Title>Overview</Title>
+      <Title>
+        Overview
+      </Title>
       
       <StatsGrid>
         <RevenueCard iconcolor="#4F46E5" iconbg="#ede9fe">
-          <Tabs
+          <StyledTabs
             activeKey={revenueType}
             onChange={setRevenueType}
-            items={items}
+            items={tabItems}
             size="small"
             type="card"
           />
@@ -373,15 +453,59 @@ const AdminDashboard = () => {
         </StatCard>
       </StatsGrid>
 
-      <ChartContainer title="Recent Bookings">
-        <StyledTable
-          columns={allColumns}
-          dataSource={stats?.recentBookings}
-          rowKey="_id"
-          pagination={false}
-          scroll={{ x: true }}
-        />
-      </ChartContainer>
+      <RoomOverviewContainer title="Room Overview">
+        <RoomList>
+          {Object.entries(stats?.roomOverview?.roomsByStatus || {})
+            .sort(([statusA], [statusB]) => getStatusOrder(statusA) - getStatusOrder(statusB))
+            .map(([status, rooms]) => (
+              <RoomGroup 
+                key={status} 
+                statusColor={
+                  status === 'Available' ? '#10b981' : 
+                  status === 'Reserved' ? '#6366f1' : 
+                  status === 'Occupied' ? '#ef4444' : 
+                  '#f59e0b'
+                }
+              >
+                <div className="status-header">
+                  <Badge 
+                    color={
+                      status === 'Available' ? '#10b981' :
+                      status === 'Occupied' ? '#ef4444' :
+                      status === 'Reserved' ? '#6366f1' :
+                      '#f59e0b'
+                    } 
+                  />
+                  <span>{status}</span>
+                  <span className="count" style={{
+                    background: status === 'Available' ? '#10b981' :
+                               status === 'Occupied' ? '#ef4444' :
+                               status === 'Reserved' ? '#6366f1' :
+                               '#f59e0b'
+                  }}>
+                    {rooms.length} rooms
+                  </span>
+                </div>
+                <div className="room-chips">
+                  {rooms.map(room => (
+                    <Tag 
+                      key={room.roomNumber}
+                      color={
+                        status === 'Available' ? 'success' :
+                        status === 'Occupied' ? 'error' :
+                        status === 'Reserved' ? 'processing' :
+                        'warning'
+                      }
+                    >
+                      {room.roomNumber} - {room.roomType}
+                    </Tag>
+                  ))}
+                </div>
+              </RoomGroup>
+            ))
+          }
+        </RoomList>
+      </RoomOverviewContainer>
     </PageContainer>
   );
 };

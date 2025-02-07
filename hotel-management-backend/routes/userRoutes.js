@@ -11,5 +11,6 @@ router.delete('/:id', authMiddleware, userController.deleteUser);
 router.get('/check-username', authMiddleware, userController.checkUsername);
 router.get('/check-email', authMiddleware, userController.checkEmail);
 router.post('/register', userController.registerCustomer);
+router.get('/:id/check-bookings', authMiddleware, userController.checkUserHasBookings);
 
 module.exports = router; 

@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Alert, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import AddButton from '../../../components/common/AddButton';
 
 const PageContainer = styled.div`
   padding: 12px;
@@ -70,20 +71,6 @@ const TableContainer = styled.div`
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-`;
-
-const AddButton = styled(Button)`
-  height: 40px;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #1a3353;
-  border: none;
-  
-  &:hover {
-    background: #2c4c7c !important;
-  }
 `;
 
 const StyledTable = styled(Table)`
@@ -399,14 +386,31 @@ const EmployeesPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${id}`, {
+      // Kiểm tra xem employee có booking nào không
+      const checkResponse = await fetch(`http://localhost:5000/api/users/${id}/check-bookings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const checkData = await checkResponse.json();
+
+      if (checkData.hasBookings) {
+        const { asReceptionist } = checkData.details;
+        message.error(
+          `Cannot delete employee because they are associated with ${asReceptionist} booking(s)`
+        );
+        return;
+      }
+
+      // Nếu không có booking thì tiến hành xóa
+      const deleteResponse = await fetch(`http://localhost:5000/api/users/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (response.ok) {
+      if (deleteResponse.ok) {
         message.success('Employee deleted successfully');
         fetchEmployees();
       } else {
@@ -465,15 +469,34 @@ const EmployeesPage = () => {
             danger
             icon={<DeleteOutlined />}
             size="small"
-            onClick={() => {
-              Modal.confirm({
-                title: 'Are you sure you want to delete this employee?',
-                content: 'This action cannot be undone.',
-                okText: 'Yes',
-                okType: 'danger',
-                cancelText: 'No',
-                onOk: () => handleDelete(record._id)
-              });
+            onClick={async () => {
+              try {
+                const response = await fetch(`http://localhost:5000/api/users/${record._id}/check-bookings`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+                });
+                const data = await response.json();
+
+                if (data.hasBookings) {
+                  const { asReceptionist } = data.details;
+                  message.error(
+                    `Cannot delete employee because they are associated with ${asReceptionist} booking(s)`
+                  );
+                  return;
+                }
+
+                Modal.confirm({
+                  title: 'Are you sure you want to delete this employee?',
+                  content: 'This action cannot be undone.',
+                  okText: 'Yes',
+                  okType: 'danger',
+                  cancelText: 'No',
+                  onOk: () => handleDelete(record._id)
+                });
+              } catch (error) {
+                message.error('Error checking employee bookings');
+              }
             }}
           />
         </Space>
@@ -544,15 +567,34 @@ const EmployeesPage = () => {
             type="primary"
             danger
             icon={<DeleteOutlined />}
-            onClick={() => {
-              Modal.confirm({
-                title: 'Are you sure you want to delete this employee?',
-                content: 'This action cannot be undone.',
-                okText: 'Yes',
-                okType: 'danger',
-                cancelText: 'No',
-                onOk: () => handleDelete(record._id)
-              });
+            onClick={async () => {
+              try {
+                const response = await fetch(`http://localhost:5000/api/users/${record._id}/check-bookings`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+                });
+                const data = await response.json();
+
+                if (data.hasBookings) {
+                  const { asReceptionist } = data.details;
+                  message.error(
+                    `Cannot delete employee because they are associated with ${asReceptionist} booking(s)`
+                  );
+                  return;
+                }
+
+                Modal.confirm({
+                  title: 'Are you sure you want to delete this employee?',
+                  content: 'This action cannot be undone.',
+                  okText: 'Yes',
+                  okType: 'danger',
+                  cancelText: 'No',
+                  onOk: () => handleDelete(record._id)
+                });
+              } catch (error) {
+                message.error('Error checking employee bookings');
+              }
             }}
           />
         </Space>
@@ -576,16 +618,9 @@ const EmployeesPage = () => {
             </div>
           </TitleSection>
 
-          <AddButton
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingEmployee(null);
-              form.resetFields();
-              setIsModalVisible(true);
-            }}
-          >
-            Add Employee
+          <AddButton onClick={() => setIsModalVisible(true)}>
+            <PlusOutlined />
+            Add New Employee
           </AddButton>
         </HeaderSection>
 
@@ -638,15 +673,8 @@ const EmployeesPage = () => {
                 }
               </div>
               {!searchText && (
-                <AddButton
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    setEditingEmployee(null);
-                    form.resetFields();
-                    setIsModalVisible(true);
-                  }}
-                >
+                <AddButton onClick={() => setIsModalVisible(true)}>
+                  <PlusOutlined />
                   Add New Employee
                 </AddButton>
               )}

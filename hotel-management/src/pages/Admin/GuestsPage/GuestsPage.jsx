@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Alert, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import AddButton from '../../../components/common/AddButton';
 
 const PageContainer = styled.div`
   padding: 12px;
@@ -62,16 +63,6 @@ const TitleSection = styled.div`
       color: #666;
       font-size: 14px;
     }
-  }
-`;
-
-const AddButton = styled(Button)`
-  background-color: #ffd700;
-  border: none;
-  color: #1a3353;
-  font-weight: 600;
-  &:hover {
-    background-color: #ffed4a;
   }
 `;
 
@@ -304,14 +295,28 @@ const GuestsPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/${id}`, {
+      // Kiểm tra xem guest có booking nào không
+      const checkResponse = await fetch(`http://localhost:5000/api/users/${id}/check-bookings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const checkData = await checkResponse.json();
+
+      if (checkData.hasBookings) {
+        message.error(`Cannot delete guest because they have ${checkData.bookingCount} booking(s)`);
+        return;
+      }
+
+      // Nếu không có booking thì tiến hành xóa
+      const deleteResponse = await fetch(`http://localhost:5000/api/users/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      if (response.ok) {
+      if (deleteResponse.ok) {
         message.success('Guest deleted successfully');
         fetchGuests();
       } else {
@@ -399,15 +404,33 @@ const GuestsPage = () => {
             danger
             icon={<DeleteOutlined />}
             size="small"
-            onClick={() => {
-              Modal.confirm({
-                title: 'Are you sure you want to delete this guest?',
-                content: 'This action cannot be undone.',
-                okText: 'Yes',
-                okType: 'danger',
-                cancelText: 'No',
-                onOk: () => handleDelete(record._id)
-              });
+            onClick={async () => {
+              // Kiểm tra bookings trước khi hiện modal xác nhận
+              try {
+                const response = await fetch(`http://localhost:5000/api/users/${record._id}/check-bookings`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+                });
+                const data = await response.json();
+
+                if (data.hasBookings) {
+                  message.error(`Cannot delete guest because they have ${data.bookingCount} booking(s)`);
+                  return;
+                }
+
+                // Nếu không có booking thì hiện modal xác nhận
+                Modal.confirm({
+                  title: 'Are you sure you want to delete this guest?',
+                  content: 'This action cannot be undone.',
+                  okText: 'Yes',
+                  okType: 'danger',
+                  cancelText: 'No',
+                  onOk: () => handleDelete(record._id)
+                });
+              } catch (error) {
+                message.error('Error checking guest bookings');
+              }
             }}
           />
         </Space>
@@ -478,15 +501,33 @@ const GuestsPage = () => {
             type="primary"
             danger
             icon={<DeleteOutlined />}
-            onClick={() => {
-              Modal.confirm({
-                title: 'Are you sure you want to delete this guest?',
-                content: 'This action cannot be undone.',
-                okText: 'Yes',
-                okType: 'danger',
-                cancelText: 'No',
-                onOk: () => handleDelete(record._id)
-              });
+            onClick={async () => {
+              // Kiểm tra bookings trước khi hiện modal xác nhận
+              try {
+                const response = await fetch(`http://localhost:5000/api/users/${record._id}/check-bookings`, {
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                  }
+                });
+                const data = await response.json();
+
+                if (data.hasBookings) {
+                  message.error(`Cannot delete guest because they have ${data.bookingCount} booking(s)`);
+                  return;
+                }
+
+                // Nếu không có booking thì hiện modal xác nhận
+                Modal.confirm({
+                  title: 'Are you sure you want to delete this guest?',
+                  content: 'This action cannot be undone.',
+                  okText: 'Yes',
+                  okType: 'danger',
+                  cancelText: 'No',
+                  onOk: () => handleDelete(record._id)
+                });
+              } catch (error) {
+                message.error('Error checking guest bookings');
+              }
             }}
           />
         </Space>
@@ -510,16 +551,9 @@ const GuestsPage = () => {
             </div>
           </TitleSection>
 
-          <AddButton
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingGuest(null);
-              form.resetFields();
-              setIsModalVisible(true);
-            }}
-          >
-            Add Guest
+          <AddButton onClick={() => setIsModalVisible(true)}>
+            <PlusOutlined />
+            Add New Guest
           </AddButton>
         </HeaderSection>
 
@@ -572,15 +606,8 @@ const GuestsPage = () => {
                 }
               </div>
               {!searchText && (
-                <AddButton
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    setEditingGuest(null);
-                    form.resetFields();
-                    setIsModalVisible(true);
-                  }}
-                >
+                <AddButton onClick={() => setIsModalVisible(true)}>
+                  <PlusOutlined />
                   Add New Guest
                 </AddButton>
               )}

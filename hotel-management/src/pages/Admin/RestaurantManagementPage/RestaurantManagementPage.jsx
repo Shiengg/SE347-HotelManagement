@@ -276,8 +276,8 @@ const ItemCard = styled.div`
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
-
+      margin-bottom: 8px;
+      
       .name {
         font-size: 16px;
         font-weight: 600;
@@ -285,26 +285,15 @@ const ItemCard = styled.div`
       }
     }
 
-    .stats {
-      display: flex;
-      gap: 24px;
-
-      .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-
-        .label {
-          font-size: 13px;
-          color: #6b7280;
-        }
-
-        .value {
-          font-size: 14px;
-          font-weight: 600;
-          color: #1a3353;
-        }
-      }
+    .description {
+      color: #6b7280;
+      font-size: 13px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.4;
     }
 
     @media (max-width: 576px) {
@@ -316,12 +305,9 @@ const ItemCard = styled.div`
         }
       }
 
-      .stats {
-        gap: 16px;
-        
-        .stat-item {
-          font-size: 12px;
-        }
+      .description {
+        font-size: 12px;
+        -webkit-line-clamp: 1;
       }
     }
   }
@@ -739,33 +725,50 @@ const ActionButtons = styled.div`
 `;
 
 // Thêm styled component cho nút Add New Item
-const AddItemButton = styled(Button)`
-  height: 44px;
+const AddButton = styled(Button)`
+  height: 48px;
   padding: 0 24px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffcc00, #ffd700);
-  border: none;
-  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
   display: flex;
   align-items: center;
   gap: 8px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1a3353, #2c5282);
+  border: none;
+  box-shadow: 0 4px 12px rgba(26, 51, 83, 0.15);
   transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 204, 0, 0.4);
-    background: linear-gradient(135deg, #ffd700, #ffed4a);
-  }
+  color: white;
 
   .anticon {
     font-size: 18px;
-    color: #1a3353;
+    transition: transform 0.3s ease;
   }
 
-  span {
-    font-weight: 600;
-    font-size: 15px;
-    color: #1a3353;
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2c5282, #1e40af);
+    box-shadow: 0 6px 16px rgba(26, 51, 83, 0.25);
+    color: white;
+
+    .anticon {
+      transform: rotate(90deg);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(26, 51, 83, 0.15);
+  }
+
+  @media (max-width: 576px) {
+    height: 42px;
+    padding: 0 18px;
+    font-size: 14px;
+    
+    .anticon {
+      font-size: 16px;
+    }
   }
 `;
 
@@ -1075,20 +1078,10 @@ const RestaurantManagementPage = () => {
                 <div className="subtitle">Manage your restaurant's menu items</div>
               </div>
             </TitleSection>
-            <AddItemButton
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setEditingItem(null);
-                setSelectedItem(null);
-                setFormMode('create');
-                form.resetFields();
-                if (isMobile) {
-                  setIsAddModalVisible(true);
-                }
-              }}
-            >
+            <AddButton onClick={() => setIsAddModalVisible(true)}>
+              <PlusOutlined />
               Add New Item
-            </AddItemButton>
+            </AddButton>
           </HeaderSection>
 
           <CategoryFilter>
@@ -1168,15 +1161,8 @@ const RestaurantManagementPage = () => {
                           {item.category}
                         </Tag>
                       </div>
-                      <div className="stats">
-                        <div className="stat-item">
-                          <span className="label">Orders:</span>
-                          <span className="value">123</span>
-                        </div>
-                        <div className="stat-item">
-                          <span className="label">Rate:</span>
-                          <span className="value">85%</span>
-                        </div>
+                      <div className="description">
+                        {item.description || 'No description available'}
                       </div>
                     </div>
                   </ItemCard>
@@ -1353,129 +1339,124 @@ const RestaurantManagementPage = () => {
                     <div className="icon-wrapper">
                       <CoffeeOutlined />
                     </div>
-                    <div>
-                      <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
-                      <Tag color={
-                        selectedItem.category === 'Food' ? 'green' :
-                        selectedItem.category === 'Beverage' ? 'blue' :
-                        'purple'
-                      }>
-                        {selectedItem.category}
-                      </Tag>
-                    </div>
+                    {selectedItem && (
+                      <div>
+                        <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                        <Tag color={
+                          selectedItem.category === 'Food' ? 'green' :
+                          selectedItem.category === 'Beverage' ? 'blue' :
+                          'purple'
+                        }>
+                          {selectedItem.category}
+                        </Tag>
+                      </div>
+                    )}
                   </DetailHeader>
 
-                  <ItemDetailSection isAvailable={selectedItem.isAvailable}>
+                  <ItemDetailSection isAvailable={selectedItem?.isAvailable}>
                     <div className="section-title">
                       <CoffeeOutlined />
                       Item Details
                     </div>
-                    <div className="detail-row price-row">
-                      <span className="label">
-                        <DollarOutlined className="icon" />
-                        Price
-                      </span>
-                      <span className="value">
-                        {selectedItem.price.toLocaleString('vi-VN')}
-                        <span className="currency">₫</span>
-                      </span>
-                    </div>
-                    <div className="detail-row status-row">
-                      <span className="label">
-                        <CheckCircleOutlined className="icon" />
-                        Status
-                      </span>
-                      <div className="status-toggle">
-                        <Switch
-                          checked={selectedItem.isAvailable}
-                          onChange={handleStatusChange}
-                        />
-                        <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
-                          {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
-                        </Tag>
-                      </div>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">
-                        <TagOutlined className="icon" />
-                        Category
-                      </span>
-                      <Tag color={
-                        selectedItem.category === 'Food' ? 'green' :
-                        selectedItem.category === 'Beverage' ? 'blue' :
-                        'purple'
-                      }>
-                        {selectedItem.category}
-                      </Tag>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">
-                        <FileTextOutlined className="icon" />
-                        Description
-                      </span>
-                      <span className="value">{selectedItem.description || 'No description'}</span>
-                    </div>
-                  </ItemDetailSection>
-
-                  <ItemDetailSection>
-                    <div className="section-title">
-                      <BarChartOutlined />
-                      Statistics
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Total Orders</span>
-                      <span className="value">123</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Order Rate</span>
-                      <span className="value">85%</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">Revenue</span>
-                      <span className="value">{(selectedItem.price * 123).toLocaleString('vi-VN')}đ</span>
-                    </div>
+                    {selectedItem && (
+                      <>
+                        <div className="detail-row price-row">
+                          <span className="label">
+                            <DollarOutlined className="icon" />
+                            Price
+                          </span>
+                          <span className="value">
+                            {selectedItem.price.toLocaleString('vi-VN')}
+                            <span className="currency">₫</span>
+                          </span>
+                        </div>
+                        <div className="detail-row status-row">
+                          <span className="label">
+                            <CheckCircleOutlined className="icon" />
+                            Status
+                          </span>
+                          <div className="status-toggle">
+                            <Switch
+                              checked={selectedItem.isAvailable}
+                              onChange={handleStatusChange}
+                            />
+                            <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                              {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                            </Tag>
+                          </div>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">
+                            <TagOutlined className="icon" />
+                            Category
+                          </span>
+                          <Tag color={
+                            selectedItem.category === 'Food' ? 'green' :
+                            selectedItem.category === 'Beverage' ? 'blue' :
+                            'purple'
+                          }>
+                            {selectedItem.category}
+                          </Tag>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">
+                            <FileTextOutlined className="icon" />
+                            Description
+                          </span>
+                          <span className="value">{selectedItem.description || 'No description'}</span>
+                        </div>
+                      </>
+                    )}
                   </ItemDetailSection>
 
                   <ActionButtons>
-                    <Button 
-                      className="action-button edit-button"
-                      icon={<EditOutlined />}
-                      onClick={() => {
-                        setEditingItem(selectedItem);
-                        form.setFieldsValue(selectedItem);
-                        setIsModalVisible(true);
-                      }}
-                    >
-                      Edit Item
-                    </Button>
-                    <Button 
-                      className="action-button delete-button"
-                      icon={<DeleteOutlined />}
-                      onClick={() => {
-                        Modal.confirm({
-                          title: 'Delete Item',
-                          icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
-                          content: (
-                            <div>
-                              <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
-                              <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
-                            </div>
-                          ),
-                          okText: 'Yes, Delete',
-                          okButtonProps: {
-                            danger: true,
-                            icon: <DeleteOutlined />
-                          },
-                          cancelText: 'Cancel',
-                          onOk: () => handleDelete(selectedItem._id),
-                          okType: 'danger',
-                          centered: true,
-                          maskClosable: true
-                        });
-                      }}
-                    >
-                      Delete Item
-                    </Button>
+                    {selectedItem && (
+                      <>
+                        <Button 
+                          className="action-button edit-button"
+                          icon={<EditOutlined />}
+                          onClick={() => {
+                            setEditingItem(selectedItem);
+                            form.setFieldsValue(selectedItem);
+                            setIsModalVisible(true);
+                            setIsDetailModalVisible(false);
+                          }}
+                        >
+                          Edit Item
+                        </Button>
+                        <Button 
+                          className="action-button delete-button"
+                          icon={<DeleteOutlined />}
+                          onClick={() => {
+                            Modal.confirm({
+                              title: 'Delete Item',
+                              icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
+                              content: (
+                                <div>
+                                  <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
+                                  <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
+                                </div>
+                              ),
+                              okText: 'Yes, Delete',
+                              okButtonProps: {
+                                danger: true,
+                                icon: <DeleteOutlined />
+                              },
+                              cancelText: 'Cancel',
+                              onOk: () => {
+                                handleDelete(selectedItem._id);
+                                setIsDetailModalVisible(false);
+                              },
+                              okType: 'danger',
+                              centered: true,
+                              maskClosable: true
+                            });
+                          }}
+                        >
+                          Delete Item
+                        </Button>
+                      </>
+                    )}
                   </ActionButtons>
                 </>
               )
@@ -1620,29 +1601,31 @@ const RestaurantManagementPage = () => {
         }}
       >
         <DetailContainer>
-          {selectedItem && (
-            <>
-              <DetailHeader>
-                <div className="icon-wrapper">
-                  <CoffeeOutlined />
-                </div>
-                <div>
-                  <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
-                  <Tag color={
-                    selectedItem.category === 'Food' ? 'green' :
-                    selectedItem.category === 'Beverage' ? 'blue' :
-                    'purple'
-                  }>
-                    {selectedItem.category}
-                  </Tag>
-                </div>
-              </DetailHeader>
+          <DetailHeader>
+            <div className="icon-wrapper">
+              <CoffeeOutlined />
+            </div>
+            {selectedItem && (
+              <div>
+                <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                <Tag color={
+                  selectedItem.category === 'Food' ? 'green' :
+                  selectedItem.category === 'Beverage' ? 'blue' :
+                  'purple'
+                }>
+                  {selectedItem.category}
+                </Tag>
+              </div>
+            )}
+          </DetailHeader>
 
-              <ItemDetailSection isAvailable={selectedItem.isAvailable}>
-                <div className="section-title">
-                  <CoffeeOutlined />
-                  Item Details
-                </div>
+          <ItemDetailSection isAvailable={selectedItem?.isAvailable}>
+            <div className="section-title">
+              <CoffeeOutlined />
+              Item Details
+            </div>
+            {selectedItem && (
+              <>
                 <div className="detail-row price-row">
                   <span className="label">
                     <DollarOutlined className="icon" />
@@ -1688,28 +1671,13 @@ const RestaurantManagementPage = () => {
                   </span>
                   <span className="value">{selectedItem.description || 'No description'}</span>
                 </div>
-              </ItemDetailSection>
+              </>
+            )}
+          </ItemDetailSection>
 
-              <ItemDetailSection>
-                <div className="section-title">
-                  <BarChartOutlined />
-                  Statistics
-                </div>
-                <div className="detail-row">
-                  <span className="label">Total Orders</span>
-                  <span className="value">123</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Order Rate</span>
-                  <span className="value">85%</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Revenue</span>
-                  <span className="value">{(selectedItem.price * 123).toLocaleString('vi-VN')}đ</span>
-                </div>
-              </ItemDetailSection>
-
-              <ActionButtons>
+          <ActionButtons>
+            {selectedItem && (
+              <>
                 <Button 
                   className="action-button edit-button"
                   icon={<EditOutlined />}
@@ -1753,9 +1721,9 @@ const RestaurantManagementPage = () => {
                 >
                   Delete Item
                 </Button>
-              </ActionButtons>
-            </>
-          )}
+              </>
+            )}
+          </ActionButtons>
         </DetailContainer>
       </StyledModal>
 

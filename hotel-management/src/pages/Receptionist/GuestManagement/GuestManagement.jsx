@@ -370,10 +370,16 @@ const GuestManagement = ({ onToggleSidebar }) => {
         message.success('Guest deleted successfully');
         fetchGuests();
       } else {
-        throw new Error('Failed to delete guest');
+        const error = await response.json();
+        // Kiểm tra nếu lỗi là do guest có booking
+        if (error.message.includes('associated bookings')) {
+          message.error('Cannot delete guest because they have active bookings');
+        } else {
+          message.error('Failed to delete guest');
+        }
       }
     } catch (error) {
-      message.error(error.message);
+      message.error('Failed to delete guest');
     }
   };
 
@@ -412,8 +418,8 @@ const GuestManagement = ({ onToggleSidebar }) => {
             size="small"
             onClick={() => {
               Modal.confirm({
-                title: 'Are you sure you want to delete this guest?',
-                content: 'This action cannot be undone.',
+                title: 'Delete Guest',
+                content: 'Are you sure you want to delete this guest? This action cannot be undone.',
                 okText: 'Yes',
                 okType: 'danger',
                 cancelText: 'No',
@@ -498,8 +504,8 @@ const GuestManagement = ({ onToggleSidebar }) => {
             icon={<DeleteOutlined />}
             onClick={() => {
               Modal.confirm({
-                title: 'Are you sure you want to delete this guest?',
-                content: 'This action cannot be undone.',
+                title: 'Delete Guest',
+                content: 'Are you sure you want to delete this guest? This action cannot be undone.',
                 okText: 'Yes',
                 okType: 'danger',
                 cancelText: 'No',
