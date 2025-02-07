@@ -313,13 +313,15 @@ const RestaurantService = () => {
         }
 
         const data = await response.json();
-        console.log('Fetched bookings:', data); // Log để debug
+        
+        // Lọc thêm một lần nữa ở client để đảm bảo
+        const confirmedBookings = data.filter(booking => booking.status === 'Confirmed');
 
-        if (data.length === 0) {
+        if (confirmedBookings.length === 0) {
           message.info('No confirmed bookings found');
         }
 
-        setBookings(data);
+        setBookings(confirmedBookings);
       } catch (error) {
         console.error('Error:', error);
         message.error(error.message);
@@ -491,7 +493,7 @@ const RestaurantService = () => {
           </div>
           <Select
             loading={bookingsLoading}
-            placeholder="Choose a booking"
+            placeholder="Choose a confirmed booking"
             value={selectedBooking?._id}
             onChange={(value) => {
               const booking = bookings.find(b => b._id === value);
