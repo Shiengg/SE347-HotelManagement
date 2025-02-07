@@ -1332,110 +1332,124 @@ const RestaurantManagementPage = () => {
                     <div className="icon-wrapper">
                       <CoffeeOutlined />
                     </div>
-                    <div>
-                      <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
-                      <Tag color={
-                        selectedItem.category === 'Food' ? 'green' :
-                        selectedItem.category === 'Beverage' ? 'blue' :
-                        'purple'
-                      }>
-                        {selectedItem.category}
-                      </Tag>
-                    </div>
+                    {selectedItem && (
+                      <div>
+                        <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                        <Tag color={
+                          selectedItem.category === 'Food' ? 'green' :
+                          selectedItem.category === 'Beverage' ? 'blue' :
+                          'purple'
+                        }>
+                          {selectedItem.category}
+                        </Tag>
+                      </div>
+                    )}
                   </DetailHeader>
 
-                  <ItemDetailSection isAvailable={selectedItem.isAvailable}>
+                  <ItemDetailSection isAvailable={selectedItem?.isAvailable}>
                     <div className="section-title">
                       <CoffeeOutlined />
                       Item Details
                     </div>
-                    <div className="detail-row price-row">
-                      <span className="label">
-                        <DollarOutlined className="icon" />
-                        Price
-                      </span>
-                      <span className="value">
-                        {selectedItem.price.toLocaleString('vi-VN')}
-                        <span className="currency">₫</span>
-                      </span>
-                    </div>
-                    <div className="detail-row status-row">
-                      <span className="label">
-                        <CheckCircleOutlined className="icon" />
-                        Status
-                      </span>
-                      <div className="status-toggle">
-                        <Switch
-                          checked={selectedItem.isAvailable}
-                          onChange={handleStatusChange}
-                        />
-                        <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
-                          {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
-                        </Tag>
-                      </div>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">
-                        <TagOutlined className="icon" />
-                        Category
-                      </span>
-                      <Tag color={
-                        selectedItem.category === 'Food' ? 'green' :
-                        selectedItem.category === 'Beverage' ? 'blue' :
-                        'purple'
-                      }>
-                        {selectedItem.category}
-                      </Tag>
-                    </div>
-                    <div className="detail-row">
-                      <span className="label">
-                        <FileTextOutlined className="icon" />
-                        Description
-                      </span>
-                      <span className="value">{selectedItem.description || 'No description'}</span>
-                    </div>
+                    {selectedItem && (
+                      <>
+                        <div className="detail-row price-row">
+                          <span className="label">
+                            <DollarOutlined className="icon" />
+                            Price
+                          </span>
+                          <span className="value">
+                            {selectedItem.price.toLocaleString('vi-VN')}
+                            <span className="currency">₫</span>
+                          </span>
+                        </div>
+                        <div className="detail-row status-row">
+                          <span className="label">
+                            <CheckCircleOutlined className="icon" />
+                            Status
+                          </span>
+                          <div className="status-toggle">
+                            <Switch
+                              checked={selectedItem.isAvailable}
+                              onChange={handleStatusChange}
+                            />
+                            <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                              {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                            </Tag>
+                          </div>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">
+                            <TagOutlined className="icon" />
+                            Category
+                          </span>
+                          <Tag color={
+                            selectedItem.category === 'Food' ? 'green' :
+                            selectedItem.category === 'Beverage' ? 'blue' :
+                            'purple'
+                          }>
+                            {selectedItem.category}
+                          </Tag>
+                        </div>
+                        <div className="detail-row">
+                          <span className="label">
+                            <FileTextOutlined className="icon" />
+                            Description
+                          </span>
+                          <span className="value">{selectedItem.description || 'No description'}</span>
+                        </div>
+                      </>
+                    )}
                   </ItemDetailSection>
 
                   <ActionButtons>
-                    <Button 
-                      className="action-button edit-button"
-                      icon={<EditOutlined />}
-                      onClick={() => {
-                        setEditingItem(selectedItem);
-                        form.setFieldsValue(selectedItem);
-                        setIsModalVisible(true);
-                      }}
-                    >
-                      Edit Item
-                    </Button>
-                    <Button 
-                      className="action-button delete-button"
-                      icon={<DeleteOutlined />}
-                      onClick={() => {
-                        Modal.confirm({
-                          title: 'Delete Item',
-                          icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
-                          content: (
-                            <div>
-                              <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
-                              <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
-                            </div>
-                          ),
-                          okText: 'Yes, Delete',
-                          okButtonProps: {
-                            danger: true,
-                            icon: <DeleteOutlined />
-                          },
-                          cancelText: 'Cancel',
-                          onOk: () => handleDelete(selectedItem._id),
-                          okType: 'danger',
-                          centered: true,
-                          maskClosable: true
-                        });
-                      }}
-                    >
-                      Delete Item
-                    </Button>
+                    {selectedItem && (
+                      <>
+                        <Button 
+                          className="action-button edit-button"
+                          icon={<EditOutlined />}
+                          onClick={() => {
+                            setEditingItem(selectedItem);
+                            form.setFieldsValue(selectedItem);
+                            setIsModalVisible(true);
+                            setIsDetailModalVisible(false);
+                          }}
+                        >
+                          Edit Item
+                        </Button>
+                        <Button 
+                          className="action-button delete-button"
+                          icon={<DeleteOutlined />}
+                          onClick={() => {
+                            Modal.confirm({
+                              title: 'Delete Item',
+                              icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
+                              content: (
+                                <div>
+                                  <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
+                                  <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
+                                </div>
+                              ),
+                              okText: 'Yes, Delete',
+                              okButtonProps: {
+                                danger: true,
+                                icon: <DeleteOutlined />
+                              },
+                              cancelText: 'Cancel',
+                              onOk: () => {
+                                handleDelete(selectedItem._id);
+                                setIsDetailModalVisible(false);
+                              },
+                              okType: 'danger',
+                              centered: true,
+                              maskClosable: true
+                            });
+                          }}
+                        >
+                          Delete Item
+                        </Button>
+                      </>
+                    )}
                   </ActionButtons>
                 </>
               )
@@ -1584,114 +1598,124 @@ const RestaurantManagementPage = () => {
             <div className="icon-wrapper">
               <CoffeeOutlined />
             </div>
-            <div>
-              <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
-              <Tag color={
-                selectedItem.category === 'Food' ? 'green' :
-                selectedItem.category === 'Beverage' ? 'blue' :
-                'purple'
-              }>
-                {selectedItem.category}
-              </Tag>
-            </div>
+            {selectedItem && (
+              <div>
+                <h2 style={{ margin: 0 }}>{selectedItem.name}</h2>
+                <Tag color={
+                  selectedItem.category === 'Food' ? 'green' :
+                  selectedItem.category === 'Beverage' ? 'blue' :
+                  'purple'
+                }>
+                  {selectedItem.category}
+                </Tag>
+              </div>
+            )}
           </DetailHeader>
 
-          <ItemDetailSection isAvailable={selectedItem.isAvailable}>
+          <ItemDetailSection isAvailable={selectedItem?.isAvailable}>
             <div className="section-title">
               <CoffeeOutlined />
               Item Details
             </div>
-            <div className="detail-row price-row">
-              <span className="label">
-                <DollarOutlined className="icon" />
-                Price
-              </span>
-              <span className="value">
-                {selectedItem.price.toLocaleString('vi-VN')}
-                <span className="currency">₫</span>
-              </span>
-            </div>
-            <div className="detail-row status-row">
-              <span className="label">
-                <CheckCircleOutlined className="icon" />
-                Status
-              </span>
-              <div className="status-toggle">
-                <Switch
-                  checked={selectedItem.isAvailable}
-                  onChange={handleStatusChange}
-                />
-                <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
-                  {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
-                </Tag>
-              </div>
-            </div>
-            <div className="detail-row">
-              <span className="label">
-                <TagOutlined className="icon" />
-                Category
-              </span>
-              <Tag color={
-                selectedItem.category === 'Food' ? 'green' :
-                selectedItem.category === 'Beverage' ? 'blue' :
-                'purple'
-              }>
-                {selectedItem.category}
-              </Tag>
-            </div>
-            <div className="detail-row">
-              <span className="label">
-                <FileTextOutlined className="icon" />
-                Description
-              </span>
-              <span className="value">{selectedItem.description || 'No description'}</span>
-            </div>
+            {selectedItem && (
+              <>
+                <div className="detail-row price-row">
+                  <span className="label">
+                    <DollarOutlined className="icon" />
+                    Price
+                  </span>
+                  <span className="value">
+                    {selectedItem.price.toLocaleString('vi-VN')}
+                    <span className="currency">₫</span>
+                  </span>
+                </div>
+                <div className="detail-row status-row">
+                  <span className="label">
+                    <CheckCircleOutlined className="icon" />
+                    Status
+                  </span>
+                  <div className="status-toggle">
+                    <Switch
+                      checked={selectedItem.isAvailable}
+                      onChange={handleStatusChange}
+                    />
+                    <Tag color={selectedItem.isAvailable ? 'success' : 'error'}>
+                      {selectedItem.isAvailable ? 'Available' : 'Unavailable'}
+                    </Tag>
+                  </div>
+                </div>
+                <div className="detail-row">
+                  <span className="label">
+                    <TagOutlined className="icon" />
+                    Category
+                  </span>
+                  <Tag color={
+                    selectedItem.category === 'Food' ? 'green' :
+                    selectedItem.category === 'Beverage' ? 'blue' :
+                    'purple'
+                  }>
+                    {selectedItem.category}
+                  </Tag>
+                </div>
+                <div className="detail-row">
+                  <span className="label">
+                    <FileTextOutlined className="icon" />
+                    Description
+                  </span>
+                  <span className="value">{selectedItem.description || 'No description'}</span>
+                </div>
+              </>
+            )}
           </ItemDetailSection>
 
           <ActionButtons>
-            <Button 
-              className="action-button edit-button"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setEditingItem(selectedItem);
-                form.setFieldsValue(selectedItem);
-                setIsModalVisible(true);
-                setIsDetailModalVisible(false);
-              }}
-            >
-              Edit Item
-            </Button>
-            <Button 
-              className="action-button delete-button"
-              icon={<DeleteOutlined />}
-              onClick={() => {
-                Modal.confirm({
-                  title: 'Delete Item',
-                  icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
-                  content: (
-                    <div>
-                      <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
-                      <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
-                    </div>
-                  ),
-                  okText: 'Yes, Delete',
-                  okButtonProps: {
-                    danger: true,
-                    icon: <DeleteOutlined />
-                  },
-                  cancelText: 'Cancel',
-                  onOk: () => {
-                    handleDelete(selectedItem._id);
+            {selectedItem && (
+              <>
+                <Button 
+                  className="action-button edit-button"
+                  icon={<EditOutlined />}
+                  onClick={() => {
+                    setEditingItem(selectedItem);
+                    form.setFieldsValue(selectedItem);
+                    setIsModalVisible(true);
                     setIsDetailModalVisible(false);
-                  },
-                  okType: 'danger',
-                  centered: true,
-                  maskClosable: true
-                });
-              }}
-            >
-              Delete Item
-            </Button>
+                  }}
+                >
+                  Edit Item
+                </Button>
+                <Button 
+                  className="action-button delete-button"
+                  icon={<DeleteOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Delete Item',
+                      icon: <DeleteOutlined style={{ color: '#ef4444' }} />,
+                      content: (
+                        <div>
+                          <p>Are you sure you want to delete <strong>{selectedItem.name}</strong>?</p>
+                          <p style={{ color: '#6b7280', fontSize: '13px' }}>This action cannot be undone.</p>
+                        </div>
+                      ),
+                      okText: 'Yes, Delete',
+                      okButtonProps: {
+                        danger: true,
+                        icon: <DeleteOutlined />
+                      },
+                      cancelText: 'Cancel',
+                      onOk: () => {
+                        handleDelete(selectedItem._id);
+                        setIsDetailModalVisible(false);
+                      },
+                      okType: 'danger',
+                      centered: true,
+                      maskClosable: true
+                    });
+                  }}
+                >
+                  Delete Item
+                </Button>
+              </>
+            )}
           </ActionButtons>
         </DetailContainer>
       </StyledModal>
