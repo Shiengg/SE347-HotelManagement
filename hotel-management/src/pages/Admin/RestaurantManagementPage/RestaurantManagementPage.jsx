@@ -725,33 +725,50 @@ const ActionButtons = styled.div`
 `;
 
 // Thêm styled component cho nút Add New Item
-const AddItemButton = styled(Button)`
-  height: 44px;
+const AddButton = styled(Button)`
+  height: 48px;
   padding: 0 24px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #ffcc00, #ffd700);
-  border: none;
-  box-shadow: 0 4px 12px rgba(255, 204, 0, 0.3);
   display: flex;
   align-items: center;
   gap: 8px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1a3353, #2c5282);
+  border: none;
+  box-shadow: 0 4px 12px rgba(26, 51, 83, 0.15);
   transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 204, 0, 0.4);
-    background: linear-gradient(135deg, #ffd700, #ffed4a);
-  }
+  color: white;
 
   .anticon {
     font-size: 18px;
-    color: #1a3353;
+    transition: transform 0.3s ease;
   }
 
-  span {
-    font-weight: 600;
-    font-size: 15px;
-    color: #1a3353;
+  &:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #2c5282, #1e40af);
+    box-shadow: 0 6px 16px rgba(26, 51, 83, 0.25);
+    color: white;
+
+    .anticon {
+      transform: rotate(90deg);
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(26, 51, 83, 0.15);
+  }
+
+  @media (max-width: 576px) {
+    height: 42px;
+    padding: 0 18px;
+    font-size: 14px;
+    
+    .anticon {
+      font-size: 16px;
+    }
   }
 `;
 
@@ -1061,20 +1078,10 @@ const RestaurantManagementPage = () => {
                 <div className="subtitle">Manage your restaurant's menu items</div>
               </div>
             </TitleSection>
-            <AddItemButton
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setEditingItem(null);
-                setSelectedItem(null);
-                setFormMode('create');
-                form.resetFields();
-                if (isMobile) {
-                  setIsAddModalVisible(true);
-                }
-              }}
-            >
+            <AddButton onClick={() => setIsAddModalVisible(true)}>
+              <PlusOutlined />
               Add New Item
-            </AddItemButton>
+            </AddButton>
           </HeaderSection>
 
           <CategoryFilter>

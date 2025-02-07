@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Table, Button, Space, Modal, Form, Input, message, Alert, Spin } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, UserOutlined, PhoneOutlined, MailOutlined, TeamOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import AddButton from '../../../components/common/AddButton';
 
 const PageContainer = styled.div`
   padding: 12px;
@@ -70,20 +71,6 @@ const TableContainer = styled.div`
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-`;
-
-const AddButton = styled(Button)`
-  height: 40px;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #1a3353;
-  border: none;
-  
-  &:hover {
-    background: #2c4c7c !important;
-  }
 `;
 
 const StyledTable = styled(Table)`
@@ -631,16 +618,9 @@ const EmployeesPage = () => {
             </div>
           </TitleSection>
 
-          <AddButton
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => {
-              setEditingEmployee(null);
-              form.resetFields();
-              setIsModalVisible(true);
-            }}
-          >
-            Add Employee
+          <AddButton onClick={() => setIsModalVisible(true)}>
+            <PlusOutlined />
+            Add New Employee
           </AddButton>
         </HeaderSection>
 
@@ -693,15 +673,8 @@ const EmployeesPage = () => {
                 }
               </div>
               {!searchText && (
-                <AddButton
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    setEditingEmployee(null);
-                    form.resetFields();
-                    setIsModalVisible(true);
-                  }}
-                >
+                <AddButton onClick={() => setIsModalVisible(true)}>
+                  <PlusOutlined />
                   Add New Employee
                 </AddButton>
               )}
