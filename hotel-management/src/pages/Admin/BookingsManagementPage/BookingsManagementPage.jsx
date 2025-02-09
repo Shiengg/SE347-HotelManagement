@@ -8,28 +8,50 @@ import BookingForm from './BookingForm';
 const { Option } = Select;
 
 const PageContainer = styled.div`
-  padding: 12px;
-  width: 100%;
+  padding: 24px;
+  background: #f8fafc;
+  min-height: calc(100vh - 64px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    min-height: calc(100vh - 56px);
+  }
 `;
 
 const ContentWrapper = styled.div`
   background: white;
-  border-radius: 10px;
-  padding: 16px;
-  border: 2px solid gold;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
   width: 100%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    border-radius: 16px;
+  }
 `;
 
 const HeaderSection = styled.div`
-  background: linear-gradient(to right, #ffffff, #f8f9fa);
-  border-radius: 12px;
-  padding: 20px;
+  background: linear-gradient(to right, #ffffff, #f8fafc);
+  border-radius: 16px;
+  padding: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid #eee;
+  border: 1px solid #e5e7eb;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    margin-bottom: 24px;
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
 `;
 
 const TitleSection = styled.div`
@@ -40,7 +62,7 @@ const TitleSection = styled.div`
   .icon-wrapper {
     width: 48px;
     height: 48px;
-    background: linear-gradient(45deg, #ffd700, #ffed4a);
+    background: linear-gradient(135deg, #1a3353, #2c5282);
     border-radius: 12px;
     display: flex;
     align-items: center;
@@ -49,7 +71,7 @@ const TitleSection = styled.div`
 
     .anticon {
       font-size: 24px;
-      color: #1a3353;
+      color: white;
     }
   }
 
@@ -58,19 +80,38 @@ const TitleSection = styled.div`
     flex-direction: column;
     gap: 4px;
   }
+
+  @media (max-width: 768px) {
+    .icon-wrapper {
+      width: 40px;
+      height: 40px;
+      
+      .anticon {
+        font-size: 20px;
+      }
+    }
+  }
 `;
 
 const Title = styled.h2`
   margin: 0;
   color: #1a3353;
-  font-size: 1.8em;
+  font-size: 24px;
   font-weight: 600;
+
+  @media (max-width: 768px) {
+    font-size: 20px;
+  }
 `;
 
 const Subtitle = styled.p`
   margin: 0;
-  color: #666;
-  font-size: 0.9em;
+  color: #6b7280;
+  font-size: 14px;
+
+  @media (max-width: 768px) {
+    font-size: 13px;
+  }
 `;
 
 const TableContainer = styled.div`
@@ -78,6 +119,15 @@ const TableContainer = styled.div`
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+  .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (max-width: 768px) {
+    border-radius: 8px;
+  }
 `;
 
 const StyledTable = styled(Table)`
@@ -90,10 +140,22 @@ const StyledTable = styled(Table)`
     background: #f8fafc;
     color: #1a3353;
     font-weight: 600;
+    padding: 16px;
+  }
+
+  .ant-table-tbody > tr > td {
+    padding: 16px;
   }
 
   .ant-table-tbody > tr:hover > td {
     background: #f8fafc;
+  }
+
+  @media (max-width: 768px) {
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+      padding: 12px;
+    }
   }
 
   @media (max-width: 576px) {
@@ -292,6 +354,10 @@ const LoadingState = styled.div`
     color: #64748b;
     font-size: 0.95em;
   }
+
+  @media (max-width: 768px) {
+    padding: 32px 20px;
+  }
 `;
 
 const formatDateTime = (date, bookingType) => {
@@ -439,11 +505,29 @@ const StyledModal = styled(Modal)`
 `;
 
 const TabsContainer = styled.div`
-  margin-bottom: 24px;
   .ant-tabs-nav {
-    margin-bottom: 0;
-    &::before {
-      border: none;
+    margin-bottom: 24px;
+  }
+
+  .ant-tabs-tab {
+    padding: 12px 20px;
+    
+    .anticon {
+      margin-right: 8px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .ant-tabs-nav {
+      margin-bottom: 16px;
+    }
+
+    .ant-tabs-tab {
+      padding: 8px 16px;
+      
+      .anticon {
+        margin-right: 6px;
+      }
     }
   }
 `;
