@@ -17,7 +17,6 @@ const PageContainer = styled.div`
   padding: 24px;
   background: #f8fafc;
   min-height: calc(100vh - 64px);
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
@@ -71,51 +70,56 @@ const TitleSection = styled.div`
 `;
 
 const Title = styled.h1`
-  margin: 0;
-  color: #1a3353;
   font-size: 28px;
-  font-weight: 600;
-
-  @media (max-width: 576px) {
-    font-size: 22px;
-  }
-`;
-
-const MenuButton = styled(Button)`
-  display: none;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 32px;
+  position: relative;
+  padding-left: 16px;
+  display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: #1a3353;
-  color: white;
-  
-  &:hover, &:focus {
-    background: #2c5282;
-    color: white;
+  gap: 12px;
+
+  &:before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(180deg, #1890ff 0%, #096dd9 100%);
+    border-radius: 4px;
   }
 
-  @media (max-width: 768px) {
-    display: flex;
+  .subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 400;
+    margin-left: 8px;
   }
 
   @media (max-width: 576px) {
-    width: 36px;
-    height: 36px;
+    font-size: 24px;
+    margin-bottom: 24px;
+    
+    .subtitle {
+      font-size: 13px;
+    }
   }
 `;
 
 const StatsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
   margin-bottom: 32px;
+  padding: 0;
 
   @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 16px;
+    margin-bottom: 24px;
   }
 
   @media (max-width: 576px) {
@@ -303,19 +307,19 @@ const RevenueCard = styled(StatCard)`
 `;
 
 const RoomOverviewContainer = styled(Card)`
-  margin: 0 24px;
-  border-radius: 24px;
+  margin: 0;
+  border-radius: 20px;
   background: white;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
   border: none;
   overflow: hidden;
 
   .ant-card-head {
     border-bottom: none;
-    padding: 24px 28px;
+    padding: 20px;
     
     .ant-card-head-title {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 600;
       color: #1a3353;
       display: flex;
@@ -324,20 +328,42 @@ const RoomOverviewContainer = styled(Card)`
 
       &:before {
         content: '🏨';
-        font-size: 24px;
+        font-size: 20px;
       }
     }
   }
 
   .ant-card-body {
-    padding: 0 28px 28px;
+    padding: 0 20px 20px;
+  }
+
+  @media (max-width: 768px) {
+    margin: 0;
+    
+    .ant-card-head {
+      padding: 16px;
+    }
+    
+    .ant-card-body {
+      padding: 0 16px 16px;
+    }
   }
 `;
 
 const RoomList = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+
+  @media (max-width: 992px) {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  @media (max-width: 576px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const RoomGroup = styled.div`
@@ -413,6 +439,33 @@ const RoomGroup = styled.div`
       &:hover {
         transform: translateY(-2px) scale(1.02);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    
+    .status-header {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      
+      span {
+        font-size: 16px;
+      }
+      
+      .count {
+        padding: 4px 12px;
+        font-size: 13px;
+      }
+    }
+    
+    .room-chips {
+      gap: 8px;
+      
+      .ant-tag {
+        padding: 6px 12px;
+        font-size: 13px;
       }
     }
   }
@@ -544,11 +597,13 @@ const ReceptionistDashboard = ({ onToggleSidebar }) => {
           <div className="icon-wrapper">
             <DollarOutlined />
           </div>
-          <Title>Dashboard Overview</Title>
+          <Title>
+            Dashboard Overview
+            <span className="subtitle">
+              Overview of your hotel's performance
+            </span>
+          </Title>
         </TitleSection>
-        <MenuButton onClick={onToggleSidebar}>
-          <MenuOutlined />
-        </MenuButton>
       </HeaderSection>
       
       <StatsGrid>
