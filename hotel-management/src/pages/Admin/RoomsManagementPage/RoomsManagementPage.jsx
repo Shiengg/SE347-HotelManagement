@@ -873,10 +873,19 @@ const RoomsManagementPage = () => {
     }
   };
 
+  // Thêm hàm xử lý khi bấm nút Add New Room
+  const handleAddNewRoom = () => {
+    setSelectedRoom(null); // Reset selected room
+    setIsEditing(false); // Reset editing state
+    form.resetFields(); // Reset form fields
+    if (isMobile) {
+      setIsAddDrawerVisible(true);
+    }
+  };
+
   return (
     <PageContainer>
       {isMobile ? (
-        // Mobile view
         <ContentWrapper>
           <HeaderSection>
             <TitleSection>
@@ -889,7 +898,7 @@ const RoomsManagementPage = () => {
               </div>
             </TitleSection>
             
-            <AddButton onClick={() => setIsAddDrawerVisible(true)}>
+            <AddButton onClick={handleAddNewRoom}>
               <PlusOutlined />
               Add New Room
             </AddButton>
@@ -1788,7 +1797,6 @@ const RoomsManagementPage = () => {
           </StyledDrawer>
         </ContentWrapper>
       ) : (
-        // Desktop view - giữ nguyên layout hiện tại
         <GridContainer>
           <ContentWrapper>
             <HeaderSection>
@@ -1802,7 +1810,7 @@ const RoomsManagementPage = () => {
                 </div>
               </TitleSection>
               
-              <AddButton onClick={() => setIsAddDrawerVisible(true)}>
+              <AddButton onClick={handleAddNewRoom}>
                 <PlusOutlined />
                 Add New Room
               </AddButton>
