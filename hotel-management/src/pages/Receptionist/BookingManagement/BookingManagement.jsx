@@ -17,7 +17,7 @@ const PageContainer = styled.div`
   -moz-osx-font-smoothing: grayscale;
 
   @media (max-width: 768px) {
-    padding: 16px;
+    padding: 12px;
     min-height: calc(100vh - 56px);
   }
 `;
@@ -25,9 +25,18 @@ const PageContainer = styled.div`
 const ContentWrapper = styled.div`
   background: white;
   border-radius: 10px;
-  padding: 16px;
+  padding: 24px;
   border: 2px solid #1890ff;
   width: 100%;
+  overflow-x: auto;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+
+  @media (max-width: 576px) {
+    padding: 12px;
+  }
 `;
 
 const HeaderSection = styled.div`
@@ -36,10 +45,15 @@ const HeaderSection = styled.div`
   align-items: center;
   margin-bottom: 32px;
   gap: 16px;
-  flex-wrap: wrap;
 
   @media (max-width: 576px) {
+    flex-direction: column;
+    align-items: stretch;
     margin-bottom: 24px;
+    
+    .text-content {
+      text-align: center;
+    }
   }
 `;
 
@@ -113,10 +127,17 @@ const StyledTable = styled(Table)`
     background: #f8fafc;
     color: #1a3353;
     font-weight: 600;
+    white-space: nowrap;
   }
 
   .ant-table-tbody > tr:hover > td {
     background: #f8fafc;
+  }
+
+  .ant-table-tbody > tr > td {
+    @media (max-width: 576px) {
+      padding: 8px;
+    }
   }
 
   @media (max-width: 576px) {
@@ -143,10 +164,23 @@ const StatusTag = styled.span`
 
 const TabsContainer = styled.div`
   margin-bottom: 24px;
+
   .ant-tabs-nav {
     margin-bottom: 0;
     &::before {
       border: none;
+    }
+  }
+
+  .ant-tabs-tab {
+    padding: 8px 16px;
+    
+    @media (max-width: 576px) {
+      padding: 8px 12px;
+      
+      .anticon + span {
+        margin-left: 4px;
+      }
     }
   }
 `;
@@ -154,6 +188,18 @@ const TabsContainer = styled.div`
 const StyledModal = styled(Modal)`
   .ant-modal-content {
     border-radius: 10px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  @media (max-width: 576px) {
+    margin: 0;
+    max-width: 100%;
+    
+    .ant-modal-content {
+      border-radius: 0;
+      min-height: 100vh;
+    }
   }
 `;
 
@@ -161,16 +207,22 @@ const DetailModal = styled(Modal)`
   .ant-modal-content {
     border-radius: 12px;
     overflow: hidden;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
-  .ant-modal-header {
-    background: linear-gradient(to right, #ffffff, #f8f9fa);
-    padding: 16px 24px;
-    border-bottom: 1px solid #f0f0f0;
-  }
+  @media (max-width: 576px) {
+    margin: 0;
+    max-width: 100%;
+    
+    .ant-modal-content {
+      border-radius: 0;
+      min-height: 100vh;
+    }
 
-  .ant-modal-body {
-    padding: 24px;
+    .ant-modal-body {
+      padding: 16px;
+    }
   }
 `;
 
@@ -443,6 +495,7 @@ const AddButton = styled(Button)`
   border: none;
   box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
   transition: all 0.3s ease;
+  white-space: nowrap;
 
   .anticon {
     font-size: 18px;
@@ -458,6 +511,8 @@ const AddButton = styled(Button)`
     height: 40px;
     padding: 0 16px;
     font-size: 14px;
+    width: 100%;
+    justify-content: center;
     
     .anticon {
       font-size: 16px;
