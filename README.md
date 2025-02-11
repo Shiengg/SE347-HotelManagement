@@ -39,5 +39,5 @@ git clone https://github.com/Shiengg/SE347-HotelManagement.git
 - cd..
 - cd .\hotel-management-backend; Set-Content .env "MONGODB_URI=mongodb+srv://trantanyo:ytMwv2k3WGksc4zF@hotel-management.hr84m.mongodb.net/hotel_management`nPORT=5000`nJWT_SECRET=your_jwt_secret_key_here`nCLOUDINARY_CLOUD_NAME=dntdeq1gh`nCLOUDINARY_API_KEY=196136842638446`nCLOUDINARY_API_SECRET=oqUHG1z-5MLTdyX4IYzX9hhvbxw"
 - cd .\hotel-management-backend\; node server.js
-- ##Tạo 1 terminal mới để chạy Frontend
+- #Tạo 1 terminal mới để chạy Frontend
 - cd .\hotel-management\; npm start
